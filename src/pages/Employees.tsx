@@ -1,23 +1,41 @@
-import { useState, useCallback, useRef } from 'react';
-import { employees as mockEmployees, salarySchemes } from '@/data/mock';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
-  Search, Plus, Upload, Download, FileDown, Eye, Edit, UserX, UserCheck,
-  ChevronUp, ChevronDown, ChevronsUpDown, Pencil, Check, X as XIcon
+  Search, Plus, Upload, Download, FileDown, Eye, Edit,
+  ChevronUp, ChevronDown, ChevronsUpDown, Pencil, Check, Loader2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { differenceInDays, parseISO, format } from 'date-fns';
 import EmployeeProfile from '@/components/employees/EmployeeProfile';
 import AddEmployeeModal from '@/components/employees/AddEmployeeModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
+type Employee = {
+  id: string;
+  name: string;
+  job_title?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  national_id?: string | null;
+  bank_account_number?: string | null;
+  city?: string | null;
+  join_date?: string | null;
+  residency_expiry?: string | null;
+  license_status?: string | null;
+  sponsorship_status?: string | null;
+  id_photo_url?: string | null;
+  license_photo_url?: string | null;
+  personal_photo_url?: string | null;
+  status: string;
+  salary_type: string;
+  base_salary: number;
+};
+
 type SortField =
   | 'name' | 'national_id' | 'phone' | 'job_title' | 'email' | 'city'
   | 'join_date' | 'residency_expiry' | 'days_residency' | 'residency_status'
@@ -34,7 +52,7 @@ const calcResidency = (expiry?: string | null) => {
 const CityBadge = ({ city }: { city?: string | null }) => {
   if (!city) return <span className="text-muted-foreground/40">—</span>;
   return city === 'makkah'
-    ? <span className="badge-info" style={{ background: 'hsl(var(--primary)/0.15)', color: 'hsl(270 60% 50%)' }}>مكة</span>
+    ? <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">مكة</span>
     : <span className="badge-info">جدة</span>;
 };
 
@@ -65,9 +83,7 @@ const StatusBadge = ({ status }: { status: string }) => {
   const map: Record<string, { label: string; cls: string }> = {
     active: { label: 'نشط', cls: 'badge-success' },
     inactive: { label: 'موقوف', cls: 'badge-warning' },
-    suspended: { label: 'موقوف', cls: 'badge-warning' },
     ended: { label: 'منتهي', cls: 'badge-urgent' },
-    terminated: { label: 'منتهي', cls: 'badge-urgent' },
   };
   const m = map[status];
   return m ? <span className={m.cls}>{m.label}</span> : null;
@@ -139,79 +155,107 @@ const SortIcon = ({ field, sortField, sortDir }: { field: SortField; sortField: 
   return <ChevronDown size={12} className="text-primary inline ml-1" />;
 };
 
+// ─── Skeleton Row ─────────────────────────────────────────────────────────────
+const SkeletonRow = () => (
+  <tr className="border-b border-border/30">
+    {Array.from({ length: 17 }).map((_, i) => (
+      <td key={i} className="px-3 py-3">
+        <Skeleton className="h-4 w-full" />
+      </td>
+    ))}
+  </tr>
+);
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 const Employees = () => {
   const { toast } = useToast();
-  const [data, setData] = useState(mockEmployees);
+  const [data, setData] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [salaryTypeFilter, setSalaryTypeFilter] = useState('all');
   const [residencyFilter, setResidencyFilter] = useState('all');
-  const [appFilter, setAppFilter] = useState('all');
   const [sortField, setSortField] = useState<SortField | null>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showImport, setShowImport] = useState(false);
+  const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
+
+  // ── Fetch from Supabase ──
+  const fetchEmployees = useCallback(async () => {
+    setLoading(true);
+    const { data: rows, error } = await supabase
+      .from('employees')
+      .select('*')
+      .order('name', { ascending: true });
+    if (!error && rows) setData(rows as Employee[]);
+    else if (error) toast({ title: 'خطأ في جلب البيانات', description: error.message, variant: 'destructive' });
+    setLoading(false);
+  }, [toast]);
+
+  useEffect(() => { fetchEmployees(); }, [fetchEmployees]);
 
   // ── Sort handler ──
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       if (sortDir === 'asc') setSortDir('desc');
       else if (sortDir === 'desc') { setSortField(null); setSortDir(null); }
-      else { setSortDir('asc'); }
+      else setSortDir('asc');
     } else {
       setSortField(field);
       setSortDir('asc');
     }
   };
 
-  // ── Inline save ──
+  // ── Inline save with optimistic update ──
   const saveField = useCallback(async (id: string, field: string, value: string) => {
-    setData(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
-    try {
-      await supabase.from('employees').update({ [field]: value }).eq('id', id);
-    } catch {
-      toast({ title: 'خطأ في الحفظ', variant: 'destructive' });
+    const prev = data.find(e => e.id === id);
+    // Optimistic update
+    setData(prev2 => prev2.map(e => e.id === id ? { ...e, [field]: value } : e));
+    const { error } = await supabase.from('employees').update({ [field]: value }).eq('id', id);
+    if (error) {
+      // Revert
+      setData(prev2 => prev2.map(e => e.id === id ? { ...e, [field]: (prev as any)?.[field] } : e));
+      toast({ title: 'خطأ في الحفظ', description: error.message, variant: 'destructive' });
     }
-  }, [toast]);
+  }, [data, toast]);
 
   // ── Filter + sort ──
-  const appsList = ['هنقرستيشن', 'جاهز', 'كيتا', 'توبو', 'نينجا'];
-
   const filtered = data.filter(e => {
     const q = search.toLowerCase();
-    const matchSearch = !q || e.name.toLowerCase().includes(q) || (e.phone || '').includes(q) || (e.nationalId || '').includes(q);
+    const matchSearch = !q || e.name.toLowerCase().includes(q) || (e.phone || '').includes(q) || (e.national_id || '').includes(q);
     const matchStatus = statusFilter === 'all' || e.status === statusFilter;
-    const matchSalary = salaryTypeFilter === 'all' || e.salaryType === salaryTypeFilter;
-    const matchApp = appFilter === 'all' || (e.apps || []).includes(appFilter);
+    const matchSalary = salaryTypeFilter === 'all' || e.salary_type === salaryTypeFilter;
     let matchRes = true;
-    if (residencyFilter !== 'all' && e.residencyExpiry) {
-      const days = differenceInDays(parseISO(e.residencyExpiry), new Date());
+    if (residencyFilter !== 'all' && e.residency_expiry) {
+      const days = differenceInDays(parseISO(e.residency_expiry), new Date());
       if (residencyFilter === 'urgent') matchRes = days < 30;
       else if (residencyFilter === 'warning') matchRes = days >= 30 && days < 60;
       else if (residencyFilter === 'safe') matchRes = days >= 60;
     }
-    return matchSearch && matchStatus && matchSalary && matchApp && matchRes;
+    return matchSearch && matchStatus && matchSalary && matchRes;
   }).sort((a, b) => {
     if (!sortField || !sortDir) return 0;
     let va: any, vb: any;
     switch (sortField) {
       case 'name': va = a.name; vb = b.name; break;
-      case 'national_id': va = a.nationalId || ''; vb = b.nationalId || ''; break;
+      case 'national_id': va = a.national_id || ''; vb = b.national_id || ''; break;
       case 'phone': va = a.phone || ''; vb = b.phone || ''; break;
-      case 'join_date': va = (a as any).join_date || ''; vb = (b as any).join_date || ''; break;
-      case 'residency_expiry': va = a.residencyExpiry || ''; vb = b.residencyExpiry || ''; break;
+      case 'job_title': va = a.job_title || ''; vb = b.job_title || ''; break;
+      case 'email': va = a.email || ''; vb = b.email || ''; break;
+      case 'join_date': va = a.join_date || ''; vb = b.join_date || ''; break;
+      case 'residency_expiry': va = a.residency_expiry || ''; vb = b.residency_expiry || ''; break;
       case 'days_residency': {
-        va = a.residencyExpiry ? differenceInDays(parseISO(a.residencyExpiry), new Date()) : -9999;
-        vb = b.residencyExpiry ? differenceInDays(parseISO(b.residencyExpiry), new Date()) : -9999;
+        va = a.residency_expiry ? differenceInDays(parseISO(a.residency_expiry), new Date()) : -9999;
+        vb = b.residency_expiry ? differenceInDays(parseISO(b.residency_expiry), new Date()) : -9999;
         break;
       }
       case 'status': va = a.status; vb = b.status; break;
-      case 'license_status': va = (a as any).license_status || ''; vb = (b as any).license_status || ''; break;
-      case 'sponsorship_status': va = (a as any).sponsorship_status || ''; vb = (b as any).sponsorship_status || ''; break;
-      case 'city': va = (a as any).city || ''; vb = (b as any).city || ''; break;
+      case 'license_status': va = a.license_status || ''; vb = b.license_status || ''; break;
+      case 'sponsorship_status': va = a.sponsorship_status || ''; vb = b.sponsorship_status || ''; break;
+      case 'city': va = a.city || ''; vb = b.city || ''; break;
+      case 'bank_account_number': va = a.bank_account_number || ''; vb = b.bank_account_number || ''; break;
       default: va = (a as any)[sortField] || ''; vb = (b as any)[sortField] || '';
     }
     if (va < vb) return sortDir === 'asc' ? -1 : 1;
@@ -222,23 +266,23 @@ const Employees = () => {
   // ── Export ──
   const handleExport = () => {
     const rows = filtered.map(e => {
-      const { days, status } = calcResidency(e.residencyExpiry);
+      const { days, status } = calcResidency(e.residency_expiry);
       return {
         'الاسم': e.name,
-        'المسمى الوظيفي': (e as any).job_title || '',
-        'رقم الهوية': e.nationalId || '',
+        'المسمى الوظيفي': e.job_title || '',
+        'رقم الهوية': e.national_id || '',
         'رقم الهاتف': e.phone || '',
         'البريد الإلكتروني': e.email || '',
-        'المدينة': (e as any).city === 'makkah' ? 'مكة' : (e as any).city === 'jeddah' ? 'جدة' : '',
-        'تاريخ الانضمام': (e as any).join_date || '',
-        'تاريخ انتهاء الإقامة': e.residencyExpiry || '',
+        'المدينة': e.city === 'makkah' ? 'مكة' : e.city === 'jeddah' ? 'جدة' : '',
+        'تاريخ الانضمام': e.join_date || '',
+        'تاريخ انتهاء الإقامة': e.residency_expiry || '',
         'المتبقي (يوم)': days ?? '',
         'حالة الإقامة': status === 'valid' ? 'صالحة' : status === 'expired' ? 'منتهية' : '',
-        'حالة الرخصة': { has_license: 'لديه رخصة', no_license: 'ليس لديه رخصة', applied: 'تم التقديم' }[(e as any).license_status] || '',
-        'حالة الكفالة': { sponsored: 'على الكفالة', not_sponsored: 'ليس على الكفالة', absconded: 'هروب', terminated: 'انتهاء الخدمة' }[(e as any).sponsorship_status] || '',
-        'رقم الحساب البنكي': (e as any).bank_account_number || '',
-        'نوع الراتب': e.salaryType === 'orders' ? 'طلبات' : 'ثابت',
-        'الحالة': { active: 'نشط', inactive: 'موقوف', suspended: 'موقوف', ended: 'منتهي', terminated: 'منتهي' }[e.status] || e.status,
+        'حالة الرخصة': { has_license: 'لديه رخصة', no_license: 'ليس لديه رخصة', applied: 'تم التقديم' }[e.license_status || ''] || '',
+        'حالة الكفالة': { sponsored: 'على الكفالة', not_sponsored: 'ليس على الكفالة', absconded: 'هروب', terminated: 'انتهاء الخدمة' }[e.sponsorship_status || ''] || '',
+        'رقم الحساب البنكي': e.bank_account_number || '',
+        'نوع الراتب': e.salary_type === 'orders' ? 'طلبات' : 'ثابت',
+        'الحالة': { active: 'نشط', inactive: 'موقوف', ended: 'منتهي' }[e.status] || e.status,
       };
     });
     const ws = XLSX.utils.json_to_sheet(rows);
@@ -247,7 +291,6 @@ const Employees = () => {
     XLSX.writeFile(wb, `بيانات_المناديب_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
   };
 
-  // ── Download template ──
   const handleTemplate = () => {
     const headers = [['الاسم', 'المسمى الوظيفي', 'رقم الهوية', 'رقم الهاتف', 'البريد الإلكتروني',
       'المدينة (makkah/jeddah)', 'تاريخ الانضمام', 'تاريخ انتهاء الإقامة',
@@ -271,9 +314,10 @@ const Employees = () => {
     </th>
   );
 
+  // ── Profile view ──
   if (selectedEmployee) {
-    const emp = mockEmployees.find(e => e.id === selectedEmployee);
-    if (emp) return <EmployeeProfile employee={emp} onBack={() => setSelectedEmployee(null)} />;
+    const emp = data.find(e => e.id === selectedEmployee);
+    if (emp) return <EmployeeProfile employee={emp as any} onBack={() => setSelectedEmployee(null)} />;
   }
 
   return (
@@ -285,7 +329,7 @@ const Employees = () => {
           <p className="text-sm text-muted-foreground mt-1">{filtered.length} من {data.length} مندوب مسجل</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button onClick={() => setShowAddModal(true)} className="gap-2">
+          <Button onClick={() => { setEditEmployee(null); setShowAddModal(true); }} className="gap-2">
             <Plus size={16} /> إضافة مندوب
           </Button>
           <Button variant="outline" className="gap-2" onClick={() => importRef.current?.click()}>
@@ -333,15 +377,8 @@ const Employees = () => {
             <SelectItem value="safe">🟢 آمن</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={appFilter} onValueChange={setAppFilter}>
-          <SelectTrigger className="w-36 h-9"><SelectValue placeholder="التطبيق" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">كل التطبيقات</SelectItem>
-            {appsList.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        {(statusFilter !== 'all' || salaryTypeFilter !== 'all' || residencyFilter !== 'all' || appFilter !== 'all') && (
-          <Button variant="ghost" size="sm" onClick={() => { setStatusFilter('all'); setSalaryTypeFilter('all'); setResidencyFilter('all'); setAppFilter('all'); }}>
+        {(statusFilter !== 'all' || salaryTypeFilter !== 'all' || residencyFilter !== 'all') && (
+          <Button variant="ghost" size="sm" onClick={() => { setStatusFilter('all'); setSalaryTypeFilter('all'); setResidencyFilter('all'); }}>
             مسح الكل
           </Button>
         )}
@@ -374,21 +411,30 @@ const Employees = () => {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
-                <tr><td colSpan={17} className="text-center py-12 text-muted-foreground">لا يوجد موظفون مطابقون</td></tr>
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={17} className="text-center py-16">
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <span className="text-4xl">👥</span>
+                      <p className="font-medium">لا يوجد موظفون</p>
+                      <p className="text-xs">أضف مندوبين جدد أو عدّل فلاتر البحث</p>
+                    </div>
+                  </td>
+                </tr>
               ) : filtered.map(emp => {
-                const res = calcResidency(emp.residencyExpiry);
+                const res = calcResidency(emp.residency_expiry);
                 const daysColor = res.days === null ? '' : res.days > 60 ? 'text-success' : res.days > 0 ? 'text-warning' : 'text-destructive font-bold';
-                const daysLabel = res.days === null ? '—' : res.days < 0 ? `${res.days} يوم` : `${res.days} يوم`;
+                const daysLabel = res.days === null ? '—' : `${res.days} يوم`;
                 const initial = emp.name.charAt(0);
-                const photoUrl = (emp as any).personal_photo_url;
 
                 return (
                   <tr key={emp.id} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
                     {/* صورة */}
                     <td className="px-3 py-2.5">
-                      {photoUrl
-                        ? <img src={photoUrl} className="w-9 h-9 rounded-full object-cover" alt="" />
+                      {emp.personal_photo_url
+                        ? <img src={emp.personal_photo_url} className="w-9 h-9 rounded-full object-cover" alt="" />
                         : <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">{initial}</div>
                       }
                     </td>
@@ -399,26 +445,26 @@ const Employees = () => {
                       </button>
                     </td>
                     {/* رقم الهوية */}
-                    <td className="px-3 py-2.5 text-sm text-muted-foreground font-mono" dir="ltr">{emp.nationalId || '—'}</td>
+                    <td className="px-3 py-2.5 text-sm text-muted-foreground font-mono" dir="ltr">{emp.national_id || '—'}</td>
                     {/* الهاتف */}
                     <td className="px-3 py-2.5 text-sm text-muted-foreground" dir="ltr">{emp.phone || '—'}</td>
                     {/* المسمى */}
-                    <td className="px-3 py-2.5 text-sm text-muted-foreground">{(emp as any).job_title || '—'}</td>
+                    <td className="px-3 py-2.5 text-sm text-muted-foreground">{emp.job_title || '—'}</td>
                     {/* البريد */}
                     <td className="px-3 py-2.5 text-sm text-muted-foreground" dir="ltr">{emp.email || '—'}</td>
                     {/* المدينة - inline */}
                     <td className="px-3 py-2.5">
                       <InlineSelect
-                        value={(emp as any).city || ''}
+                        value={emp.city || ''}
                         options={[{ value: 'makkah', label: 'مكة' }, { value: 'jeddah', label: 'جدة' }]}
                         onSave={v => saveField(emp.id, 'city', v)}
-                        renderDisplay={() => <CityBadge city={(emp as any).city} />}
+                        renderDisplay={() => <CityBadge city={emp.city} />}
                       />
                     </td>
                     {/* تاريخ الانضمام */}
-                    <td className="px-3 py-2.5 text-sm text-muted-foreground">{(emp as any).join_date ? format(parseISO((emp as any).join_date), 'yyyy/MM/dd') : '—'}</td>
+                    <td className="px-3 py-2.5 text-sm text-muted-foreground">{emp.join_date ? format(parseISO(emp.join_date), 'yyyy/MM/dd') : '—'}</td>
                     {/* انتهاء الإقامة */}
-                    <td className="px-3 py-2.5 text-sm text-muted-foreground">{emp.residencyExpiry ? format(parseISO(emp.residencyExpiry), 'yyyy/MM/dd') : '—'}</td>
+                    <td className="px-3 py-2.5 text-sm text-muted-foreground">{emp.residency_expiry ? format(parseISO(emp.residency_expiry), 'yyyy/MM/dd') : '—'}</td>
                     {/* المتبقي */}
                     <td className={`px-3 py-2.5 text-sm font-medium ${daysColor}`}>{daysLabel}</td>
                     {/* حالة الإقامة */}
@@ -433,20 +479,20 @@ const Employees = () => {
                     {/* الرخصة - inline */}
                     <td className="px-3 py-2.5">
                       <InlineSelect
-                        value={(emp as any).license_status || 'no_license'}
+                        value={emp.license_status || 'no_license'}
                         options={[
                           { value: 'has_license', label: 'لديه رخصة' },
                           { value: 'no_license', label: 'ليس لديه رخصة' },
                           { value: 'applied', label: 'تم التقديم عليها' },
                         ]}
                         onSave={v => saveField(emp.id, 'license_status', v)}
-                        renderDisplay={() => <LicenseBadge status={(emp as any).license_status} />}
+                        renderDisplay={() => <LicenseBadge status={emp.license_status} />}
                       />
                     </td>
                     {/* الكفالة - inline */}
                     <td className="px-3 py-2.5">
                       <InlineSelect
-                        value={(emp as any).sponsorship_status || 'not_sponsored'}
+                        value={emp.sponsorship_status || 'not_sponsored'}
                         options={[
                           { value: 'sponsored', label: 'على الكفالة' },
                           { value: 'not_sponsored', label: 'ليس على الكفالة' },
@@ -454,14 +500,14 @@ const Employees = () => {
                           { value: 'terminated', label: 'انتهاء الخدمة' },
                         ]}
                         onSave={v => saveField(emp.id, 'sponsorship_status', v)}
-                        renderDisplay={() => <SponsorBadge status={(emp as any).sponsorship_status} />}
+                        renderDisplay={() => <SponsorBadge status={emp.sponsorship_status} />}
                       />
                     </td>
                     {/* رقم الحساب */}
-                    <td className="px-3 py-2.5 text-sm text-muted-foreground font-mono" dir="ltr">{(emp as any).bank_account_number || '—'}</td>
+                    <td className="px-3 py-2.5 text-sm text-muted-foreground font-mono" dir="ltr">{emp.bank_account_number || '—'}</td>
                     {/* المستندات */}
                     <td className="px-3 py-2.5">
-                      <DocIcons idUrl={(emp as any).id_photo_url} licUrl={(emp as any).license_photo_url} photoUrl={(emp as any).personal_photo_url} />
+                      <DocIcons idUrl={emp.id_photo_url} licUrl={emp.license_photo_url} photoUrl={emp.personal_photo_url} />
                     </td>
                     {/* الحالة - inline */}
                     <td className="px-3 py-2.5">
@@ -482,7 +528,11 @@ const Employees = () => {
                         <button onClick={() => setSelectedEmployee(emp.id)} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" title="عرض">
                           <Eye size={15} />
                         </button>
-                        <button onClick={() => setShowAddModal(true)} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" title="تعديل">
+                        <button
+                          onClick={() => { setEditEmployee(emp); setShowAddModal(true); }}
+                          className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                          title="تعديل"
+                        >
                           <Edit size={15} />
                         </button>
                       </div>
@@ -495,7 +545,17 @@ const Employees = () => {
         </div>
       </div>
 
-      {showAddModal && <AddEmployeeModal onClose={() => setShowAddModal(false)} />}
+      {showAddModal && (
+        <AddEmployeeModal
+          onClose={() => { setShowAddModal(false); setEditEmployee(null); }}
+          editEmployee={editEmployee}
+          onSuccess={() => {
+            fetchEmployees();
+            setShowAddModal(false);
+            setEditEmployee(null);
+          }}
+        />
+      )}
     </div>
   );
 };
