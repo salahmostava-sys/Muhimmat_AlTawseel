@@ -651,12 +651,20 @@ const Advances = () => {
           <h1 className="page-title flex items-center gap-2"><CreditCard size={20} /> السلف والأقساط</h1>
         </div>
         <div className="flex gap-2">
+          <input ref={importRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportAdvances} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2 h-8"><Download size={14} /> 📥 تحميل تقرير ▾</Button>
+              <Button variant="outline" size="sm" className="gap-2 h-8"><Download size={14} /> 📥 تحميل ▾</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleExport}>📊 تصدير Excel</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {permissions.can_edit && (
+                <DropdownMenuItem onClick={() => importRef.current?.click()}>
+                  <Upload size={14} className="ml-2" /> استيراد Excel
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={handleAdvancesTemplate}>📋 تحميل القالب</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           {permissions.can_edit && (

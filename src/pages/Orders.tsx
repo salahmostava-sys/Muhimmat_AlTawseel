@@ -655,7 +655,18 @@ const MonthSummary = () => {
 };
 
 // ─── Page ────────────────────────────────────────────────────────────
-const Orders = () => (
+const Orders = () => {
+  const exportRef = useRef<HTMLInputElement>(null);
+
+  const handleOrdersTemplate = () => {
+    const headers = [['اسم الموظف', 'التطبيق', 'التاريخ (YYYY-MM-DD)', 'عدد الطلبات']];
+    const ws = XLSX.utils.aoa_to_sheet(headers);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'قالب');
+    XLSX.writeFile(wb, 'template_orders.xlsx');
+  };
+
+  return (
   <div className="space-y-3" dir="rtl">
     <div className="flex items-center justify-between gap-3 flex-wrap">
       <div>
@@ -668,6 +679,14 @@ const Orders = () => (
           <Package size={18} /> الطلبات اليومية
         </h1>
       </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" className="gap-2"><Download size={15} /> 📥 تحميل ▾</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={handleOrdersTemplate}>📋 تحميل القالب</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
     <Tabs defaultValue="grid" dir="rtl">
       <TabsList>
@@ -678,6 +697,7 @@ const Orders = () => (
       <TabsContent value="summary" className="mt-4"><MonthSummary /></TabsContent>
     </Tabs>
   </div>
-);
+  );
+};
 
 export default Orders;
