@@ -199,7 +199,7 @@ const SpreadsheetGrid = () => {
             الكل
           </button>
           {apps.map(app => {
-            const c = appColor(app.name);
+            const c = getAppColor(appColorsList, app.name);
             const isActive = selectedApp === app.name;
             return (
               <button key={app.id} onClick={() => setSelectedApp(app.name)}
