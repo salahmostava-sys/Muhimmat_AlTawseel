@@ -62,7 +62,7 @@ export default function GlobalSearch() {
         label: v.plate_number,
         sub: [v.brand, v.model].filter(Boolean).join(' ') || undefined,
         type: 'vehicle',
-        href: '/vehicles',
+        href: '/motorcycles',
       });
     });
 
