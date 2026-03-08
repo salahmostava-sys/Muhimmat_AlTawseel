@@ -60,7 +60,8 @@ interface SalaryRow {
   advanceRemaining: number;
   externalDeduction: number;
   status: 'pending' | 'approved' | 'paid';
-  isDirty?: boolean; // true if edited after approval/save
+  isDirty?: boolean;
+  preferredLanguage: SlipLanguage;
 }
 
 interface SchemeData {
