@@ -52,11 +52,10 @@ const MonthlyRecord = ({ selectedMonth, selectedYear }: Props) => {
     const leaveDays = rows.filter(r => r.status === 'leave').length;
     const sickDays = rows.filter(r => r.status === 'sick').length;
     const lateDays = rows.filter(r => r.status === 'late').length;
-    const unpaidLeaveDays = rows.filter(r => r.status === 'unpaid_leave').length;
     const totalHours = (presentDays + lateDays) * 8;
     const workDays = daysInMonth - leaveDays - sickDays;
     const earnedSalary = workDays > 0 ? Math.round(emp.base_salary * (presentDays / workDays)) : 0;
-    return { ...emp, presentDays, absentDays, leaveDays, sickDays, lateDays, unpaidLeaveDays, totalHours, earnedSalary };
+    return { ...emp, presentDays, absentDays, leaveDays, sickDays, lateDays, totalHours, earnedSalary };
   });
 
   const totals = data.reduce(
@@ -66,11 +65,10 @@ const MonthlyRecord = ({ selectedMonth, selectedYear }: Props) => {
       leaveDays: acc.leaveDays + d.leaveDays,
       sickDays: acc.sickDays + d.sickDays,
       lateDays: acc.lateDays + d.lateDays,
-      unpaidLeaveDays: acc.unpaidLeaveDays + d.unpaidLeaveDays,
       totalHours: acc.totalHours + d.totalHours,
       earnedSalary: acc.earnedSalary + d.earnedSalary,
     }),
-    { presentDays: 0, absentDays: 0, leaveDays: 0, sickDays: 0, lateDays: 0, unpaidLeaveDays: 0, totalHours: 0, earnedSalary: 0 }
+    { presentDays: 0, absentDays: 0, leaveDays: 0, sickDays: 0, lateDays: 0, totalHours: 0, earnedSalary: 0 }
   );
 
   const t = {
@@ -81,7 +79,6 @@ const MonthlyRecord = ({ selectedMonth, selectedYear }: Props) => {
     leave:       lang === 'ar' ? 'إجازة'          : 'Leave',
     sick:        lang === 'ar' ? 'مريض'           : 'Sick',
     late:        lang === 'ar' ? 'متأخر'          : 'Late',
-    unpaid:      lang === 'ar' ? 'بدون راتب'      : 'Unpaid',
     hours:       lang === 'ar' ? 'ساعات العمل'    : 'Work Hours',
     earned:      lang === 'ar' ? 'المستحق'        : 'Earned',
     total:       lang === 'ar' ? 'الإجمالي'       : 'Total',
@@ -109,9 +106,6 @@ const MonthlyRecord = ({ selectedMonth, selectedYear }: Props) => {
                 <th className="ta-th-center">
                   <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">{t.late}</span>
                 </th>
-                <th className="ta-th-center">
-                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground">{t.unpaid}</span>
-                </th>
                 <th className="ta-th-center">{t.hours}</th>
                 <th className="ta-th-center">{t.earned}</th>
               </tr>
@@ -120,13 +114,13 @@ const MonthlyRecord = ({ selectedMonth, selectedYear }: Props) => {
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="ta-tr">
-                    {Array.from({ length: 10 }).map((_, j) => (
+                    {Array.from({ length: 9 }).map((_, j) => (
                       <td key={j} className="ta-td"><div className="h-4 bg-muted rounded animate-pulse" /></td>
                     ))}
                   </tr>
                 ))
               ) : data.length === 0 ? (
-                <tr><td colSpan={10} className="p-10 text-center text-muted-foreground">{t.noData}</td></tr>
+                <tr><td colSpan={9} className="p-10 text-center text-muted-foreground">{t.noData}</td></tr>
               ) : (
                 data.map(row => (
                   <tr key={row.id} className="ta-tr">
@@ -144,7 +138,6 @@ const MonthlyRecord = ({ selectedMonth, selectedYear }: Props) => {
                     <td className="ta-td-center font-semibold text-yellow-600 dark:text-yellow-400">{row.leaveDays}</td>
                     <td className="ta-td-center font-semibold text-purple-600 dark:text-purple-400">{row.sickDays}</td>
                     <td className="ta-td-center text-orange-600 dark:text-orange-400">{row.lateDays}</td>
-                    <td className="ta-td-center text-muted-foreground">{row.unpaidLeaveDays}</td>
                     <td className="ta-td-center text-muted-foreground">{row.totalHours} {t.hoursUnit}</td>
                     <td className="ta-td-center font-semibold text-foreground">{row.earnedSalary.toLocaleString()} {t.sarUnit}</td>
                   </tr>
@@ -161,7 +154,6 @@ const MonthlyRecord = ({ selectedMonth, selectedYear }: Props) => {
                   <td className="ta-td-center text-yellow-600 dark:text-yellow-400">{totals.leaveDays}</td>
                   <td className="ta-td-center text-purple-600 dark:text-purple-400">{totals.sickDays}</td>
                   <td className="ta-td-center text-orange-600 dark:text-orange-400">{totals.lateDays}</td>
-                  <td className="ta-td-center text-muted-foreground">{totals.unpaidLeaveDays}</td>
                   <td className="ta-td-center text-muted-foreground">{totals.totalHours} {t.hoursUnit}</td>
                   <td className="ta-td-center text-foreground">{totals.earnedSalary.toLocaleString()} {t.sarUnit}</td>
                 </tr>
