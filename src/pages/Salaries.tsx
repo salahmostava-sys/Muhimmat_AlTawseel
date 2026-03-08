@@ -675,7 +675,7 @@ const Salaries = () => {
     };
 
     fetchAllData();
-  }, [selectedMonth]);
+  }, [selectedMonth, platforms]);
 
   const computeRow = useCallback((r: SalaryRow) => {
     const totalPlatformSalary = Object.values(r.platformSalaries).reduce((s, v) => s + v, 0);
