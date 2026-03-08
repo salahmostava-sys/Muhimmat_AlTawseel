@@ -411,6 +411,7 @@ export type Database = {
           national_id: string | null
           personal_photo_url: string | null
           phone: string | null
+          preferred_language: string
           residency_expiry: string | null
           salary_type: Database["public"]["Enums"]["salary_type"]
           sponsorship_status:
@@ -445,6 +446,7 @@ export type Database = {
           national_id?: string | null
           personal_photo_url?: string | null
           phone?: string | null
+          preferred_language?: string
           residency_expiry?: string | null
           salary_type?: Database["public"]["Enums"]["salary_type"]
           sponsorship_status?:
@@ -479,6 +481,7 @@ export type Database = {
           national_id?: string | null
           personal_photo_url?: string | null
           phone?: string | null
+          preferred_language?: string
           residency_expiry?: string | null
           salary_type?: Database["public"]["Enums"]["salary_type"]
           sponsorship_status?:
