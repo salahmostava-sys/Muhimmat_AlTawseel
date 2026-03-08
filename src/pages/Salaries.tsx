@@ -582,7 +582,6 @@ const Salaries = () => {
       }
 
       const employees = empRes.data || [];
-      const schemes = schemesRes.data || [];
 
       const extMap: Record<string, number> = {};
       extRes.data?.forEach(d => {
@@ -596,40 +595,18 @@ const Salaries = () => {
         ordMap[r.employee_id][appName] = (ordMap[r.employee_id][appName] || 0) + r.orders_count;
       });
 
-      // ── Build emp→scheme map from employee_scheme table ──
-      // employee_scheme: employee_id → salary_scheme (one scheme per employee)
-      const empSchemeMap: Record<string, SchemeData> = {};
-      empSchemeRes.data?.forEach((es: any) => {
-        const s = es.salary_schemes;
-        if (!s) return;
-        empSchemeMap[es.employee_id] = s as SchemeData;
+      // ── Build appName→scheme map from apps.scheme_id (scheme per platform) ──
+      const appSchemeMap: Record<string, SchemeData | null> = {};
+      appsWithSchemeRes.data?.forEach((a: any) => {
+        appSchemeMap[a.name] = a.salary_schemes ? (a.salary_schemes as SchemeData) : null;
       });
 
-      // ── Build emp→registeredApps map from employee_apps ──
-      const empRegisteredApps: Record<string, Set<string>> = {};
-      empAppsRes.data?.forEach((ea: any) => {
-        const appName = (ea.apps as any)?.name;
-        if (!appName) return;
-        if (!empRegisteredApps[ea.employee_id]) empRegisteredApps[ea.employee_id] = new Set();
-        empRegisteredApps[ea.employee_id].add(appName);
-      });
-
-      // ── Build empPlatformScheme: per-employee per-platform scheme ──
-      // Each employee uses their assigned scheme for ALL their active platforms
-      // If they have orders on a platform but no scheme → salary = 0 (indicator: no scheme)
+      // ── Build empPlatformScheme: per-employee per-platform → uses app's scheme ──
       const builtEmpPlatformScheme: Record<string, Record<string, SchemeData | null>> = {};
       employees.forEach(emp => {
         builtEmpPlatformScheme[emp.id] = {};
-        const scheme = empSchemeMap[emp.id] || null;
-        const registeredPlatforms = empRegisteredApps[emp.id] || new Set();
         platforms.forEach(p => {
-          if (registeredPlatforms.has(p)) {
-            // Employee is registered on this platform — use their scheme (or null if none)
-            builtEmpPlatformScheme[emp.id][p] = scheme;
-          } else {
-            // Employee has no registration on this platform
-            builtEmpPlatformScheme[emp.id][p] = undefined as any;
-          }
+          builtEmpPlatformScheme[emp.id][p] = appSchemeMap[p] ?? null;
         });
       });
       setEmpPlatformScheme(builtEmpPlatformScheme as any);
@@ -646,15 +623,12 @@ const Salaries = () => {
           platformOrders[p] = orders;
           if (orders === 0) { platformSalaries[p] = 0; return; }
 
-          // Use employee's assigned scheme; if no scheme → salary = 0 (show "لا توجد سكيما")
-          const scheme = builtEmpPlatformScheme[emp.id]?.[p];
+          // Use the platform's assigned scheme; if no scheme → salary = 0 + warning
+          const scheme = appSchemeMap[p];
           if (scheme && scheme.salary_scheme_tiers) {
             platformSalaries[p] = calcSalaryFromTiers(orders, scheme.salary_scheme_tiers, scheme.target_orders, scheme.target_bonus);
-          } else if (scheme === null) {
-            // Registered on platform but no scheme assigned → 0 salary, show warning
-            platformSalaries[p] = 0;
           } else {
-            // Not registered / fallback
+            // Platform has no scheme assigned → 0 salary, show warning
             platformSalaries[p] = 0;
           }
         });
