@@ -306,27 +306,30 @@ const Employees = () => {
     const rows = filtered.map(e => {
       const { days, status } = calcResidency(e.residency_expiry);
       return {
-        [t('name')]: e.name,
-        [t('jobTitle')]: e.job_title || '',
-        [t('nationalId')]: e.national_id || '',
-        [t('phone')]: e.phone || '',
-        [t('email')]: e.email || '',
-        [t('city')]: e.city === 'makkah' ? t('makkah') : e.city === 'jeddah' ? t('jeddah') : '',
-        [t('joinDate')]: e.join_date || '',
-        [t('residencyExpiry')]: e.residency_expiry || '',
-        [t('residencyDays')]: days ?? '',
-        [t('residencyStatus')]: status === 'valid' ? t('residencyValid') : status === 'expired' ? t('residencyExpired') : '',
-        [t('licenseStatus')]: { has_license: t('hasLicense'), no_license: t('noLicense'), applied: t('applied') }[e.license_status || ''] || '',
-        [t('sponsorshipStatus')]: { sponsored: t('sponsored'), not_sponsored: t('notSponsored'), absconded: t('absconded'), terminated: t('terminated') }[e.sponsorship_status || ''] || '',
-        [t('bankAccount')]: e.bank_account_number || '',
-        [t('salaryType')]: e.salary_type === 'orders' ? t('byOrders') : t('shift'),
-        [t('status')]: { active: t('active'), inactive: t('inactive'), ended: t('ended') }[e.status] || e.status,
+        'الاسم': e.name,
+        'كود الموظف': e.employee_code || '',
+        'رقم الهوية': e.national_id || '',
+        'رقم الهاتف': e.phone || '',
+        'البريد الإلكتروني': e.email || '',
+        'المدينة': e.city === 'makkah' ? 'مكة' : e.city === 'jeddah' ? 'جدة' : '',
+        'الجنسية': e.nationality || '',
+        'المسمى الوظيفي': e.job_title || '',
+        'تاريخ الانضمام': e.join_date || '',
+        'تاريخ الميلاد': e.birth_date || '',
+        'تاريخ انتهاء الإقامة': e.residency_expiry || '',
+        'المتبقي (يوم)': days ?? '',
+        'حالة الإقامة': status === 'valid' ? 'صالحة' : status === 'expired' ? 'منتهية' : '',
+        'الرخصة': { has_license: 'لديه رخصة', no_license: 'ليس لديه رخصة', applied: 'تم التقديم' }[e.license_status || ''] || '',
+        'حالة الكفالة': { sponsored: 'على الكفالة', not_sponsored: 'ليس على الكفالة', absconded: 'هروب', terminated: 'انتهاء الخدمة' }[e.sponsorship_status || ''] || '',
+        'رقم الحساب البنكي': e.bank_account_number || '',
+        'نوع الراتب': e.salary_type === 'orders' ? 'بالطلب' : 'ثابت',
+        'الحالة': { active: 'نشط', inactive: 'موقوف', ended: 'منتهي' }[e.status] || e.status,
       };
     });
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, t('employees'));
-    XLSX.writeFile(wb, `employees_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, 'بيانات الموظفين');
+    XLSX.writeFile(wb, `بيانات_المناديب_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
   };
 
   const handleTemplate = () => {
