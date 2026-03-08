@@ -1753,8 +1753,8 @@ const Salaries = () => {
                 <FileUp size={13} className="ml-2" /> استيراد Excel
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => window.print()}>
-                <Printer size={13} className="ml-2" /> طباعة
+              <DropdownMenuItem onClick={handlePrintTable}>
+                <Printer size={13} className="ml-2" /> طباعة جدول الرواتب
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
