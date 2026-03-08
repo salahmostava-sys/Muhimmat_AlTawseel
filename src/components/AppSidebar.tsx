@@ -17,6 +17,7 @@ const AppSidebar = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { isRTL } = useLanguage();
+  const { projectName, projectSubtitle, settings } = useSystemSettings();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     hr: true, finance: false, operations: false, settings: false,
   });
