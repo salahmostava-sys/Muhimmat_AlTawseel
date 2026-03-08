@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,103 +6,106 @@
 
 @layer base {
   :root {
-    --background: 220 20% 97%;
-    --foreground: 220 25% 10%;
+    /* ─── TailAdmin-inspired light palette ──────────────────── */
+    --background: 210 20% 98%;
+    --foreground: 220 30% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 10%;
+    --card-foreground: 220 30% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 10%;
+    --popover-foreground: 220 30% 12%;
 
-    --primary: 217 72% 45%;
+    /* Brand: #6172F3 → HSL ~235 85% 64% */
+    --primary: 235 85% 64%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 16% 93%;
+    --secondary: 220 14% 93%;
     --secondary-foreground: 220 25% 20%;
 
-    --muted: 220 16% 93%;
+    --muted: 220 14% 93%;
     --muted-foreground: 220 10% 50%;
 
-    --accent: 220 16% 93%;
-    --accent-foreground: 220 25% 15%;
+    --accent: 235 85% 97%;
+    --accent-foreground: 235 85% 45%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 4 86% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 60% 40%;
+    --success: 152 69% 39%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
+    --warning: 36 91% 50%;
     --warning-foreground: 0 0% 100%;
 
     --info: 210 80% 52%;
     --info-foreground: 0 0% 100%;
 
-    --border: 220 13% 90%;
-    --input: 220 13% 90%;
-    --ring: 217 72% 45%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 235 85% 64%;
 
-    --radius: 0.625rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 220 25% 12%;
-    --sidebar-foreground: 220 10% 85%;
-    --sidebar-primary: 217 72% 55%;
+    /* Sidebar stays dark always */
+    --sidebar-background: 228 39% 14%;
+    --sidebar-foreground: 220 15% 78%;
+    --sidebar-primary: 235 85% 64%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 20% 18%;
-    --sidebar-accent-foreground: 220 10% 90%;
-    --sidebar-border: 220 20% 20%;
-    --sidebar-ring: 217 72% 55%;
-    --sidebar-muted: 220 15% 40%;
+    --sidebar-accent: 228 35% 20%;
+    --sidebar-accent-foreground: 220 15% 90%;
+    --sidebar-border: 228 30% 22%;
+    --sidebar-ring: 235 85% 64%;
+    --sidebar-muted: 220 15% 45%;
   }
 
   .dark {
-    --background: 222 28% 9%;
-    --foreground: 213 20% 92%;
+    --background: 228 28% 8%;
+    --foreground: 213 18% 90%;
 
-    --card: 222 28% 12%;
-    --card-foreground: 213 20% 92%;
+    --card: 228 28% 11%;
+    --card-foreground: 213 18% 90%;
 
-    --popover: 222 28% 11%;
-    --popover-foreground: 213 20% 92%;
+    --popover: 228 28% 10%;
+    --popover-foreground: 213 18% 90%;
 
-    --primary: 217 72% 58%;
+    --primary: 235 82% 68%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 222 22% 18%;
-    --secondary-foreground: 213 20% 85%;
+    --secondary: 228 22% 18%;
+    --secondary-foreground: 213 18% 82%;
 
-    --muted: 222 22% 16%;
-    --muted-foreground: 213 15% 55%;
+    --muted: 228 22% 16%;
+    --muted-foreground: 213 14% 52%;
 
-    --accent: 222 22% 18%;
-    --accent-foreground: 213 20% 88%;
+    --accent: 228 30% 20%;
+    --accent-foreground: 235 82% 75%;
 
-    --destructive: 0 65% 55%;
+    --destructive: 4 80% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 55% 45%;
+    --success: 152 55% 44%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 88% 55%;
+    --warning: 36 88% 55%;
     --warning-foreground: 0 0% 100%;
 
     --info: 210 75% 58%;
     --info-foreground: 0 0% 100%;
 
-    --border: 222 22% 20%;
-    --input: 222 22% 20%;
-    --ring: 217 72% 58%;
+    --border: 228 22% 20%;
+    --input: 228 22% 20%;
+    --ring: 235 82% 68%;
 
-    --sidebar-background: 222 30% 7%;
-    --sidebar-foreground: 213 18% 80%;
-    --sidebar-primary: 217 72% 60%;
+    --sidebar-background: 228 35% 7%;
+    --sidebar-foreground: 213 16% 76%;
+    --sidebar-primary: 235 82% 68%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 25% 14%;
-    --sidebar-accent-foreground: 213 18% 88%;
-    --sidebar-border: 222 25% 15%;
-    --sidebar-ring: 217 72% 60%;
-    --sidebar-muted: 213 15% 45%;
+    --sidebar-accent: 228 30% 13%;
+    --sidebar-accent-foreground: 213 16% 86%;
+    --sidebar-border: 228 28% 14%;
+    --sidebar-ring: 235 82% 68%;
+    --sidebar-muted: 213 14% 42%;
   }
 }
 
@@ -113,80 +116,165 @@
 
   html {
     direction: rtl;
-    font-family: 'IBM Plex Sans Arabic', sans-serif;
     scrollbar-gutter: stable both-edges;
+  }
+
+  /* Font strategy: Outfit for LTR/English, Cairo for Arabic */
+  html[lang="en"],
+  html:not([lang="ar"]) {
+    font-family: 'Outfit', sans-serif;
+  }
+
+  html[lang="ar"] {
+    font-family: 'Cairo', 'Outfit', sans-serif;
   }
 
   * {
     scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     overflow-y: scroll;
+    font-feature-settings: "cv11", "ss01";
   }
 }
 
-@layer utilities {
-  /* ─── Cards & Glass ─────────────────────────────────────────── */
-  .glass-card {
-    @apply bg-card/80 backdrop-blur-sm border border-border/50 shadow-sm;
+@layer components {
+  /* ─── TailAdmin-style card ──────────────────────────────────── */
+  .tailcard {
+    @apply bg-card rounded-2xl border border-border shadow-card p-5 transition-shadow duration-200;
   }
 
+  .tailcard:hover {
+    @apply shadow-card-hover;
+  }
+
+  /* ─── KPI metric card ───────────────────────────────────────── */
+  .metric-card {
+    @apply bg-card rounded-2xl border border-border p-5 shadow-card transition-all duration-200 hover:shadow-card-hover;
+  }
+
+  /* ─── Stat card (legacy, kept for compatibility) ────────────── */
   .stat-card {
-    @apply bg-card rounded-xl border border-border/50 p-4 sm:p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/20;
+    @apply bg-card rounded-2xl border border-border p-4 sm:p-5 shadow-card transition-all duration-200 hover:shadow-card-hover hover:border-primary/20;
+  }
+
+  /* ─── Chart container ───────────────────────────────────────── */
+  .chart-card {
+    @apply bg-card rounded-2xl border border-border shadow-card overflow-hidden;
+  }
+
+  .chart-card-header {
+    @apply flex items-center justify-between px-5 py-4 border-b border-border;
+  }
+
+  .chart-card-title {
+    @apply text-sm font-semibold text-foreground;
+  }
+
+  /* ─── TailAdmin table style ─────────────────────────────────── */
+  .ta-table-wrap {
+    @apply overflow-hidden rounded-2xl border border-border bg-card;
+  }
+
+  .ta-thead {
+    @apply border-b border-border bg-muted/40;
+  }
+
+  .ta-th {
+    @apply px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-right whitespace-nowrap;
+  }
+
+  .ta-th-center {
+    @apply px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center whitespace-nowrap;
+  }
+
+  .ta-tr {
+    @apply border-b border-border/60 hover:bg-muted/30 transition-colors duration-150;
+  }
+
+  .ta-td {
+    @apply px-4 py-3.5 text-sm text-foreground;
+  }
+
+  .ta-td-center {
+    @apply px-4 py-3.5 text-sm text-foreground text-center;
+  }
+
+  /* ─── Page header (breadcrumb + title) ─────────────────────── */
+  .page-header {
+    @apply space-y-1 mb-6;
+  }
+
+  .page-breadcrumb {
+    @apply flex items-center gap-1.5 text-xs text-muted-foreground;
+  }
+
+  .page-breadcrumb-sep {
+    @apply text-muted-foreground/50;
+  }
+
+  .page-title {
+    @apply text-xl font-bold text-foreground tracking-tight;
+  }
+
+  .page-subtitle {
+    @apply text-sm text-muted-foreground;
   }
 
   /* ─── Badges ────────────────────────────────────────────────── */
   .badge-urgent {
-    @apply bg-destructive/10 text-destructive text-xs font-medium px-2.5 py-0.5 rounded-full;
+    @apply inline-flex items-center bg-destructive/10 text-destructive text-xs font-medium px-2.5 py-0.5 rounded-full;
   }
 
   .badge-warning {
-    @apply bg-warning/10 text-warning text-xs font-medium px-2.5 py-0.5 rounded-full;
+    @apply inline-flex items-center bg-warning/10 text-warning text-xs font-medium px-2.5 py-0.5 rounded-full;
   }
 
   .badge-success {
-    @apply bg-success/10 text-success text-xs font-medium px-2.5 py-0.5 rounded-full;
+    @apply inline-flex items-center bg-success/10 text-success text-xs font-medium px-2.5 py-0.5 rounded-full;
   }
 
   .badge-info {
-    @apply bg-info/10 text-info text-xs font-medium px-2.5 py-0.5 rounded-full;
+    @apply inline-flex items-center bg-info/10 text-info text-xs font-medium px-2.5 py-0.5 rounded-full;
   }
 
-  /* ─── Responsive Table wrapper ──────────────────────────────── */
+  /* ─── Icon box (colored bg for icons) ──────────────────────── */
+  .icon-box {
+    @apply w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0;
+  }
+
+  .icon-box-sm {
+    @apply w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0;
+  }
+
+  /* ─── Glass card ────────────────────────────────────────────── */
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-sm border border-border/50 shadow-card;
+  }
+
+  /* ─── Responsive utilities ──────────────────────────────────── */
   .table-wrapper {
-    @apply w-full overflow-x-auto rounded-xl border border-border/50 bg-card shadow-sm;
+    @apply w-full overflow-x-auto rounded-2xl border border-border bg-card shadow-card;
     -webkit-overflow-scrolling: touch;
   }
 
-  /* ─── Page headers ──────────────────────────────────────────── */
-  .page-title {
-    @apply text-lg sm:text-xl lg:text-2xl font-bold text-foreground;
-  }
-
-  .page-subtitle {
-    @apply text-xs sm:text-sm text-muted-foreground;
-  }
-
-  /* ─── Responsive filter bar ─────────────────────────────────── */
   .filter-bar {
     @apply flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 sm:gap-3;
   }
 
-  /* ─── Touch-friendly min tap target ─────────────────────────── */
   .touch-target {
     @apply min-h-[44px] min-w-[44px];
   }
 
-  /* ─── Mobile full-width buttons ─────────────────────────────── */
   .btn-responsive {
     @apply w-full sm:w-auto;
   }
 
-  /* ─── Responsive grid helpers ───────────────────────────────── */
   .stats-grid {
-    @apply grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4;
+    @apply grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4;
   }
 
   .cards-grid {
@@ -194,3 +282,19 @@
   }
 }
 
+/* ─── Sidebar nav active indicator ──────────────────────────── */
+.sidebar-item-active::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: hsl(var(--sidebar-primary));
+  border-radius: 0 3px 3px 0;
+}
+
+[dir="ltr"] .sidebar-item-active::before {
+  border-radius: 3px 0 0 3px;
+}
