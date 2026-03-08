@@ -1227,7 +1227,7 @@ const Salaries = () => {
                       <td className={`${tdClass} whitespace-nowrap`} style={{ position: 'sticky', left: 176, zIndex: 10, background: 'hsl(var(--card))' }}>{r.jobTitle}</td>
                       <td className={`${tdClass} border-l border-border/30 text-muted-foreground text-xs whitespace-nowrap`} style={{ position: 'sticky', left: 288, zIndex: 10, background: 'hsl(var(--card))' }}>{r.nationalId}</td>
                       {platforms.map(p => {
-                        const pc = PLATFORM_COLORS[p];
+                        const pc = platformColors[p];
                         const orders = r.platformOrders[p] || 0;
                         const salary = r.platformSalaries[p] || 0;
                         const scheme = empPlatformScheme?.[r.employeeId]?.[p];
