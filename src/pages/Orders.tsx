@@ -475,7 +475,7 @@ const MonthSummary = () => {
                       </div>
                     </td>
                     {apps.map(app => {
-                      const c = appColor(app.name);
+                      const c = getAppColor(appColorsList, app.name);
                       const appTotal = dayArr.reduce((s, d) => s + (data[`${emp.id}::${app.id}::${d}`] ?? 0), 0);
                       return (
                         <td key={app.id} className="text-center p-3 font-semibold" style={{ color: appTotal > 0 ? c.val : undefined }}>
