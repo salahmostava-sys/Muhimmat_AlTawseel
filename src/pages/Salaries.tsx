@@ -533,25 +533,42 @@ const Salaries = () => {
       });
 
       // ── Fetch advance installments via advances → employee_id ──
-      // Step 1: get all active/paused advances
+      // Step 1: get all active/paused advances with total amount for remaining calc
       const { data: allAdvances } = await supabase
         .from('advances')
-        .select('id, employee_id, status')
+        .select('id, employee_id, status, amount, monthly_amount')
         .in('status', ['active', 'paused']);
 
-      const advMap: Record<string, number> = {};
+      const advMap: Record<string, number> = {};      // this month's installment deduction
       const advInstIds: Record<string, string[]> = {};
       const deductedInstIds: Record<string, string[]> = {};
+      const advRemainingMap: Record<string, number> = {}; // total remaining balance
 
       if (allAdvances && allAdvances.length > 0) {
         const advIdToEmpMap: Record<string, string> = {};
         allAdvances.forEach(adv => { advIdToEmpMap[adv.id] = adv.employee_id; });
 
+        // Fetch installments for this month
         const { data: advInstData } = await supabase
           .from('advance_installments')
           .select('id, advance_id, amount, status')
           .eq('month_year', selectedMonth)
           .in('advance_id', allAdvances.map(a => a.id));
+
+        // Fetch all pending/deferred installments to calculate remaining balance
+        const { data: allPendingInsts } = await supabase
+          .from('advance_installments')
+          .select('advance_id, amount, status')
+          .in('status', ['pending', 'deferred'])
+          .in('advance_id', allAdvances.map(a => a.id));
+
+        // Build remaining balance per employee
+        allPendingInsts?.forEach(inst => {
+          const empId = advIdToEmpMap[inst.advance_id];
+          if (empId) {
+            advRemainingMap[empId] = (advRemainingMap[empId] || 0) + Number(inst.amount);
+          }
+        });
 
         advInstData?.forEach(inst => {
           const empId = advIdToEmpMap[inst.advance_id];
