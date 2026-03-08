@@ -31,9 +31,11 @@ type Employee = {
   phone?: string | null;
   email?: string | null;
   national_id?: string | null;
+  employee_code?: string | null;
   bank_account_number?: string | null;
   city?: string | null;
   join_date?: string | null;
+  birth_date?: string | null;
   residency_expiry?: string | null;
   license_status?: string | null;
   sponsorship_status?: string | null;
