@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { cn } from '@/lib/utils';
+import UserProfileModal from '@/components/UserProfileModal';
 
 const AppSidebar = () => {
   const { t } = useTranslation();
@@ -18,6 +19,7 @@ const AppSidebar = () => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     hr: true, finance: false, operations: false, settings: false,
   });
+  const [showProfile, setShowProfile] = useState(false);
 
   const toggleGroup = (key: string) =>
     setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }));
@@ -149,16 +151,22 @@ const AppSidebar = () => {
 
       {/* Footer */}
       <div className="p-4 border-t border-sidebar-border flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground text-sm font-bold">
+        <button
+          onClick={() => setShowProfile(true)}
+          className="w-full flex items-center gap-3 rounded-lg p-1.5 hover:bg-sidebar-accent/50 transition-colors text-start group"
+          title="Profile Settings"
+        >
+          <div className="w-8 h-8 rounded-full bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground text-sm font-bold flex-shrink-0 group-hover:ring-2 group-hover:ring-sidebar-primary/50 transition-all">
             {user?.email?.[0]?.toUpperCase() || 'A'}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-sidebar-accent-foreground truncate">{user?.email}</p>
             <p className="text-xs text-sidebar-muted">{t('systemAdmin')}</p>
           </div>
-        </div>
+        </button>
       </div>
+
+      {showProfile && <UserProfileModal onClose={() => setShowProfile(false)} />}
     </aside>
   );
 };
