@@ -810,7 +810,7 @@ const Salaries = () => {
       approved_by: user?.id ?? null,
       approved_at: new Date().toISOString(),
     }, { onConflict: 'employee_id,month_year' });
-    updateRow(id, { status: 'approved' });
+    updateRow(id, { status: 'approved', isDirty: false });
     toast({ title: '✅ تم اعتماد الراتب' });
   };
 
