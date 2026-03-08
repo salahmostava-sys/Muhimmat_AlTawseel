@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Search, Wallet, Download, CheckCircle, Printer, Upload, FileUp, ChevronUp, ChevronDown, ChevronsUpDown, LayoutGrid, Table2, AlertTriangle, FileText, Settings2 } from 'lucide-react';
+import { Search, Wallet, Download, CheckCircle, Printer, Upload, FileUp, ChevronUp, ChevronDown, ChevronsUpDown, LayoutGrid, Table2, AlertTriangle, FileText, Settings2, Globe } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import { useAppColors, AppColorData } from '@/hooks/useAppColors';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { getSlipTranslations, getStatusLabel, LANGUAGE_META, type SlipLanguage } from '@/lib/salarySlipTranslations';
 
 
 // Kept for legacy references — populated dynamically from DB at runtime
@@ -59,7 +60,8 @@ interface SalaryRow {
   advanceRemaining: number;
   externalDeduction: number;
   status: 'pending' | 'approved' | 'paid';
-  isDirty?: boolean; // true if edited after approval/save
+  isDirty?: boolean;
+  preferredLanguage: SlipLanguage;
 }
 
 interface SchemeData {
@@ -83,6 +85,10 @@ const SortIcon = ({ field, sortField, sortDir }: { field: string; sortField: str
 interface PayslipProps { row: SalaryRow; onClose: () => void; onApprove: () => void; selectedMonth: string; }
 
 const PayslipModal = ({ row, onClose, onApprove, selectedMonth }: PayslipProps) => {
+  const t = getSlipTranslations(row.preferredLanguage);
+  const meta = LANGUAGE_META[row.preferredLanguage];
+  const dir = meta.dir;
+
   const totalPlatformSalary = Object.values(row.platformSalaries).reduce((s, v) => s + v, 0);
   const totalAdditions = row.incentives + row.sickAllowance;
   const totalWithSalary = totalPlatformSalary + totalAdditions;
@@ -91,36 +97,76 @@ const PayslipModal = ({ row, onClose, onApprove, selectedMonth }: PayslipProps) 
   const remaining = netSalary - row.transfer;
   const monthLabel = months.find(m => m.v === selectedMonth)?.l || selectedMonth;
 
+  const fmt = (n: number) => `${n.toLocaleString()} ${t.currency}`;
+
   const printPayslip = () => {
-    const html = `<html dir="rtl"><head><meta charset="utf-8"><title>كشف راتب</title>
-      <style>body{font-family:Arial,sans-serif;padding:30px;max-width:650px;margin:0 auto;color:#222}.header{text-align:center;border-bottom:2px solid #333;padding-bottom:15px;margin-bottom:20px}.logo{font-size:22px;font-weight:bold}table{width:100%;border-collapse:collapse;margin-top:10px}td{padding:8px 12px;border:1px solid #ddd;font-size:13px}.label{background:#f5f5f5;font-weight:600;width:50%}.green{color:#16a34a}.red{color:#dc2626}.blue{color:#2563eb}.total-row{background:#dbeafe;font-weight:bold;font-size:15px}.net-row{background:#dcfce7;font-weight:bold;font-size:16px}.footer{margin-top:30px;display:flex;justify-content:space-between;border-top:1px solid #ddd;padding-top:20px}h3{margin:20px 0 8px;font-size:14px;color:#555}</style>
+    const isRTL = dir === 'rtl';
+    const deductionRows = [
+      { l: t.advanceInstallment, v: row.advanceDeduction },
+      { l: t.externalDeductions, v: row.externalDeduction },
+      { l: t.violations, v: row.violations },
+      { l: t.walletHunger, v: row.walletHunger },
+      { l: t.walletTuyo, v: row.walletTuyo },
+      { l: t.walletJahiz, v: row.walletJahiz },
+      { l: t.foodDamage, v: row.foodDamage },
+    ].filter(x => x.v > 0);
+
+    const html = `<html dir="${dir}"><head><meta charset="utf-8"><title>${t.title}</title>
+      <style>
+        body{font-family:${meta.fontFamily};padding:30px;max-width:650px;margin:0 auto;color:#222;direction:${dir}}
+        .header{text-align:center;border-bottom:2px solid #333;padding-bottom:15px;margin-bottom:20px}
+        .logo{font-size:22px;font-weight:bold}
+        .lang-badge{display:inline-block;padding:2px 8px;background:#eef2ff;color:#4f46e5;border-radius:12px;font-size:11px;margin-top:4px}
+        table{width:100%;border-collapse:collapse;margin-top:10px}
+        td{padding:8px 12px;border:1px solid #ddd;font-size:13px}
+        .label{background:#f5f5f5;font-weight:600;width:50%}
+        .green{color:#16a34a}.red{color:#dc2626}.blue{color:#2563eb}
+        .total-row{background:#dbeafe;font-weight:bold;font-size:15px}
+        .net-row{background:#dcfce7;font-weight:bold;font-size:16px}
+        .footer{margin-top:30px;display:flex;justify-content:space-between;border-top:1px solid #ddd;padding-top:20px}
+        h3{margin:20px 0 8px;font-size:14px;color:#555}
+      </style>
       </head><body>
-      <div class="header"><div class="logo">🚀 نظام إدارة التوصيل</div><p style="color:#666;margin:5px 0">كشف راتب — ${monthLabel}</p></div>
-      <h3>بيانات المندوب</h3><table>
-        <tr><td class="label">الاسم</td><td>${row.employeeName}</td></tr>
-        <tr><td class="label">رقم الهوية</td><td>${row.nationalId}</td></tr>
-        <tr><td class="label">المدينة</td><td>${row.city}</td></tr>
+      <div class="header">
+        <div class="logo">🚀 ${t.subtitle}</div>
+        <p style="color:#666;margin:5px 0">${t.title} — ${monthLabel}</p>
+        <span class="lang-badge">${meta.flag} ${meta.label}</span>
+      </div>
+      <h3>${t.sectionEmployee}</h3><table>
+        <tr><td class="label">${t.name}</td><td>${row.employeeName}</td></tr>
+        <tr><td class="label">${t.nationalId}</td><td dir="ltr">${row.nationalId}</td></tr>
+        <tr><td class="label">${t.city}</td><td>${row.city}</td></tr>
+        <tr><td class="label">${t.paymentMethod}</td><td>${row.paymentMethod === 'bank' ? t.payBank : t.payCash}</td></tr>
       </table>
-      <h3>الطلبات والرواتب حسب المنصة</h3><table>
+      <h3>${t.sectionPlatforms}</h3><table>
         ${row.registeredApps.map(app => {
           const orders = row.platformOrders[app] || 0;
           const salary = row.platformSalaries[app] || 0;
-          return `<tr><td class="label">${app} (${orders} طلب)</td><td class="blue">${salary.toLocaleString()} ر.س</td></tr>`;
+          return `<tr><td class="label">${app} (${orders} ${t.orders})</td><td class="blue">${salary.toLocaleString()} ${t.currency}</td></tr>`;
         }).join('')}
-        <tr class="total-row"><td class="label">الإجمالي</td><td class="blue">${totalPlatformSalary.toLocaleString()} ر.س</td></tr>
+        <tr class="total-row"><td class="label">${t.platformTotal}</td><td class="blue">${totalPlatformSalary.toLocaleString()} ${t.currency}</td></tr>
       </table>
-      <h3>المستقطعات</h3><table>
-        ${row.advanceDeduction > 0 ? `<tr><td class="label">السلف</td><td class="red">- ${row.advanceDeduction.toLocaleString()} ر.س</td></tr>` : ''}
-        ${row.externalDeduction > 0 ? `<tr><td class="label">خصومات خارجية</td><td class="red">- ${row.externalDeduction.toLocaleString()} ر.س</td></tr>` : ''}
-        ${row.violations > 0 ? `<tr><td class="label">المخالفات</td><td class="red">- ${row.violations.toLocaleString()} ر.س</td></tr>` : ''}
-        <tr class="total-row"><td class="label">إجمالي المستقطعات</td><td class="red">- ${totalDeductions.toLocaleString()} ر.س</td></tr>
+      ${row.incentives > 0 || row.sickAllowance > 0 ? `
+      <h3>${t.sectionAdditions}</h3><table>
+        ${row.incentives > 0 ? `<tr><td class="label">${t.incentives}</td><td class="green">+${row.incentives.toLocaleString()} ${t.currency}</td></tr>` : ''}
+        ${row.sickAllowance > 0 ? `<tr><td class="label">${t.sickAllowance}</td><td class="green">+${row.sickAllowance.toLocaleString()} ${t.currency}</td></tr>` : ''}
+        <tr class="total-row"><td class="label">${t.totalWithSalary}</td><td class="blue">${totalWithSalary.toLocaleString()} ${t.currency}</td></tr>
+      </table>` : ''}
+      ${deductionRows.length > 0 ? `
+      <h3>${t.sectionDeductions}</h3><table>
+        ${deductionRows.map(d => `<tr><td class="label">${d.l}</td><td class="red">- ${d.v.toLocaleString()} ${t.currency}</td></tr>`).join('')}
+        <tr class="total-row"><td class="label">${t.totalDeductions}</td><td class="red">- ${totalDeductions.toLocaleString()} ${t.currency}</td></tr>
+      </table>` : ''}
+      <h3></h3><table>
+        <tr class="net-row"><td class="label">${t.netSalary}</td><td class="green">${netSalary.toLocaleString()} ${t.currency}</td></tr>
+        ${row.transfer > 0 ? `<tr><td class="label">${t.transfer}</td><td>${row.transfer.toLocaleString()} ${t.currency}</td></tr>` : ''}
+        ${row.transfer > 0 ? `<tr><td class="label">${t.remaining}</td><td>${remaining.toLocaleString()} ${t.currency}</td></tr>` : ''}
+        ${row.advanceRemaining > 0 ? `<tr><td class="label">${t.advanceBalance}</td><td class="red">${row.advanceRemaining.toLocaleString()} ${t.currency}</td></tr>` : ''}
       </table>
-      <h3>الصافي</h3><table>
-        <tr class="net-row"><td class="label">إجمالي الراتب الصافي</td><td class="green">${netSalary.toLocaleString()} ر.س</td></tr>
-        <tr><td class="label">التحويل</td><td>${row.transfer.toLocaleString()} ر.س</td></tr>
-        <tr><td class="label">المتبقي</td><td>${remaining.toLocaleString()} ر.س</td></tr>
-      </table>
-      <div class="footer"><div>توقيع المندوب: _______________</div><div>اعتماد الإدارة: _______________</div></div>
+      <div class="footer">
+        <div>${t.signatureDriver}: _______________</div>
+        <div>${t.signatureAdmin}: _______________</div>
+      </div>
       </body></html>`;
     const win = window.open('', '_blank');
     win?.document.write(html);
@@ -128,102 +174,125 @@ const PayslipModal = ({ row, onClose, onApprove, selectedMonth }: PayslipProps) 
     win?.print();
   };
 
+  const deductionItems = [
+    { l: t.advanceInstallment, v: row.advanceDeduction },
+    { l: t.externalDeductions, v: row.externalDeduction },
+    { l: t.violations, v: row.violations },
+    { l: t.walletHunger, v: row.walletHunger },
+    { l: t.walletTuyo, v: row.walletTuyo },
+    { l: t.walletJahiz, v: row.walletJahiz },
+    { l: t.foodDamage, v: row.foodDamage },
+  ].filter(x => x.v > 0);
+
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent dir="rtl" className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent dir={dir} className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>كشف راتب — {row.employeeName}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            {t.title} — {row.employeeName}
+            <span className="text-sm font-normal bg-primary/10 text-primary px-2 py-0.5 rounded-full flex items-center gap-1">
+              <Globe size={12} /> {meta.flag} {meta.label}
+            </span>
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 text-sm">
+          {/* Employee Info */}
           <div className="bg-muted/40 rounded-lg p-3 grid grid-cols-2 gap-2">
-            <div><span className="text-muted-foreground">الشهر: </span><span className="font-medium">{monthLabel}</span></div>
-            <div><span className="text-muted-foreground">المدينة: </span><span className="font-medium">{row.city}</span></div>
-            <div><span className="text-muted-foreground">رقم الهوية: </span><span className="font-medium">{row.nationalId}</span></div>
-            <div><span className="text-muted-foreground">الحالة: </span><span className={statusStyles[row.status]}>{statusLabels[row.status]}</span></div>
+            <div><span className="text-muted-foreground">{t.month}: </span><span className="font-medium">{monthLabel}</span></div>
+            <div><span className="text-muted-foreground">{t.city}: </span><span className="font-medium">{row.city}</span></div>
+            <div><span className="text-muted-foreground">{t.nationalId}: </span><span className="font-medium" dir="ltr">{row.nationalId}</span></div>
+            <div><span className="text-muted-foreground">{t.status}: </span><span className={statusStyles[row.status]}>{getStatusLabel(row.status, row.preferredLanguage)}</span></div>
           </div>
+
+          {/* Platforms */}
           <div>
-            <p className="font-semibold text-xs text-muted-foreground uppercase tracking-wide mb-2">الطلبات حسب المنصة</p>
+            <p className="font-semibold text-xs text-muted-foreground uppercase tracking-wide mb-2">{t.sectionPlatforms}</p>
             {row.registeredApps.map(app => {
               const orders = row.platformOrders[app] || 0;
               const salary = row.platformSalaries[app] || 0;
               const color = PLATFORM_COLORS[app]?.valueColor || 'hsl(var(--primary))';
               return (
                 <div key={app} className="flex justify-between py-1.5 border-b border-border/30">
-                  <span className="text-muted-foreground">{app} ({orders} طلب)</span>
-                  <span className="font-semibold" style={{ color }}>{salary.toLocaleString()} ر.س</span>
+                  <span className="text-muted-foreground">{app} ({orders} {t.orders})</span>
+                  <span className="font-semibold" style={{ color }}>{fmt(salary)}</span>
                 </div>
               );
             })}
             <div className="flex justify-between py-2 font-bold text-primary bg-primary/5 px-2 rounded mt-1">
-              <span>إجمالي الراتب الأساسي</span>
-              <span>{totalPlatformSalary.toLocaleString()} ر.س</span>
+              <span>{t.platformTotal}</span><span>{fmt(totalPlatformSalary)}</span>
             </div>
           </div>
-          <div>
-            <p className="font-semibold text-xs text-muted-foreground uppercase tracking-wide mb-2">الإضافات</p>
-            <div className="flex justify-between py-1.5 border-b border-border/30">
-              <span className="text-success">الحوافز</span>
-              <span className="font-semibold text-success">+{row.incentives.toLocaleString()} ر.س</span>
-            </div>
-            <div className="flex justify-between py-1.5 border-b border-border/30">
-              <span className="text-success">بدل مرضي</span>
-              <span className="font-semibold text-success">+{row.sickAllowance.toLocaleString()} ر.س</span>
-            </div>
-            <div className="flex justify-between py-2 font-bold text-primary bg-primary/5 px-2 rounded mt-1">
-              <span>المجموع مع الراتب</span>
-              <span>{totalWithSalary.toLocaleString()} ر.س</span>
-            </div>
-          </div>
-          <div>
-            <p className="font-semibold text-xs text-muted-foreground uppercase tracking-wide mb-2">المستقطعات</p>
-            {[
-              { l: 'قسط سلفة', v: row.advanceDeduction },
-              { l: 'خصومات خارجية', v: row.externalDeduction },
-              { l: 'المخالفات', v: row.violations },
-              { l: 'محفظة هنقرستيشن', v: row.walletHunger },
-              { l: 'محفظة تويو', v: row.walletTuyo },
-              { l: 'محفظة جاهز', v: row.walletJahiz },
-              { l: 'تلف طعام', v: row.foodDamage },
-            ].filter(x => x.v > 0).map(x => (
-              <div key={x.l} className="flex justify-between py-1.5 border-b border-border/30">
-                <span className="text-destructive">{x.l}</span>
-                <span className="font-semibold text-destructive">-{x.v.toLocaleString()} ر.س</span>
+
+          {/* Additions */}
+          {(row.incentives > 0 || row.sickAllowance > 0) && (
+            <div>
+              <p className="font-semibold text-xs text-muted-foreground uppercase tracking-wide mb-2">{t.sectionAdditions}</p>
+              {row.incentives > 0 && (
+                <div className="flex justify-between py-1.5 border-b border-border/30">
+                  <span className="text-success">{t.incentives}</span>
+                  <span className="font-semibold text-success">+{fmt(row.incentives)}</span>
+                </div>
+              )}
+              {row.sickAllowance > 0 && (
+                <div className="flex justify-between py-1.5 border-b border-border/30">
+                  <span className="text-success">{t.sickAllowance}</span>
+                  <span className="font-semibold text-success">+{fmt(row.sickAllowance)}</span>
+                </div>
+              )}
+              <div className="flex justify-between py-2 font-bold text-primary bg-primary/5 px-2 rounded mt-1">
+                <span>{t.totalWithSalary}</span><span>{fmt(totalWithSalary)}</span>
               </div>
-            ))}
-            <div className="flex justify-between py-2 font-bold text-destructive bg-destructive/5 px-2 rounded mt-1">
-              <span>إجمالي المستقطعات</span>
-              <span>-{totalDeductions.toLocaleString()} ر.س</span>
             </div>
-          </div>
+          )}
+
+          {/* Deductions */}
+          {deductionItems.length > 0 && (
+            <div>
+              <p className="font-semibold text-xs text-muted-foreground uppercase tracking-wide mb-2">{t.sectionDeductions}</p>
+              {deductionItems.map(x => (
+                <div key={x.l} className="flex justify-between py-1.5 border-b border-border/30">
+                  <span className="text-destructive">{x.l}</span>
+                  <span className="font-semibold text-destructive">-{fmt(x.v)}</span>
+                </div>
+              ))}
+              <div className="flex justify-between py-2 font-bold text-destructive bg-destructive/5 px-2 rounded mt-1">
+                <span>{t.totalDeductions}</span><span>-{fmt(totalDeductions)}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Net */}
           <div className="flex justify-between items-center py-3 bg-success/10 rounded-lg px-4">
-            <span className="font-bold text-lg">إجمالي الراتب الصافي</span>
-            <span className="text-2xl font-black text-success">{netSalary.toLocaleString()} ر.س</span>
+            <span className="font-bold text-lg">{t.netSalary}</span>
+            <span className="text-2xl font-black text-success">{fmt(netSalary)}</span>
           </div>
+
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-muted/40 rounded-lg p-3 text-center">
-              <p className="text-xs text-muted-foreground">التحويل</p>
-              <p className="font-bold">{row.transfer.toLocaleString()} ر.س</p>
+              <p className="text-xs text-muted-foreground">{t.transfer}</p>
+              <p className="font-bold">{fmt(row.transfer)}</p>
             </div>
             <div className="bg-muted/40 rounded-lg p-3 text-center">
-              <p className="text-xs text-muted-foreground">المتبقي</p>
-              <p className="font-bold">{remaining.toLocaleString()} ر.س</p>
+              <p className="text-xs text-muted-foreground">{t.remaining}</p>
+              <p className="font-bold">{fmt(remaining)}</p>
             </div>
             <div className="bg-muted/40 rounded-lg p-3 text-center">
-                <p className="text-xs text-muted-foreground">طريقة الصرف</p>
-                <p className="font-bold">{row.paymentMethod === 'bank' ? '🏦 بنك' : '💵 ماش'}</p>
-              </div>
+              <p className="text-xs text-muted-foreground">{t.paymentMethod}</p>
+              <p className="font-bold">{row.paymentMethod === 'bank' ? t.payBank : t.payCash}</p>
+            </div>
           </div>
         </div>
+
         <div className="flex gap-2 justify-between pt-2">
-          <Button variant="outline" onClick={onClose}>إغلاق</Button>
+          <Button variant="outline" onClick={onClose}>{t.close}</Button>
           <div className="flex gap-2">
             {row.status === 'pending' && (
               <Button variant="default" className="gap-2" onClick={onApprove}>
-                <CheckCircle size={14} /> اعتماد
+                <CheckCircle size={14} /> {t.approve}
               </Button>
             )}
             <Button onClick={printPayslip} className="gap-2">
-              <Printer size={14} /> طباعة PDF
+              <Printer size={14} /> {t.printPdf}
             </Button>
           </div>
         </div>
@@ -498,7 +567,7 @@ const Salaries = () => {
       const [empRes, extRes, ordersRes, appsWithSchemeRes] = await Promise.all([
         supabase
           .from('employees')
-          .select('id, name, job_title, national_id, salary_type, base_salary, iban, city')
+          .select('id, name, job_title, national_id, salary_type, base_salary, iban, city, preferred_language')
           .eq('status', 'active')
           .order('name'),
 
@@ -692,6 +761,7 @@ const Salaries = () => {
           advanceRemaining: advRemainingMap[emp.id] || 0,
           externalDeduction: extDeduction,
           status,
+          preferredLanguage: ((emp as any).preferred_language as SlipLanguage) || 'ar',
         };
       });
 

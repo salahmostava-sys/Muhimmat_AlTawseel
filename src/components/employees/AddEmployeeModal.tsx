@@ -27,6 +27,7 @@ interface EmployeeData {
   status: string;
   salary_type: string;
   base_salary: number;
+  preferred_language?: string | null;
 }
 
 interface Props {
@@ -150,6 +151,7 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
     base_salary: '',
     selected_apps: [] as string[],
     app_schemes: {} as Record<string, string>,
+    preferred_language: 'ar' as 'ar' | 'en' | 'ur',
   });
 
   // Pre-fill form when editing
@@ -171,6 +173,7 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
         base_salary: editEmployee.base_salary ? String(editEmployee.base_salary) : '',
         selected_apps: [],
         app_schemes: {},
+        preferred_language: (editEmployee.preferred_language as 'ar' | 'en' | 'ur') || 'ar',
       });
     }
   }, [editEmployee]);
@@ -234,6 +237,7 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
         sponsorship_status: form.sponsorship_status,
         salary_type: form.salary_type,
         base_salary: form.salary_type === 'shift' ? parseFloat(form.base_salary) : 0,
+        preferred_language: form.preferred_language,
       };
 
       let empId: string;
@@ -362,6 +366,20 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
               </F>
               <F label="تاريخ الانضمام">
                 <Input type="date" value={form.join_date} onChange={e => setField('join_date', e.target.value)} />
+              </F>
+              <F label="لغة كشف الراتب">
+                <div className="flex gap-2 mt-1">
+                  {([
+                    { v: 'ar', flag: '🇸🇦', l: 'العربية' },
+                    { v: 'en', flag: '🇬🇧', l: 'English' },
+                    { v: 'ur', flag: '🇵🇰', l: 'اردو' },
+                  ] as { v: 'ar' | 'en' | 'ur'; flag: string; l: string }[]).map(({ v, flag, l }) => (
+                    <button key={v} type="button" onClick={() => setField('preferred_language', v)}
+                      className={`flex-1 py-2 px-2 rounded-lg border text-xs font-medium transition-colors flex items-center justify-center gap-1 ${form.preferred_language === v ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/50'}`}>
+                      {flag} {l}
+                    </button>
+                  ))}
+                </div>
               </F>
             </div>
           )}
