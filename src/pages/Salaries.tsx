@@ -1274,7 +1274,7 @@ const Salaries = () => {
                         {r.advanceDeduction > 0 ? (
                           <div className="flex flex-col items-center">
                             <span className="text-destructive font-semibold">{r.advanceDeduction.toLocaleString()}</span>
-                            <span className="text-[9px] text-orange-500">قسط سلفة</span>
+                            <span className="text-[9px] text-warning">قسط سلفة</span>
                           </div>
                         ) : <span className="text-muted-foreground/30">—</span>}
                       </td>
