@@ -1906,7 +1906,7 @@ const Salaries = () => {
                           className={`text-xs px-1.5 py-0.5 rounded-md border border-border/50 bg-background cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary ${r.paymentMethod === 'bank' ? 'text-primary' : 'text-muted-foreground'}`}
                         >
                           <option value="bank">🏦 بنك</option>
-                          <option value="cash">💵 ماش</option>
+                          <option value="cash">💵 كاش</option>
                         </select>
                       </td>
                       <td className={`${tdClass} border-l border-border/20`}>
