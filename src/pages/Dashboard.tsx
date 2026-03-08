@@ -246,7 +246,7 @@ const Dashboard = () => {
       </div>
 
       {/* ── Charts row ─────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Weekly attendance bar chart */}
         <div className="lg:col-span-2">
           <ChartCard title={lang === 'ar' ? 'الحضور هذا الأسبوع' : 'Weekly Attendance'}>
