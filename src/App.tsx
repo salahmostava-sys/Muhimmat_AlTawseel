@@ -27,6 +27,8 @@ import UsersAndPermissions from "./pages/UsersAndPermissions";
 import GeneralSettings from "./pages/GeneralSettings";
 import Analytics from "./pages/Analytics";
 import ViolationResolver from "./pages/ViolationResolver";
+import Motorcycles from "./pages/Motorcycles";
+import VehicleAssignment from "./pages/VehicleAssignment";
 import NotFound from "./pages/NotFound";
 import "@/i18n";
 
