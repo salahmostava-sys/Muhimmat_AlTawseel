@@ -11,6 +11,8 @@ import { useAppColors, AppColorData } from '@/hooks/useAppColors';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getSlipTranslations, getStatusLabel, LANGUAGE_META, type SlipLanguage } from '@/lib/salarySlipTranslations';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 
 // Kept for legacy references — populated dynamically from DB at runtime
