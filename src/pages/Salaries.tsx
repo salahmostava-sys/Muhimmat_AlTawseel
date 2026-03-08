@@ -440,6 +440,7 @@ const SalaryBreakdown = ({ orders, scheme, salary, children }: SalaryBreakdownPr
 const Salaries = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { apps: appColorsList } = useAppColors();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedMonth, setSelectedMonth] = useState(months[0].v);
@@ -454,6 +455,19 @@ const Salaries = () => {
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [markingPaid, setMarkingPaid] = useState<string | null>(null);
   const [editingCell, setEditingCell] = useState<{ rowId: string; platform: string } | null>(null);
+
+  // Sync PLATFORM_COLORS from DB apps
+  useEffect(() => {
+    appColorsList.forEach(app => {
+      PLATFORM_COLORS[app.name] = {
+        header: app.brand_color,
+        headerText: app.text_color,
+        cellBg: `${app.brand_color}18`,
+        valueColor: app.brand_color,
+        focusBorder: app.brand_color,
+      };
+    });
+  }, [appColorsList]);
 
   // ─── Data fetching ─────────────────────────────────────────────
   useEffect(() => {
@@ -984,10 +998,6 @@ const Salaries = () => {
           <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="بحث بالاسم..." className="pr-9 h-9 w-48" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <div className="relative">
-          <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="بحث بالاسم..." className="pr-9 h-9 w-48" value={search} onChange={e => setSearch(e.target.value)} />
-        </div>
         <div className="flex gap-1">
           {[{ v: 'all', l: 'الكل' }, { v: 'pending', l: 'معلّق' }, { v: 'approved', l: 'معتمد' }, { v: 'paid', l: 'مصروف' }].map(s => (
             <button key={s.v} onClick={() => setStatusFilter(s.v)}
@@ -1127,8 +1137,8 @@ const Salaries = () => {
               <thead className="sticky top-0 z-30">
                 <tr className="bg-muted/70 border-b border-border/50">
                   <th colSpan={3} className={`${thFrozenBase} border-l border-border/50`} style={stickyLeft(0)}>بيانات المندوب</th>
-                  <th colSpan={7} className="px-3 py-2 text-xs font-semibold text-primary whitespace-nowrap border-b border-border/50 bg-muted/40 text-center border-l border-border/50">
-                    الطلبات حسب المنصة (نقر مزدوج للتعديل)
+                  <th colSpan={PLATFORMS.length * 2} className="px-3 py-2 text-xs font-semibold text-primary whitespace-nowrap border-b border-border/50 bg-muted/40 text-center border-l border-border/50">
+                    المنصات — الطلبات والراتب (نقر مزدوج للتعديل)
                   </th>
                   <th className="px-3 py-2 text-xs font-semibold text-primary whitespace-nowrap border-b border-border/50 bg-muted/40 text-center border-l border-border/50">الراتب الأساسي</th>
                   <th colSpan={4} className="px-3 py-2 text-xs font-semibold text-success whitespace-nowrap border-b border-border/50 bg-muted/40 text-center border-l border-border/50">الإضافات</th>
@@ -1149,21 +1159,29 @@ const Salaries = () => {
                   </th>
                   {PLATFORMS.map(p => {
                     const pc = PLATFORM_COLORS[p];
-                    // Use first matching scheme across all employees as header label
                     const headerScheme = empPlatformScheme
                       ? Object.values(empPlatformScheme).find(m => m[p])?.[p]
                       : null;
                     const schemeName = headerScheme?.name || '';
-                    return (
-                      <th key={p} className="px-3 py-2 text-xs font-semibold whitespace-nowrap border-b border-border/50 text-center cursor-pointer select-none hover:opacity-90 transition-opacity"
+                    return [
+                      <th key={`${p}-orders`}
+                        className="px-2 py-2 text-xs font-semibold whitespace-nowrap border-b border-border/50 text-center cursor-pointer select-none hover:opacity-90 transition-opacity"
                         style={{ backgroundColor: pc?.header, color: pc?.headerText }}
                         onClick={() => handleSort(p)}>
                         <div className="flex flex-col items-center gap-0">
-                          <span>{p} <SortIcon field={p} sortField={sortField} sortDir={sortDir} /></span>
-                          {schemeName && <span className="text-[9px] opacity-70 font-normal">{schemeName}</span>}
+                          <span>{p}</span>
+                          <span className="text-[9px] opacity-80 font-normal">طلبات <SortIcon field={p} sortField={sortField} sortDir={sortDir} /></span>
+                          {schemeName && <span className="text-[8px] opacity-60 font-normal">{schemeName}</span>}
                         </div>
-                      </th>
-                    );
+                      </th>,
+                      <th key={`${p}-salary`}
+                        className="px-2 py-2 text-xs font-semibold whitespace-nowrap border-b border-l border-border/30 text-center"
+                        style={{ backgroundColor: pc?.header ? `${pc.header}cc` : undefined, color: pc?.headerText }}>
+                        <div className="flex flex-col items-center gap-0">
+                          <span className="text-[9px] opacity-80 font-normal">راتب ر.س</span>
+                        </div>
+                      </th>,
+                    ];
                   })}
                   <th className={thBase}>الراتب الأساسي</th>
                   <th className={thBase}>حوافز</th>
@@ -1202,15 +1220,15 @@ const Salaries = () => {
                       {PLATFORMS.map(p => {
                         const pc = PLATFORM_COLORS[p];
                         const orders = r.platformOrders[p] || 0;
+                        const salary = r.platformSalaries[p] || 0;
                         const scheme = empPlatformScheme?.[r.employeeId]?.[p];
                         const target = scheme?.target_orders;
-                        const cellBg = orders === 0
-                          ? 'bg-muted/20'
-                          : (target && orders >= target)
-                            ? 'bg-success/10'
-                            : '';
-                        return (
-                          <td key={p} className={`${tdClass} text-center ${cellBg}`}
+                        const hitTarget = target && orders >= target;
+                        const rowBg = orders === 0 ? undefined : hitTarget ? 'rgba(34,197,94,0.08)' : pc?.cellBg;
+                        return [
+                          // Orders column
+                          <td key={`${p}-orders`} className={`${tdClass} text-center`}
+                            style={{ background: rowBg }}
                             onDoubleClick={() => setEditingCell({ rowId: r.id, platform: p })}>
                             {editingCell?.rowId === r.id && editingCell?.platform === p ? (
                               <input
@@ -1218,16 +1236,32 @@ const Salaries = () => {
                                 type="number"
                                 defaultValue={orders}
                                 className="w-16 text-center border rounded px-1 py-0.5 text-xs bg-background"
+                                style={{ borderColor: pc?.focusBorder }}
                                 onBlur={e => { updatePlatformOrders(r.id, p, Number(e.target.value)); setEditingCell(null); }}
                                 onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingCell(null); }}
                               />
                             ) : (
-                              <span style={{ color: orders === 0 ? undefined : pc?.valueColor }} className={orders === 0 ? 'text-muted-foreground/30' : 'font-semibold'}>
+                              <span
+                                style={{ color: orders === 0 ? undefined : pc?.valueColor }}
+                                className={`font-semibold ${orders === 0 ? 'text-muted-foreground/30' : ''}`}
+                              >
                                 {orders === 0 ? '—' : orders}
                               </span>
                             )}
-                          </td>
-                        );
+                          </td>,
+                          // Salary column
+                          <td key={`${p}-salary`} className={`${tdClass} text-center border-l border-border/20`}
+                            style={{ background: rowBg }}>
+                            <SalaryBreakdown orders={orders} scheme={scheme || null} salary={salary}>
+                              <span
+                                style={{ color: salary === 0 ? undefined : pc?.valueColor }}
+                                className={`text-xs ${salary === 0 ? 'text-muted-foreground/30' : 'font-medium'}`}
+                              >
+                                {salary === 0 ? '—' : salary.toLocaleString()}
+                              </span>
+                            </SalaryBreakdown>
+                          </td>,
+                        ];
                       })}
                       <td className={`${tdClass} font-bold text-primary border-l border-border/20`}>{c.totalPlatformSalary.toLocaleString()}</td>
                       <td className={tdClass}><EditableCell value={r.incentives} onChange={v => updateRow(r.id, { incentives: v })} className="text-success" /></td>
@@ -1293,31 +1327,37 @@ const Salaries = () => {
                     </tr>
                   );
                 })}
-                {/* Totals footer */}
-                <tr className="bg-muted/60 border-t-2 border-border">
-                  <td className={`${tfClass} sticky text-right border-l border-border/30`} style={{ left: 0, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}>الإجمالي</td>
-                  <td className={tfClass} style={{ position: 'sticky', left: 176, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}></td>
-                  <td className={`${tfClass} border-l border-border/30`} style={{ position: 'sticky', left: 288, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}></td>
-                  {PLATFORMS.map(p => (
-                    <td key={p} className={tfClass} style={{ color: PLATFORM_COLORS[p]?.valueColor }}>{(totals.platform[p] || 0).toLocaleString()}</td>
-                  ))}
-                  <td className={`${tfClass} text-primary border-l border-border/30`}>{totals.platformSalaries.toLocaleString()}</td>
-                  <td className={`${tfClass} text-success`}>{totals.incentives.toLocaleString()}</td>
-                  <td className={`${tfClass} text-success`}>{totals.sickAllowance.toLocaleString()}</td>
-                  <td className={`${tfClass} text-success`}>{totals.totalAdditions.toLocaleString()}</td>
-                  <td className={`${tfClass} text-primary border-l border-border/30`}>{totals.totalWithSalary.toLocaleString()}</td>
-                  <td className={`${tfClass} text-destructive`}>{totals.advance.toLocaleString()}</td>
-                  <td className={`${tfClass} text-destructive`}>{totals.externalDed.toLocaleString()}</td>
-                  <td className={`${tfClass} text-destructive`}>{totals.violations.toLocaleString()}</td>
-                  <td className={`${tfClass} text-destructive`}>{totals.walletH.toLocaleString()}</td>
-                  <td className={`${tfClass} text-destructive`}>{totals.walletT.toLocaleString()}</td>
-                  <td className={`${tfClass} text-destructive border-l border-border/30`}>{totals.food.toLocaleString()}</td>
-                  <td className={`${tfClass} text-destructive border-l border-border/30`}>{totals.totalDed.toLocaleString()}</td>
-                  <td className={`${tfClass} text-success text-base`}>{totals.net.toLocaleString()}</td>
-                  <td className={tfClass}>{totals.transfer.toLocaleString()}</td>
-                  <td className={`${tfClass} border-l border-border/30`}>{totals.remaining.toLocaleString()}</td>
-                  <td className={tfClass} colSpan={6}></td>
-                </tr>
+                 {/* Totals footer */}
+                 <tr className="bg-muted/60 border-t-2 border-border">
+                   <td className={`${tfClass} sticky text-right border-l border-border/30`} style={{ left: 0, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}>الإجمالي</td>
+                   <td className={tfClass} style={{ position: 'sticky', left: 176, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}></td>
+                   <td className={`${tfClass} border-l border-border/30`} style={{ position: 'sticky', left: 288, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}></td>
+                   {PLATFORMS.map(p => {
+                     const pc = PLATFORM_COLORS[p];
+                     const totalOrders = totals.platform[p] || 0;
+                     const totalSal = filtered.reduce((s, r) => s + (r.platformSalaries[p] || 0), 0);
+                     return [
+                       <td key={`${p}-orders`} className={tfClass} style={{ color: pc?.valueColor }}>{totalOrders.toLocaleString()}</td>,
+                       <td key={`${p}-salary`} className={`${tfClass} border-l border-border/20`} style={{ color: pc?.valueColor }}>{totalSal.toLocaleString()}</td>,
+                     ];
+                   })}
+                   <td className={`${tfClass} text-primary border-l border-border/30`}>{totals.platformSalaries.toLocaleString()}</td>
+                   <td className={`${tfClass} text-success`}>{totals.incentives.toLocaleString()}</td>
+                   <td className={`${tfClass} text-success`}>{totals.sickAllowance.toLocaleString()}</td>
+                   <td className={`${tfClass} text-success`}>{totals.totalAdditions.toLocaleString()}</td>
+                   <td className={`${tfClass} text-primary border-l border-border/30`}>{totals.totalWithSalary.toLocaleString()}</td>
+                   <td className={`${tfClass} text-destructive`}>{totals.advance.toLocaleString()}</td>
+                   <td className={`${tfClass} text-destructive`}>{totals.externalDed.toLocaleString()}</td>
+                   <td className={`${tfClass} text-destructive`}>{totals.violations.toLocaleString()}</td>
+                   <td className={`${tfClass} text-destructive`}>{totals.walletH.toLocaleString()}</td>
+                   <td className={`${tfClass} text-destructive`}>{totals.walletT.toLocaleString()}</td>
+                   <td className={`${tfClass} text-destructive border-l border-border/30`}>{totals.food.toLocaleString()}</td>
+                   <td className={`${tfClass} text-destructive border-l border-border/30`}>{totals.totalDed.toLocaleString()}</td>
+                   <td className={`${tfClass} text-success text-base`}>{totals.net.toLocaleString()}</td>
+                   <td className={tfClass}>{totals.transfer.toLocaleString()}</td>
+                   <td className={`${tfClass} border-l border-border/30`}>{totals.remaining.toLocaleString()}</td>
+                   <td className={tfClass} colSpan={6}></td>
+                 </tr>
               </tbody>
             </table>
           </div>
