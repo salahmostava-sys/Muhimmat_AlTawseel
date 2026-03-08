@@ -21,6 +21,8 @@ const monthLabel = (y: number, m: number) =>
 const dateStr = (y: number, m: number, d: number) =>
   `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
+// fallback appColor — replaced at runtime by useAppColors in each component
+const _fallbackColor = { bg: 'hsl(var(--primary))', text: '#fff', cellBg: 'rgba(0,0,0,0.03)', val: 'hsl(var(--primary))' };
 
 // ─── SpreadsheetGrid ─────────────────────────────────────────────────
 const SpreadsheetGrid = () => {
