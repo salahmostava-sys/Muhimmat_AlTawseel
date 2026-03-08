@@ -232,6 +232,7 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
         phone: form.phone || null,
         email: form.email || null,
         national_id: form.national_id || null,
+        nationality: form.nationality || null,
         bank_account_number: form.bank_account_number || null,
         city: form.city || null,
         join_date: form.join_date || null,
