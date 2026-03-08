@@ -260,8 +260,8 @@ const PayslipModal = ({ row, onClose, onApprove, selectedMonth }: PayslipProps) 
                 <CheckCircle size={14} /> {t.approve}
               </Button>
             )}
-            <Button onClick={printPayslip} className="gap-2">
-              <Printer size={14} /> {t.printPdf}
+            <Button onClick={exportPDF} disabled={exporting} className="gap-2">
+              <Printer size={14} /> {exporting ? '...' : t.printPdf}
             </Button>
           </div>
         </div>
