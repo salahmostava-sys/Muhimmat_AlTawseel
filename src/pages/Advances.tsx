@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { Search, Plus, CreditCard } from 'lucide-react';
+import { Search, Plus, CreditCard, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { advances } from '@/data/mock';
+import * as XLSX from 'xlsx';
+import { format } from 'date-fns';
 
 const statusLabels: Record<string, string> = { active: 'نشطة', completed: 'مكتملة', paused: 'متوقفة' };
 const statusStyles: Record<string, string> = { active: 'badge-info', completed: 'badge-success', paused: 'badge-warning' };

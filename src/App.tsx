@@ -22,7 +22,6 @@ import Alerts from "./pages/Alerts";
 import SalarySchemes from "./pages/SalarySchemes";
 import Users from "./pages/Users";
 import Permissions from "./pages/Permissions";
-import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import "@/i18n";
 
