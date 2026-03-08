@@ -1166,7 +1166,7 @@ const Salaries = () => {
                   <th className={`${thFrozenBase} w-28 border-l border-border/50 cursor-pointer hover:text-foreground select-none`} style={stickyLeft(288)} onClick={() => handleSort('nationalId')}>
                     رقم الهوية <SortIcon field="nationalId" sortField={sortField} sortDir={sortDir} />
                   </th>
-                  {PLATFORMS.map(p => {
+                  {platforms.map(p => {
                     const pc = PLATFORM_COLORS[p];
                     const headerScheme = empPlatformScheme
                       ? Object.values(empPlatformScheme).find(m => m[p])?.[p]
