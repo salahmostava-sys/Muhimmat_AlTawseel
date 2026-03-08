@@ -72,13 +72,16 @@ const AppSidebar = () => {
     },
   ];
 
-  // auto-open group containing active route
-  const activeGroup = navGroups.find(g => g.items.some(i => isActive(i.path)));
-  if (activeGroup && !openGroups[activeGroup.key]) {
-    setOpenGroups(prev => ({ ...prev, [activeGroup.key]: true }));
-  }
+  // auto-open group containing active route — use effect to avoid setState during render
+  useEffect(() => {
+    const activeGroup = navGroups.find(g => g.items.some(i => isActive(i.path)));
+    if (activeGroup && !openGroups[activeGroup.key]) {
+      setOpenGroups(prev => ({ ...prev, [activeGroup.key]: true }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
-  const ChevronIcon = isRTL ? ChevronDown : ChevronDown;
+  const ChevronIcon = ChevronDown;
 
   return (
     <>
