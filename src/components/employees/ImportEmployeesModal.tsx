@@ -314,11 +314,11 @@ const ImportEmployeesModal = ({ onClose, onSuccess }: Props) => {
             payload.status = payload.status || 'active';
             const { data: newEmp, error: insErr } = await supabase
               .from('employees')
-              .insert(payload)
+              .insert([payload] as any)
               .select('id')
               .single();
             if (insErr) throw insErr;
-            empId = newEmp.id;
+            empId = (newEmp as any).id;
           }
 
           // Link platform → employee_apps
