@@ -1261,7 +1261,14 @@ const Salaries = () => {
                   return (
                     <tr key={r.id} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
                       <td className={`${tdClass} sticky font-medium whitespace-nowrap`} style={{ left: 0, zIndex: 10, background: 'hsl(var(--card))' }}>
-                        <span className="whitespace-nowrap">{r.employeeName}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="whitespace-nowrap">{r.employeeName}</span>
+                          {r.isDirty && (
+                            <span title="تم تعديل البيانات بعد الاعتماد — يرجى إعادة الاعتماد" className="flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full bg-warning/20 text-warning border border-warning/40 whitespace-nowrap cursor-help">
+                              <AlertTriangle size={9} /> يحتاج إعادة اعتماد
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className={`${tdClass} whitespace-nowrap`} style={{ position: 'sticky', left: 176, zIndex: 10, background: 'hsl(var(--card))' }}>{r.jobTitle}</td>
                       <td className={`${tdClass} border-l border-border/30 text-muted-foreground text-xs whitespace-nowrap`} style={{ position: 'sticky', left: 288, zIndex: 10, background: 'hsl(var(--card))' }}>{r.nationalId}</td>
