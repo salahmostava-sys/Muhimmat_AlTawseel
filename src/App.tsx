@@ -64,6 +64,11 @@ const App = () => (
                             <Route path="/fuel" element={<FuelPage />} />
                             <Route path="/apps" element={<Apps />} />
                             <Route path="/alerts" element={<Alerts />} />
+                            <Route path="/settings" element={<Navigate to="/settings/schemes" replace />} />
+                            <Route path="/settings/permissions" element={<Navigate to="/settings/users" replace />} />
+                            <Route path="/vehicles" element={<Navigate to="/motorcycles" replace />} />
+                            <Route path="/vehicle-tracking" element={<Navigate to="/motorcycles" replace />} />
+                            <Route path="/deductions" element={<Navigate to="/advances" replace />} />
                             <Route path="/settings/schemes" element={<SalarySchemes />} />
                             <Route path="/settings/users" element={<UsersAndPermissions />} />
                             <Route path="/settings/general" element={<GeneralSettings />} />
