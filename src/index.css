@@ -128,14 +128,16 @@
 }
 
 @layer utilities {
+  /* ─── Cards & Glass ─────────────────────────────────────────── */
   .glass-card {
     @apply bg-card/80 backdrop-blur-sm border border-border/50 shadow-sm;
   }
 
   .stat-card {
-    @apply bg-card rounded-xl border border-border/50 p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/20;
+    @apply bg-card rounded-xl border border-border/50 p-4 sm:p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/20;
   }
 
+  /* ─── Badges ────────────────────────────────────────────────── */
   .badge-urgent {
     @apply bg-destructive/10 text-destructive text-xs font-medium px-2.5 py-0.5 rounded-full;
   }
@@ -151,4 +153,44 @@
   .badge-info {
     @apply bg-info/10 text-info text-xs font-medium px-2.5 py-0.5 rounded-full;
   }
+
+  /* ─── Responsive Table wrapper ──────────────────────────────── */
+  .table-wrapper {
+    @apply w-full overflow-x-auto rounded-xl border border-border/50 bg-card shadow-sm;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ─── Page headers ──────────────────────────────────────────── */
+  .page-title {
+    @apply text-lg sm:text-xl lg:text-2xl font-bold text-foreground;
+  }
+
+  .page-subtitle {
+    @apply text-xs sm:text-sm text-muted-foreground;
+  }
+
+  /* ─── Responsive filter bar ─────────────────────────────────── */
+  .filter-bar {
+    @apply flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 sm:gap-3;
+  }
+
+  /* ─── Touch-friendly min tap target ─────────────────────────── */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* ─── Mobile full-width buttons ─────────────────────────────── */
+  .btn-responsive {
+    @apply w-full sm:w-auto;
+  }
+
+  /* ─── Responsive grid helpers ───────────────────────────────── */
+  .stats-grid {
+    @apply grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4;
+  }
+
+  .cards-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+  }
 }
+

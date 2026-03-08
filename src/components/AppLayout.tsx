@@ -4,18 +4,19 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useSystemSettings } from '@/context/SystemSettingsContext';
+import { useMobileSidebar, MobileSidebarProvider } from '@/context/MobileSidebarContext';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, Languages, Sun, Moon } from 'lucide-react';
+import { LogOut, Languages, Sun, Moon, Menu } from 'lucide-react';
 import NotificationCenter from '@/components/NotificationCenter';
 import GlobalSearch from '@/components/GlobalSearch';
+import { cn } from '@/lib/utils';
 
 interface AppLayoutProps {
   children: ReactNode;
 }
 
-// Route → page title key map
 const routeTitles: Record<string, string> = {
   '/': 'dashboard',
   '/employees': 'employees',
@@ -35,11 +36,12 @@ const routeTitles: Record<string, string> = {
   '/settings/general': 'generalSettings',
 };
 
-const AppLayout = ({ children }: AppLayoutProps) => {
+const AppLayoutInner = ({ children }: AppLayoutProps) => {
   const { lang, toggleLang } = useLanguage();
   const { signOut, role } = useAuth();
   const { toggleTheme, isDark } = useTheme();
   const { projectName } = useSystemSettings();
+  const { toggle } = useMobileSidebar();
   const { t } = useTranslation();
   const location = useLocation();
 
@@ -50,33 +52,41 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   const isRtl = lang === 'ar';
 
-  // Dynamic browser tab title
   useEffect(() => {
     const pageKey = routeTitles[location.pathname] || 'dashboard';
-    const pageTitle = t(pageKey);
-    document.title = `${projectName} | ${pageTitle}`;
+    document.title = `${projectName} | ${t(pageKey)}`;
   }, [location.pathname, projectName, t]);
 
   return (
     <div className="min-h-screen bg-background" dir={isRtl ? 'rtl' : 'ltr'}>
       <AppSidebar />
-      <main
-        className="min-h-screen flex flex-col"
-        style={{
-          marginRight: isRtl ? '16rem' : undefined,
-          marginLeft: isRtl ? undefined : '16rem',
-        }}
-      >
+
+      <main className={cn(
+        'min-h-screen flex flex-col transition-all duration-300',
+        isRtl ? 'lg:mr-64' : 'lg:ml-64'
+      )}>
         {/* Header */}
-        <header className="h-14 bg-card border-b border-border flex items-center justify-between px-6 sticky top-0 z-40">
-          <div className="flex items-center gap-3">
+        <header className="h-14 bg-card border-b border-border flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40">
+          <div className="flex items-center gap-2 lg:gap-3">
+            {/* Hamburger — mobile only */}
+            <button
+              onClick={toggle}
+              className="lg:hidden h-8 w-8 flex items-center justify-center rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+              aria-label="Toggle sidebar"
+            >
+              <Menu size={18} />
+            </button>
+
             {role && (
-              <span className="badge-info text-xs">{roleLabels[role] || role}</span>
+              <span className="badge-info text-xs hidden sm:inline-flex">{roleLabels[role] || role}</span>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            {/* Global search */}
-            <GlobalSearch />
+
+          <div className="flex items-center gap-1.5 lg:gap-2">
+            {/* Global search — hidden on very small screens */}
+            <div className="hidden sm:block">
+              <GlobalSearch />
+            </div>
 
             {/* Notifications */}
             <NotificationCenter />
@@ -85,7 +95,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             <button
               onClick={toggleTheme}
               className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
-              title={isDark ? (isRtl ? 'الوضع الفاتح' : 'Light mode') : (isRtl ? 'الوضع الداكن' : 'Dark mode')}
+              title={isDark ? 'Light mode' : 'Dark mode'}
             >
               {isDark ? <Sun size={15} /> : <Moon size={15} />}
             </button>
@@ -95,10 +105,11 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               variant="outline"
               size="sm"
               onClick={toggleLang}
-              className="text-xs font-medium h-8 px-3 gap-1.5"
+              className="text-xs font-medium h-8 px-2 lg:px-3 gap-1"
             >
               <Languages size={13} />
-              {lang === 'ar' ? 'English' : 'عربي'}
+              <span className="hidden sm:inline">{lang === 'ar' ? 'English' : 'عربي'}</span>
+              <span className="sm:hidden">{lang === 'ar' ? 'EN' : 'ع'}</span>
             </Button>
 
             {/* Logout */}
@@ -106,20 +117,27 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               variant="ghost"
               size="sm"
               onClick={signOut}
-              className="h-8 px-3 text-muted-foreground hover:text-destructive gap-1.5 text-xs"
+              className="h-8 px-2 lg:px-3 text-muted-foreground hover:text-destructive gap-1 text-xs"
             >
               <LogOut size={14} />
-              {t('logout')}
+              <span className="hidden sm:inline">{t('logout')}</span>
             </Button>
           </div>
         </header>
+
         {/* Content */}
-        <div className="flex-1 p-6 lg:p-8">
+        <div className="flex-1 p-4 sm:p-5 lg:p-8">
           {children}
         </div>
       </main>
     </div>
   );
 };
+
+const AppLayout = ({ children }: AppLayoutProps) => (
+  <MobileSidebarProvider>
+    <AppLayoutInner>{children}</AppLayoutInner>
+  </MobileSidebarProvider>
+);
 
 export default AppLayout;

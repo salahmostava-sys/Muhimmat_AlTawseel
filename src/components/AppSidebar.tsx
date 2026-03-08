@@ -3,12 +3,13 @@ import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, Users, Clock, Package, Wallet, CreditCard,
   Bike, FileDown, Bell, Smartphone,
-  Settings, Map, ChevronDown, ChevronUp, Fuel, Settings2,
+  Settings, Map, ChevronDown, ChevronUp, Fuel, Settings2, X,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useSystemSettings } from '@/context/SystemSettingsContext';
+import { useMobileSidebar } from '@/context/MobileSidebarContext';
 import { cn } from '@/lib/utils';
 import UserProfileModal from '@/components/UserProfileModal';
 
@@ -18,6 +19,7 @@ const AppSidebar = () => {
   const { user } = useAuth();
   const { isRTL } = useLanguage();
   const { projectName, projectSubtitle, settings } = useSystemSettings();
+  const { isOpen, close } = useMobileSidebar();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     hr: true, finance: false, operations: false, settings: false,
   });
@@ -81,101 +83,129 @@ const AppSidebar = () => {
   }
 
   return (
-    <aside className={cn(
-      'fixed top-0 h-screen w-64 bg-sidebar text-sidebar-foreground flex flex-col z-50',
-      isRTL ? 'right-0 border-l border-sidebar-border' : 'left-0 border-r border-sidebar-border'
-    )}>
-      {/* Logo */}
-      <div className="p-5 border-b border-sidebar-border flex-shrink-0">
-        <Link to="/" className="flex items-center gap-3">
-          {settings?.logo_url ? (
-            <img src={settings.logo_url} alt="logo" className="w-9 h-9 rounded-xl object-cover" />
-          ) : (
-            <div className="w-9 h-9 rounded-xl bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground font-bold text-lg">
-              🚀
-            </div>
-          )}
-          <div>
-            <h1 className="text-sm font-bold text-sidebar-accent-foreground leading-tight">{projectName}</h1>
-            <p className="text-xs text-sidebar-muted">{projectSubtitle}</p>
-          </div>
-        </Link>
-      </div>
+    <>
+      {/* Backdrop — mobile only */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={close}
+          aria-hidden="true"
+        />
+      )}
 
-
-      {/* Dashboard link */}
-      <div className="px-3 pt-3">
-        <Link
-          to="/"
-          className={cn(
-            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-            isActive('/')
-              ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-          )}
-        >
-          <LayoutDashboard size={16} />
-          <span>{t('dashboard')}</span>
-        </Link>
-      </div>
-
-      {/* Nav Groups */}
-      <nav className="flex-1 overflow-y-auto py-2 px-3 space-y-1">
-        {navGroups.map(group => (
-          <div key={group.key}>
-            <button
-              onClick={() => toggleGroup(group.key)}
-              className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-sidebar-muted uppercase tracking-wide hover:text-sidebar-accent-foreground transition-colors rounded-lg hover:bg-sidebar-accent/50"
-            >
-              <span className="flex items-center gap-2">
-                <span>{group.icon}</span>
-                <span>{group.label}</span>
-              </span>
-              {openGroups[group.key] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-            </button>
-
-            {openGroups[group.key] && (
-              <div className="mt-0.5 space-y-0.5 mb-1">
-                {group.items.map(item => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={cn(
-                      'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
-                      isActive(item.path)
-                        ? 'bg-sidebar-primary text-sidebar-primary-foreground font-medium'
-                        : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                    )}
-                  >
-                    <item.icon size={15} className="flex-shrink-0" />
-                    <span>{item.label}</span>
-                  </Link>
-                ))}
+      <aside className={cn(
+        'fixed top-0 h-screen w-64 bg-sidebar text-sidebar-foreground flex flex-col z-50',
+        'transition-transform duration-300 ease-in-out',
+        isRTL
+          ? 'right-0 border-l border-sidebar-border'
+          : 'left-0 border-r border-sidebar-border',
+        // Mobile: hidden by default, slide in when open
+        isRTL
+          ? (isOpen ? 'translate-x-0' : 'translate-x-full')
+          : (isOpen ? 'translate-x-0' : '-translate-x-full'),
+        // Desktop: always visible
+        'lg:translate-x-0',
+      )}>
+        {/* Logo */}
+        <div className="p-4 lg:p-5 border-b border-sidebar-border flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-3 min-w-0">
+              {settings?.logo_url ? (
+                <img src={settings.logo_url} alt="logo" className="w-8 h-8 lg:w-9 lg:h-9 rounded-xl object-cover flex-shrink-0" />
+              ) : (
+                <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-xl bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground font-bold text-base lg:text-lg flex-shrink-0">
+                  🚀
+                </div>
+              )}
+              <div className="min-w-0">
+                <h1 className="text-sm font-bold text-sidebar-accent-foreground leading-tight truncate">{projectName}</h1>
+                <p className="text-xs text-sidebar-muted truncate">{projectSubtitle}</p>
               </div>
+            </Link>
+            {/* Mobile close button */}
+            <button
+              onClick={close}
+              className="lg:hidden h-7 w-7 rounded-lg flex items-center justify-center hover:bg-sidebar-accent/50 text-sidebar-muted flex-shrink-0"
+            >
+              <X size={15} />
+            </button>
+          </div>
+        </div>
+
+        {/* Dashboard link */}
+        <div className="px-3 pt-3">
+          <Link
+            to="/"
+            className={cn(
+              'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+              isActive('/')
+                ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+                : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
             )}
-          </div>
-        ))}
-      </nav>
+          >
+            <LayoutDashboard size={16} />
+            <span>{t('dashboard')}</span>
+          </Link>
+        </div>
 
-      {/* Footer */}
-      <div className="p-4 border-t border-sidebar-border flex-shrink-0">
-        <button
-          onClick={() => setShowProfile(true)}
-          className="w-full flex items-center gap-3 rounded-lg p-1.5 hover:bg-sidebar-accent/50 transition-colors text-start group"
-          title="Profile Settings"
-        >
-          <div className="w-8 h-8 rounded-full bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground text-sm font-bold flex-shrink-0 group-hover:ring-2 group-hover:ring-sidebar-primary/50 transition-all">
-            {user?.email?.[0]?.toUpperCase() || 'A'}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sidebar-accent-foreground truncate">{user?.email}</p>
-            <p className="text-xs text-sidebar-muted">{t('systemAdmin')}</p>
-          </div>
-        </button>
-      </div>
+        {/* Nav Groups */}
+        <nav className="flex-1 overflow-y-auto py-2 px-3 space-y-1">
+          {navGroups.map(group => (
+            <div key={group.key}>
+              <button
+                onClick={() => toggleGroup(group.key)}
+                className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-sidebar-muted uppercase tracking-wide hover:text-sidebar-accent-foreground transition-colors rounded-lg hover:bg-sidebar-accent/50"
+              >
+                <span className="flex items-center gap-2">
+                  <span>{group.icon}</span>
+                  <span>{group.label}</span>
+                </span>
+                {openGroups[group.key] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+              </button>
 
-      {showProfile && <UserProfileModal onClose={() => setShowProfile(false)} />}
-    </aside>
+              {openGroups[group.key] && (
+                <div className="mt-0.5 space-y-0.5 mb-1">
+                  {group.items.map(item => (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2.5 lg:py-2 rounded-lg text-sm transition-colors',
+                        isActive(item.path)
+                          ? 'bg-sidebar-primary text-sidebar-primary-foreground font-medium'
+                          : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                      )}
+                    >
+                      <item.icon size={15} className="flex-shrink-0" />
+                      <span>{item.label}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </nav>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-sidebar-border flex-shrink-0">
+          <button
+            onClick={() => setShowProfile(true)}
+            className="w-full flex items-center gap-3 rounded-lg p-1.5 hover:bg-sidebar-accent/50 transition-colors text-start group"
+            title="Profile Settings"
+          >
+            <div className="w-8 h-8 rounded-full bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground text-sm font-bold flex-shrink-0 group-hover:ring-2 group-hover:ring-sidebar-primary/50 transition-all">
+              {user?.email?.[0]?.toUpperCase() || 'A'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-sidebar-accent-foreground truncate">{user?.email}</p>
+              <p className="text-xs text-sidebar-muted">{t('systemAdmin')}</p>
+            </div>
+          </button>
+        </div>
+
+        {showProfile && <UserProfileModal onClose={() => setShowProfile(false)} />}
+      </aside>
+    </>
   );
 };
 
