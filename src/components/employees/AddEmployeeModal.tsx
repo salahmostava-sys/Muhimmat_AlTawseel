@@ -173,6 +173,7 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
         base_salary: editEmployee.base_salary ? String(editEmployee.base_salary) : '',
         selected_apps: [],
         app_schemes: {},
+        preferred_language: (editEmployee.preferred_language as 'ar' | 'en' | 'ur') || 'ar',
       });
     }
   }, [editEmployee]);
