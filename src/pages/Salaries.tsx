@@ -1331,31 +1331,37 @@ const Salaries = () => {
                     </tr>
                   );
                 })}
-                {/* Totals footer */}
-                <tr className="bg-muted/60 border-t-2 border-border">
-                  <td className={`${tfClass} sticky text-right border-l border-border/30`} style={{ left: 0, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}>الإجمالي</td>
-                  <td className={tfClass} style={{ position: 'sticky', left: 176, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}></td>
-                  <td className={`${tfClass} border-l border-border/30`} style={{ position: 'sticky', left: 288, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}></td>
-                  {PLATFORMS.map(p => (
-                    <td key={p} className={tfClass} style={{ color: PLATFORM_COLORS[p]?.valueColor }}>{(totals.platform[p] || 0).toLocaleString()}</td>
-                  ))}
-                  <td className={`${tfClass} text-primary border-l border-border/30`}>{totals.platformSalaries.toLocaleString()}</td>
-                  <td className={`${tfClass} text-success`}>{totals.incentives.toLocaleString()}</td>
-                  <td className={`${tfClass} text-success`}>{totals.sickAllowance.toLocaleString()}</td>
-                  <td className={`${tfClass} text-success`}>{totals.totalAdditions.toLocaleString()}</td>
-                  <td className={`${tfClass} text-primary border-l border-border/30`}>{totals.totalWithSalary.toLocaleString()}</td>
-                  <td className={`${tfClass} text-destructive`}>{totals.advance.toLocaleString()}</td>
-                  <td className={`${tfClass} text-destructive`}>{totals.externalDed.toLocaleString()}</td>
-                  <td className={`${tfClass} text-destructive`}>{totals.violations.toLocaleString()}</td>
-                  <td className={`${tfClass} text-destructive`}>{totals.walletH.toLocaleString()}</td>
-                  <td className={`${tfClass} text-destructive`}>{totals.walletT.toLocaleString()}</td>
-                  <td className={`${tfClass} text-destructive border-l border-border/30`}>{totals.food.toLocaleString()}</td>
-                  <td className={`${tfClass} text-destructive border-l border-border/30`}>{totals.totalDed.toLocaleString()}</td>
-                  <td className={`${tfClass} text-success text-base`}>{totals.net.toLocaleString()}</td>
-                  <td className={tfClass}>{totals.transfer.toLocaleString()}</td>
-                  <td className={`${tfClass} border-l border-border/30`}>{totals.remaining.toLocaleString()}</td>
-                  <td className={tfClass} colSpan={6}></td>
-                </tr>
+                 {/* Totals footer */}
+                 <tr className="bg-muted/60 border-t-2 border-border">
+                   <td className={`${tfClass} sticky text-right border-l border-border/30`} style={{ left: 0, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}>الإجمالي</td>
+                   <td className={tfClass} style={{ position: 'sticky', left: 176, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}></td>
+                   <td className={`${tfClass} border-l border-border/30`} style={{ position: 'sticky', left: 288, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}></td>
+                   {PLATFORMS.map(p => {
+                     const pc = PLATFORM_COLORS[p];
+                     const totalOrders = totals.platform[p] || 0;
+                     const totalSal = filtered.reduce((s, r) => s + (r.platformSalaries[p] || 0), 0);
+                     return [
+                       <td key={`${p}-orders`} className={tfClass} style={{ color: pc?.valueColor }}>{totalOrders.toLocaleString()}</td>,
+                       <td key={`${p}-salary`} className={`${tfClass} border-l border-border/20`} style={{ color: pc?.valueColor }}>{totalSal.toLocaleString()}</td>,
+                     ];
+                   })}
+                   <td className={`${tfClass} text-primary border-l border-border/30`}>{totals.platformSalaries.toLocaleString()}</td>
+                   <td className={`${tfClass} text-success`}>{totals.incentives.toLocaleString()}</td>
+                   <td className={`${tfClass} text-success`}>{totals.sickAllowance.toLocaleString()}</td>
+                   <td className={`${tfClass} text-success`}>{totals.totalAdditions.toLocaleString()}</td>
+                   <td className={`${tfClass} text-primary border-l border-border/30`}>{totals.totalWithSalary.toLocaleString()}</td>
+                   <td className={`${tfClass} text-destructive`}>{totals.advance.toLocaleString()}</td>
+                   <td className={`${tfClass} text-destructive`}>{totals.externalDed.toLocaleString()}</td>
+                   <td className={`${tfClass} text-destructive`}>{totals.violations.toLocaleString()}</td>
+                   <td className={`${tfClass} text-destructive`}>{totals.walletH.toLocaleString()}</td>
+                   <td className={`${tfClass} text-destructive`}>{totals.walletT.toLocaleString()}</td>
+                   <td className={`${tfClass} text-destructive border-l border-border/30`}>{totals.food.toLocaleString()}</td>
+                   <td className={`${tfClass} text-destructive border-l border-border/30`}>{totals.totalDed.toLocaleString()}</td>
+                   <td className={`${tfClass} text-success text-base`}>{totals.net.toLocaleString()}</td>
+                   <td className={tfClass}>{totals.transfer.toLocaleString()}</td>
+                   <td className={`${tfClass} border-l border-border/30`}>{totals.remaining.toLocaleString()}</td>
+                   <td className={tfClass} colSpan={6}></td>
+                 </tr>
               </tbody>
             </table>
           </div>
