@@ -1989,6 +1989,7 @@ const Salaries = () => {
         <PayslipModal
           row={payslipRow}
           selectedMonth={selectedMonth}
+          companyName={projectName}
           onClose={() => setPayslipRow(null)}
           onApprove={() => { approveRow(payslipRow.id); setPayslipRow(null); }}
         />
