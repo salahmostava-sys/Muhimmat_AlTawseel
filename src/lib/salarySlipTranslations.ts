@@ -82,7 +82,7 @@ const translations: Record<SlipLanguage, SlipTranslations> = {
     statusPaid: 'مصروف',
     sectionEarnings: 'الاستحقاقات',
     payBank: '🏦 بنك',
-    payCash: '💵 ماش',
+    payCash: '💵 كاش',
     sectionPlatforms: 'الطلبات حسب المنصة',
     orders: 'طلب',
     platformTotal: 'إجمالي الراتب الأساسي',
