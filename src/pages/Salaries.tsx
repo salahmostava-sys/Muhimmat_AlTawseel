@@ -1284,6 +1284,28 @@ const Salaries = () => {
         </div>
       </div>
 
+      {/* Setup Required Banner — platforms without scheme */}
+      {appsWithoutScheme.length > 0 && (
+        <div className="flex items-center gap-3 bg-warning/10 border border-warning/30 rounded-xl px-4 py-3">
+          <Settings2 size={18} className="text-warning flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">إعداد مطلوب — منصات بدون سكيمة رواتب</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              المنصات التالية لا تملك سكيمة محددة وسيكون الراتب صفر:
+              <span className="font-semibold text-warning mr-1">{appsWithoutScheme.join(' · ')}</span>
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 text-xs border-warning/40 text-warning hover:bg-warning/10 flex-shrink-0"
+            onClick={() => navigate('/settings/schemes')}
+          >
+            <Settings2 size={13} /> إعداد الآن
+          </Button>
+        </div>
+      )}
+
       {/* Toolbar */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="relative">
