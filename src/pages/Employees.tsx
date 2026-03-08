@@ -175,7 +175,7 @@ const SortIcon = ({ field, sortField, sortDir }: { field: SortField; sortField: 
 // ─── Skeleton Row ─────────────────────────────────────────────────────────────
 const SkeletonRow = () => (
   <tr className="border-b border-border/30">
-    {Array.from({ length: 17 }).map((_, i) => (
+    {Array.from({ length: 18 }).map((_, i) => (
       <td key={i} className="px-3 py-3">
         <Skeleton className="h-4 w-full" />
       </td>
