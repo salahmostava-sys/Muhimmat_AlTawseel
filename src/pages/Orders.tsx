@@ -21,7 +21,7 @@ const monthLabel = (y: number, m: number) =>
 const dateStr = (y: number, m: number, d: number) =>
   `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
-// appColor resolved dynamically from DB via useAppColors hook passed as prop
+import { useAppColors, getAppColor } from '@/hooks/useAppColors';
 
 // ─── SpreadsheetGrid ─────────────────────────────────────────────────
 const SpreadsheetGrid = () => {
