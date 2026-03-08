@@ -18,7 +18,6 @@ import Attendance from "./pages/Attendance";
 import Orders from "./pages/Orders";
 import Salaries from "./pages/Salaries";
 import Advances from "./pages/Advances";
-import Vehicles from "./pages/Vehicles";
 import FuelPage from "./pages/Fuel";
 import Apps from "./pages/Apps";
 import Alerts from "./pages/Alerts";
