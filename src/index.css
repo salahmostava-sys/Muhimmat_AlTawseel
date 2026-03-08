@@ -186,11 +186,11 @@
   }
 
   .ta-th {
-    @apply px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-right whitespace-nowrap;
+    @apply px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-right whitespace-nowrap;
   }
 
   .ta-th-center {
-    @apply px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center whitespace-nowrap;
+    @apply px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center whitespace-nowrap;
   }
 
   .ta-tr {
@@ -198,16 +198,16 @@
   }
 
   .ta-td {
-    @apply px-4 py-3 text-sm text-foreground;
+    @apply px-4 py-2 text-sm text-foreground;
   }
 
   .ta-td-center {
-    @apply px-4 py-3 text-sm text-foreground text-center;
+    @apply px-4 py-2 text-sm text-foreground text-center;
   }
 
   /* ─── Page header ────────────────────────────────────────────── */
   .page-header {
-    @apply space-y-1 mb-6;
+    @apply space-y-1 mb-4;
   }
 
   .page-breadcrumb {
