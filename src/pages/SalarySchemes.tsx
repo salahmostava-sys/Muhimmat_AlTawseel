@@ -22,8 +22,7 @@ type Scheme = {
   assignedCount?: number;
 };
 type Snapshot = { month_year: string };
-
-const appsList = ['هنقرستيشن', 'جاهز', 'كيتا', 'توبو', 'نينجا', 'تويو', 'أمازون'];
+type AppItem = { id: string; name: string; scheme_id: string | null };
 
 const arabicMonths: Record<string, string> = {
   '01': 'يناير', '02': 'فبراير', '03': 'مارس', '04': 'أبريل',
