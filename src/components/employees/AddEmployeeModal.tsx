@@ -142,6 +142,7 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
     phone: '',
     email: '',
     national_id: '',
+    nationality: '',
     bank_account_number: '',
     city: '' as 'makkah' | 'jeddah' | '',
     join_date: '',
