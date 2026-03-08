@@ -315,7 +315,7 @@ const Employees = () => {
   // ── Th helper ──
   const Th = ({ field, label, sortable = true }: { field?: SortField; label: string; sortable?: boolean }) => (
     <th
-      className={`px-3 py-3 text-xs font-semibold text-muted-foreground whitespace-nowrap select-none ${sortable && field ? 'cursor-pointer hover:text-foreground' : ''}`}
+      className={`ta-th select-none ${sortable && field ? 'cursor-pointer hover:text-foreground' : ''}`}
       onClick={sortable && field ? () => handleSort(field) : undefined}
     >
       {label}
@@ -331,11 +331,16 @@ const Employees = () => {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{t('employees')}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{filtered.length} {t('results')} / {data.length} {t('registeredEmployees')}</p>
+      {/* Page header */}
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div className="page-header mb-0">
+          <div className="page-breadcrumb">
+            <span>{t('hr')}</span>
+            <span className="page-breadcrumb-sep">/</span>
+            <span className="text-foreground font-medium">{t('employees')}</span>
+          </div>
+          <h1 className="page-title">{t('employees')}</h1>
+          <p className="page-subtitle">{filtered.length} {t('results')} / {data.length} {t('registeredEmployees')}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button onClick={() => { setEditEmployee(null); setShowAddModal(true); }} className="gap-2">
@@ -403,11 +408,11 @@ const Employees = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
+      <div className="ta-table-wrap">
         <div className="overflow-x-scroll">
           <table className="w-full min-w-[1400px]">
-            <thead>
-              <tr className="border-b border-border/50 bg-muted/30">
+            <thead className="ta-thead">
+              <tr>
                 <Th label={t('photo')} sortable={false} />
                 <Th field="name" label={t('name')} />
                 <Th field="national_id" label={t('nationalId')} />

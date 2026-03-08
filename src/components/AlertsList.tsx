@@ -23,12 +23,6 @@ const typeIcons: Record<string, typeof AlertTriangle> = {
   authorization: Clock,
 };
 
-const severityStyles: Record<string, string> = {
-  urgent: 'badge-urgent',
-  warning: 'badge-warning',
-  info: 'badge-info',
-};
-
 interface AlertItem {
   id: string;
   type: string;
@@ -96,46 +90,72 @@ const AlertsList = () => {
     fetchAlerts();
   }, []);
 
-  if (alerts.length === 0) {
-    return (
-      <div className="bg-card rounded-xl border border-border/50 shadow-sm">
-        <div className="p-5 border-b border-border/50">
-          <h3 className="font-semibold text-foreground">التنبيهات العاجلة</h3>
-        </div>
-        <div className="p-8 text-center text-muted-foreground text-sm">
-          ✅ لا توجد تنبيهات عاجلة
-        </div>
-      </div>
-    );
-  }
+  const severityDot: Record<string, string> = {
+    urgent: 'bg-destructive',
+    warning: 'bg-warning',
+    info: 'bg-info',
+  };
+
+  const severityBadge: Record<string, string> = {
+    urgent: 'badge-urgent',
+    warning: 'badge-warning',
+    info: 'badge-info',
+  };
+
+  const severityIconBg: Record<string, string> = {
+    urgent: 'bg-destructive/10 text-destructive',
+    warning: 'bg-warning/10 text-warning',
+    info: 'bg-info/10 text-info',
+  };
 
   return (
-    <div className="bg-card rounded-xl border border-border/50 shadow-sm">
-      <div className="p-5 border-b border-border/50">
-        <h3 className="font-semibold text-foreground">التنبيهات العاجلة</h3>
+    <div className="chart-card animate-fade-in">
+      {/* Header */}
+      <div className="chart-card-header">
+        <div className="flex items-center gap-2">
+          <h3 className="chart-card-title">التنبيهات العاجلة</h3>
+          {alerts.length > 0 && (
+            <span className="w-5 h-5 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center">
+              {alerts.length}
+            </span>
+          )}
+        </div>
       </div>
-      <div className="divide-y divide-border/50">
-        {alerts.map((alert) => {
-          const Icon = typeIcons[alert.type] || AlertTriangle;
-          return (
-            <div key={alert.id} className="p-4 flex items-center gap-3 hover:bg-muted/50 transition-colors">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                alert.severity === 'urgent' ? 'bg-destructive/10 text-destructive' :
-                alert.severity === 'warning' ? 'bg-warning/10 text-warning' : 'bg-info/10 text-info'
-              }`}>
-                <Icon size={16} />
+
+      {alerts.length === 0 ? (
+        <div className="p-8 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-success/10 flex items-center justify-center mx-auto mb-3">
+            <Shield size={22} className="text-success" />
+          </div>
+          <p className="text-sm font-medium text-foreground">لا توجد تنبيهات عاجلة</p>
+          <p className="text-xs text-muted-foreground mt-1">كل شيء على ما يرام ✅</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-border/40">
+          {alerts.map((alert) => {
+            const Icon = typeIcons[alert.type] || AlertTriangle;
+            return (
+              <div key={alert.id} className="flex items-center gap-3 px-5 py-3.5 hover:bg-muted/30 transition-colors">
+                <div className={`icon-box-sm flex-shrink-0 ${severityIconBg[alert.severity]}`}>
+                  <Icon size={14} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{alert.entityName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {typeLabels[alert.type] || alert.type} — {alert.dueDate}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className={`w-1.5 h-1.5 rounded-full ${severityDot[alert.severity]}`} />
+                  <span className={severityBadge[alert.severity]}>
+                    {alert.daysLeft < 0 ? 'منتهي' : alert.daysLeft === 0 ? 'اليوم' : `${alert.daysLeft}ي`}
+                  </span>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{alert.entityName}</p>
-                <p className="text-xs text-muted-foreground">انتهاء {typeLabels[alert.type] || alert.type} — {alert.dueDate}</p>
-              </div>
-              <span className={severityStyles[alert.severity]}>
-                {alert.daysLeft < 0 ? 'منتهي' : alert.daysLeft === 0 ? 'اليوم' : `${alert.daysLeft} يوم`}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
