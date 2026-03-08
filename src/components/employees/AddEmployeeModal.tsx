@@ -113,10 +113,25 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [schemes, setSchemes] = useState<{ id: string; name: string }[]>([]);
+  const [availableApps, setAvailableApps] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
-    supabase.from('salary_schemes').select('id, name').eq('status', 'active').order('name')
-      .then(({ data }) => { if (data) setSchemes(data); });
+    Promise.all([
+      supabase.from('salary_schemes').select('id, name').eq('status', 'active').order('name'),
+      supabase.from('apps').select('id, name').eq('is_active', true).order('name'),
+    ]).then(([schemesRes, appsRes]) => {
+      if (schemesRes.data) setSchemes(schemesRes.data);
+      if (appsRes.data) setAvailableApps(appsRes.data);
+    });
+    // If editing, load current employee_apps
+    if (editEmployee) {
+      supabase.from('employee_apps').select('app_id, apps(name)').eq('employee_id', editEmployee.id)
+        .then(({ data }) => {
+          if (data) {
+            setForm(f => ({ ...f, selected_apps: data.map((ea: any) => ea.apps?.name).filter(Boolean) }));
+          }
+        });
+    }
   }, []);
 
   const [form, setForm] = useState({
