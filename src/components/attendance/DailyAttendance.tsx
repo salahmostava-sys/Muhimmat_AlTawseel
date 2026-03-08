@@ -123,16 +123,26 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
     const toSave = Object.values(records).filter(r => r.status !== null);
     let saved = 0;
 
+    // Map 'unpaid_leave' → 'leave' for DB compatibility (note saved alongside)
+    const dbStatusMap: Record<AttendanceStatus, 'present' | 'absent' | 'leave' | 'sick' | 'late'> = {
+      present: 'present', absent: 'absent', leave: 'leave',
+      sick: 'sick', late: 'late', unpaid_leave: 'leave',
+    };
     for (const r of toSave) {
+      const noteText = [
+        r.note,
+        r.status === 'unpaid_leave' ? 'إجازة بدون راتب' : '',
+        r.customStatus,
+      ].filter(Boolean).join(' | ') || null;
       const payload = {
         employee_id: r.employeeId,
         date: dateStr,
-        status: r.status as string,
+        status: dbStatusMap[r.status!],
         check_in: r.checkIn || null,
         check_out: r.checkOut || null,
-        note: [r.note, r.customStatus].filter(Boolean).join(' | ') || null,
+        note: noteText,
       };
-      const { error } = await supabase.from('attendance').upsert(payload, {
+      const { error } = await supabase.from('attendance').upsert([payload], {
         onConflict: 'employee_id,date',
       });
       if (!error) saved++;
