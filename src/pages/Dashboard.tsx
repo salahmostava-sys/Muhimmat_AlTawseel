@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import { Users, Wallet, CreditCard, UserCheck, TrendingUp, DollarSign, Bell, ArrowUpRight, Package, MapPin, ShieldCheck, FileText, Car } from 'lucide-react';
 import AlertsList from '@/components/AlertsList';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,17 +15,18 @@ function cn(...classes: (string | undefined | false)[]) {
 }
 
 // ─── Custom Tooltip ───────────────────────────────────────────────
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = forwardRef<HTMLDivElement, any>(({ active, payload, label }, ref) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-card border border-border rounded-xl shadow-card-hover px-3 py-2 text-xs">
+    <div ref={ref} className="bg-card border border-border rounded-xl shadow-card-hover px-3 py-2 text-xs">
       <p className="font-semibold text-foreground mb-1">{label}</p>
       {payload.map((p: any) => (
         <p key={p.name} style={{ color: p.color }}>{p.name}: {p.value}</p>
       ))}
     </div>
   );
-};
+});
+CustomTooltip.displayName = 'CustomTooltip';
 
 // ─── Platform Order Card (Row 1) ──────────────────────────────────
 interface PlatformOrderCardProps {
