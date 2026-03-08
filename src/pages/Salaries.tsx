@@ -2028,8 +2028,14 @@ const Salaries = () => {
             style={{ position: 'fixed', left: '-9999px', top: 0, width: '600px', background: '#ffffff', padding: '16px', fontFamily: meta.fontFamily, zIndex: -1 }}
           >
             <div style={{ marginBottom: 12, borderBottom: '2px solid #465FFF', paddingBottom: 8 }}>
-              <div style={{ fontSize: 16, fontWeight: 800, color: '#465FFF' }}>{t.title} — {row.employeeName}</div>
-              <div style={{ fontSize: 11, color: '#666' }}>{monthLabel} · {meta.flag} {meta.label}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  {projectName && <div style={{ fontSize: 18, fontWeight: 900, color: '#465FFF' }}>{projectName}</div>}
+                  <div style={{ fontSize: 14, fontWeight: 800, color: '#1a1a1a' }}>{t.title} — {row.employeeName}</div>
+                  <div style={{ fontSize: 11, color: '#666' }}>{monthLabel} · {meta.flag} {meta.label}</div>
+                </div>
+                <div style={{ fontSize: 12, color: '#888', textAlign: 'left' }}>{new Date().toLocaleDateString('ar-SA')}</div>
+              </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, background: '#f8f8ff', borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 12 }}>
               <div><span style={{ color: '#888', fontSize: 10 }}>{t.month}: </span><strong>{monthLabel}</strong></div>
