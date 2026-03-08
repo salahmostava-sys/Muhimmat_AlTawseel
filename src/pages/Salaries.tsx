@@ -645,6 +645,7 @@ const Salaries = () => {
         const extDeduction = extMap[emp.id] || 0;
         const cityLabel = emp.city === 'makkah' ? 'مكة' : emp.city === 'jeddah' ? 'جدة' : '—';
         const bankAccount = emp.iban ? emp.iban.slice(-6) : '';
+        const hasIban = !!emp.iban;
 
         return {
           id: `${emp.id}-${selectedMonth}`,
@@ -654,6 +655,8 @@ const Salaries = () => {
           nationalId: emp.national_id || '—',
           city: cityLabel,
           bankAccount,
+          hasIban,
+          paymentMethod: hasIban ? 'bank' as const : 'cash' as const,
           registeredApps,
           platformOrders,
           platformSalaries,
