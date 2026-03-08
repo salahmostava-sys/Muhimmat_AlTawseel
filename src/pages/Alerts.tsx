@@ -171,6 +171,9 @@ const Alerts = () => {
     };
 
     fetchAlerts();
+    // Live polling every 60 seconds
+    const interval = setInterval(fetchAlerts, 60_000);
+    return () => clearInterval(interval);
   }, []);
 
   const filtered = localAlerts.filter(a => {

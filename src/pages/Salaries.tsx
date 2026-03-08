@@ -1540,10 +1540,10 @@ const Salaries = () => {
                                   >
                                     {orders === 0 ? '—' : orders}
                                   </span>
-                                  {orders > 0 && (
-                                    noScheme ? (
-                                      <span className="text-[9px] text-warning font-semibold">⚠️ لا سكيما</span>
-                                    ) : (
+                                   {orders > 0 && (
+                                     noScheme ? (
+                                       <span className="text-[9px] text-orange-500 font-semibold">⚙️ يحتاج إعداد</span>
+                                     ) : (
                                       <span
                                         style={{ color: pc?.valueColor }}
                                         className="text-[10px] opacity-75 font-normal"
