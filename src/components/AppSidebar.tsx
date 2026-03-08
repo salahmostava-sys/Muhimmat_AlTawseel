@@ -63,7 +63,6 @@ const AppSidebar = () => {
         { label: t('schemes'), icon: Settings, path: '/settings/schemes' },
         { label: t('users'), icon: Users, path: '/settings/users' },
         { label: t('permissions'), icon: Settings, path: '/settings/permissions' },
-        { label: t('reports'), icon: BarChart3, path: '/reports' },
       ],
     },
   ];
