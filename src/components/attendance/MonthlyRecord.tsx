@@ -98,7 +98,7 @@ const MonthlyRecord = ({ selectedMonth, selectedYear }: Props) => {
           <table className="w-full text-sm">
             <thead className="ta-thead">
               <tr>
-                <th className={`ta-th sticky ${isRTL ? 'right-0' : 'left-0'} bg-muted/40`}>{t.employee}</th>
+                <th className={`ta-th sticky ${isRTL ? 'right-0' : 'left-0'} ${isRTL ? 'text-right' : 'text-left'} bg-muted/40`}>{t.employee}</th>
                 <th className="ta-th">{t.nationalId}</th>
                 <th className="ta-th-center"><span className="badge-success">{t.present}</span></th>
                 <th className="ta-th-center"><span className="badge-urgent">{t.absent}</span></th>

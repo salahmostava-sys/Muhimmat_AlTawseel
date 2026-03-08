@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Search, Wallet, Download, CheckCircle, Printer, Upload, FileUp, ChevronUp, ChevronDown, ChevronsUpDown, LayoutGrid, Table2, AlertTriangle } from 'lucide-react';
+import { Search, Wallet, Download, CheckCircle, Printer, Upload, FileUp, ChevronUp, ChevronDown, ChevronsUpDown, LayoutGrid, Table2, AlertTriangle, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
@@ -956,6 +956,129 @@ const Salaries = () => {
     toast({ title: '📊 تم التصدير بنجاح' });
   };
 
+  // ── Generate & print individual PDF per employee ──────────────────
+  const generateEmployeePDF = (row: SalaryRow, monthLabel: string) => {
+    const c = computeRow(row);
+    const html = `<html dir="rtl"><head><meta charset="utf-8">
+    <title>كشف راتب — ${row.employeeName}</title>
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:'Segoe UI',Arial,sans-serif;padding:24px;color:#1a1a1a;font-size:13px;background:#fff}
+      .page{max-width:700px;margin:0 auto}
+      .header{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #4f46e5;padding-bottom:12px;margin-bottom:16px}
+      .title{font-size:20px;font-weight:800;color:#4f46e5}
+      .subtitle{font-size:11px;color:#666;margin-top:2px}
+      .badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700}
+      .badge-paid{background:#dcfce7;color:#15803d}
+      .badge-approved{background:#dbeafe;color:#1d4ed8}
+      .badge-pending{background:#fef9c3;color:#b45309}
+      .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#f8f8ff;border-radius:8px;padding:12px;margin-bottom:14px}
+      .info-row{display:flex;flex-direction:column}
+      .info-label{font-size:10px;color:#888;margin-bottom:1px}
+      .info-value{font-size:12px;font-weight:600;color:#111}
+      h3{font-size:12px;font-weight:700;color:#4f46e5;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.5px}
+      table{width:100%;border-collapse:collapse;margin-bottom:10px}
+      td{padding:7px 10px;border:1px solid #e5e7eb;font-size:12px}
+      .label{background:#f3f4f6;font-weight:600;width:55%}
+      .val-blue{color:#2563eb;font-weight:700}
+      .val-green{color:#16a34a;font-weight:700}
+      .val-red{color:#dc2626;font-weight:700}
+      .val-orange{color:#ea580c;font-weight:600}
+      .total-row td{background:#eff6ff;font-weight:700;font-size:13px}
+      .deduction-total td{background:#fff1f2;font-weight:700}
+      .net-row td{background:#f0fdf4;font-size:15px;font-weight:800}
+      .footer{display:flex;justify-content:space-between;margin-top:28px;border-top:1px solid #ddd;padding-top:16px;font-size:11px;color:#555}
+      @media print{body{padding:10px}.page{max-width:100%}}
+    </style></head><body>
+    <div class="page">
+      <div class="header">
+        <div>
+          <div class="title">🚀 كشف راتب شهري</div>
+          <div class="subtitle">${monthLabel}</div>
+        </div>
+        <span class="badge badge-${row.status}">${{ pending: 'معلّق', approved: 'معتمد', paid: 'مصروف' }[row.status]}</span>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-row"><span class="info-label">الاسم الكامل</span><span class="info-value">${row.employeeName}</span></div>
+        <div class="info-row"><span class="info-label">رقم الهوية</span><span class="info-value">${row.nationalId}</span></div>
+        <div class="info-row"><span class="info-label">المدينة</span><span class="info-value">${row.city}</span></div>
+        <div class="info-row"><span class="info-label">طريقة الصرف</span><span class="info-value">${row.paymentMethod === 'bank' ? '🏦 بنكي' : '💵 ماش'}</span></div>
+      </div>
+
+      <h3>الطلبات والراتب حسب المنصة</h3>
+      <table>
+        <tr><td class="label" style="background:#e0e7ff;color:#4338ca;font-weight:700">المنصة</td>
+            <td style="background:#e0e7ff;color:#4338ca;font-weight:700;text-align:center">عدد الطلبات</td>
+            <td style="background:#e0e7ff;color:#4338ca;font-weight:700;text-align:center">الراتب</td></tr>
+        ${row.registeredApps.length > 0 ? row.registeredApps.map(app => {
+          const orders = row.platformOrders[app] || 0;
+          const salary = row.platformSalaries[app] || 0;
+          return `<tr><td class="label">${app}</td><td style="text-align:center">${orders.toLocaleString()}</td><td class="val-blue" style="text-align:center">${salary.toLocaleString()} ر.س</td></tr>`;
+        }).join('') : `<tr><td colspan="3" style="text-align:center;color:#999">لا توجد منصات مسجلة</td></tr>`}
+        <tr class="total-row"><td class="label">إجمالي الراتب الأساسي</td><td></td><td class="val-blue" style="text-align:center">${c.totalPlatformSalary.toLocaleString()} ر.س</td></tr>
+      </table>
+
+      ${c.totalAdditions > 0 ? `
+      <h3>الإضافات</h3>
+      <table>
+        ${row.incentives > 0 ? `<tr><td class="label">الحوافز</td><td class="val-green">+ ${row.incentives.toLocaleString()} ر.س</td></tr>` : ''}
+        ${row.sickAllowance > 0 ? `<tr><td class="label">بدل مرضي</td><td class="val-green">+ ${row.sickAllowance.toLocaleString()} ر.س</td></tr>` : ''}
+        <tr class="total-row"><td class="label">المجموع مع الراتب</td><td class="val-blue">${c.totalWithSalary.toLocaleString()} ر.س</td></tr>
+      </table>` : ''}
+
+      ${c.totalDeductions > 0 ? `
+      <h3>المستقطعات</h3>
+      <table>
+        ${row.advanceDeduction > 0 ? `<tr><td class="label">قسط سلفة</td><td class="val-red">- ${row.advanceDeduction.toLocaleString()} ر.س</td></tr>` : ''}
+        ${row.advanceRemaining > 0 ? `<tr><td class="label">رصيد السلفة المتبقي (للمعلومية)</td><td class="val-orange">${row.advanceRemaining.toLocaleString()} ر.س</td></tr>` : ''}
+        ${row.externalDeduction > 0 ? `<tr><td class="label">خصومات خارجية</td><td class="val-red">- ${row.externalDeduction.toLocaleString()} ر.س</td></tr>` : ''}
+        ${row.violations > 0 ? `<tr><td class="label">مخالفات</td><td class="val-red">- ${row.violations.toLocaleString()} ر.س</td></tr>` : ''}
+        ${row.walletHunger > 0 ? `<tr><td class="label">محفظة هنقرستيشن</td><td class="val-red">- ${row.walletHunger.toLocaleString()} ر.س</td></tr>` : ''}
+        ${row.walletTuyo > 0 ? `<tr><td class="label">محفظة تويو</td><td class="val-red">- ${row.walletTuyo.toLocaleString()} ر.س</td></tr>` : ''}
+        ${row.walletJahiz > 0 ? `<tr><td class="label">محفظة جاهز</td><td class="val-red">- ${row.walletJahiz.toLocaleString()} ر.س</td></tr>` : ''}
+        ${row.foodDamage > 0 ? `<tr><td class="label">تلف طعام</td><td class="val-red">- ${row.foodDamage.toLocaleString()} ر.س</td></tr>` : ''}
+        <tr class="deduction-total"><td class="label">إجمالي المستقطعات</td><td class="val-red">- ${c.totalDeductions.toLocaleString()} ر.س</td></tr>
+      </table>` : ''}
+
+      <h3>الصافي</h3>
+      <table>
+        <tr class="net-row"><td class="label">إجمالي الراتب الصافي</td><td class="val-green">${c.netSalary.toLocaleString()} ر.س</td></tr>
+        ${row.transfer > 0 ? `<tr><td class="label">المبلغ المحوّل</td><td>${row.transfer.toLocaleString()} ر.س</td></tr>` : ''}
+        ${row.transfer > 0 ? `<tr><td class="label">المتبقي نقداً</td><td class="val-orange">${c.remaining.toLocaleString()} ر.س</td></tr>` : ''}
+      </table>
+
+      <div class="footer">
+        <div>توقيع المندوب: _______________________</div>
+        <div>اعتماد المدير: _______________________</div>
+        <div>التاريخ: ${new Date().toLocaleDateString('ar-SA')}</div>
+      </div>
+    </div></body></html>`;
+    return html;
+  };
+
+  const exportAllPDFs = () => {
+    const monthLabel = months.find(m => m.v === selectedMonth)?.l || selectedMonth;
+    const toPrint = filtered.filter(r => r.status !== 'pending' || true); // all rows
+    if (toPrint.length === 0) { toast({ title: 'لا يوجد بيانات للطباعة' }); return; }
+
+    // Open each employee in a separate window/tab for individual printing
+    toPrint.forEach((row, idx) => {
+      setTimeout(() => {
+        const html = generateEmployeePDF(row, monthLabel);
+        const win = window.open('', `_blank_${idx}`);
+        if (win) {
+          win.document.write(html);
+          win.document.close();
+          win.focus();
+          // Auto print after load
+          win.onload = () => win.print();
+        }
+      }, idx * 300); // slight delay between windows
+    });
+    toast({ title: `📄 جارٍ فتح ${toPrint.length} كشف راتب للطباعة...`, description: 'سيتم فتح نافذة منفصلة لكل مندوب' });
+  };
+
   const totals = filtered.reduce((acc, r) => {
     const c = computeRow(r);
     platforms.forEach(p => {
@@ -1082,6 +1205,9 @@ const Salaries = () => {
           )}
           <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={exportExcel}>
             <Download size={13} /> تصدير Excel
+          </Button>
+          <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs text-primary border-primary/40 hover:bg-primary/10" onClick={exportAllPDFs}>
+            <FileText size={13} /> PDF لكل مندوب
           </Button>
           <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={() => setShowImport(true)}>
             <FileUp size={13} /> استيراد Excel

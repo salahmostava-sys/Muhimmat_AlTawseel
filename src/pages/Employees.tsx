@@ -423,7 +423,6 @@ const Employees = () => {
                 <Th field="national_id" label={t('nationalId')} />
                 <Th field="phone" label={t('phone')} />
                 <Th field="job_title" label={t('jobTitle')} />
-                <Th field="email" label={t('email')} />
                 <Th field="city" label={t('city')} />
                 <Th field="join_date" label={t('joinDate')} />
                 <Th field="residency_expiry" label={t('residencyExpiry')} />
@@ -435,6 +434,7 @@ const Employees = () => {
                 <Th label={t('documents')} sortable={false} />
                 <Th field="status" label={t('status')} />
                 <Th label={t('actions')} sortable={false} />
+                <Th field="email" label={t('email')} />
               </tr>
             </thead>
             <tbody>
@@ -472,7 +472,6 @@ const Employees = () => {
                     <td className="px-3 py-2.5 text-sm text-muted-foreground font-mono" dir="ltr">{emp.national_id || '—'}</td>
                     <td className="px-3 py-2.5 text-sm text-muted-foreground" dir="ltr">{emp.phone || '—'}</td>
                     <td className="px-3 py-2.5 text-sm text-muted-foreground">{emp.job_title || '—'}</td>
-                    <td className="px-3 py-2.5 text-sm text-muted-foreground" dir="ltr">{emp.email || '—'}</td>
                     <td className="px-3 py-2.5">
                       <InlineSelect
                         value={emp.city || ''}
@@ -546,6 +545,12 @@ const Employees = () => {
                           <Edit size={15} />
                         </button>
                       </div>
+                    </td>
+                    <td className="px-3 py-2.5 text-sm" dir="ltr">
+                      {emp.email
+                        ? <a href={`mailto:${emp.email}`} className="text-primary hover:underline" title={`إرسال بريد إلى ${emp.email}`}>{emp.email}</a>
+                        : <span className="text-muted-foreground/40">—</span>
+                      }
                     </td>
                   </tr>
                 );
