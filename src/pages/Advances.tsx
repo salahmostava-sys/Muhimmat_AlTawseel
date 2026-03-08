@@ -464,7 +464,7 @@ const AddAdvanceModalInline = ({ open, onClose, onSaved, defaultEmployeeId, allA
         <DialogHeader><DialogTitle>إضافة سلفة جديدة</DialogTitle></DialogHeader>
         <div className="grid grid-cols-2 gap-3">
           {hasActiveAdvance && (
-            <div className="col-span-2 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-300 dark:border-yellow-700 rounded-lg p-3 text-sm text-yellow-700 dark:text-yellow-300">
+            <div className="col-span-2 bg-warning/10 border border-warning/30 rounded-lg p-3 text-sm text-warning">
               ⚠️ هذا المندوب لديه سلفة نشطة — هل تريد المتابعة؟
             </div>
           )}
