@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, Users, Clock, Package, Wallet, CreditCard,
   Bike, FileDown, Bell, Smartphone,
-  Settings, Map, ChevronDown, ChevronUp,
+  Settings, Map, ChevronDown, ChevronUp, Fuel,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
