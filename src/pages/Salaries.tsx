@@ -53,7 +53,8 @@ interface SalaryRow {
   foodDamage: number;
   transfer: number;
   advanceDeduction: number;
-  advanceInstallmentIds: string[]; // IDs of pending installments for this month
+  advanceInstallmentIds: string[];
+  advanceRemaining: number; // Total remaining balance of all active advances
   externalDeduction: number;
   status: 'pending' | 'approved' | 'paid';
 }
@@ -532,25 +533,42 @@ const Salaries = () => {
       });
 
       // ── Fetch advance installments via advances → employee_id ──
-      // Step 1: get all active/paused advances
+      // Step 1: get all active/paused advances with total amount for remaining calc
       const { data: allAdvances } = await supabase
         .from('advances')
-        .select('id, employee_id, status')
+        .select('id, employee_id, status, amount, monthly_amount')
         .in('status', ['active', 'paused']);
 
-      const advMap: Record<string, number> = {};
+      const advMap: Record<string, number> = {};      // this month's installment deduction
       const advInstIds: Record<string, string[]> = {};
       const deductedInstIds: Record<string, string[]> = {};
+      const advRemainingMap: Record<string, number> = {}; // total remaining balance
 
       if (allAdvances && allAdvances.length > 0) {
         const advIdToEmpMap: Record<string, string> = {};
         allAdvances.forEach(adv => { advIdToEmpMap[adv.id] = adv.employee_id; });
 
+        // Fetch installments for this month
         const { data: advInstData } = await supabase
           .from('advance_installments')
           .select('id, advance_id, amount, status')
           .eq('month_year', selectedMonth)
           .in('advance_id', allAdvances.map(a => a.id));
+
+        // Fetch all pending/deferred installments to calculate remaining balance
+        const { data: allPendingInsts } = await supabase
+          .from('advance_installments')
+          .select('advance_id, amount, status')
+          .in('status', ['pending', 'deferred'])
+          .in('advance_id', allAdvances.map(a => a.id));
+
+        // Build remaining balance per employee
+        allPendingInsts?.forEach(inst => {
+          const empId = advIdToEmpMap[inst.advance_id];
+          if (empId) {
+            advRemainingMap[empId] = (advRemainingMap[empId] || 0) + Number(inst.amount);
+          }
+        });
 
         advInstData?.forEach(inst => {
           const empId = advIdToEmpMap[inst.advance_id];
@@ -672,6 +690,7 @@ const Salaries = () => {
           transfer: 0,
           advanceDeduction: advDeduction,
           advanceInstallmentIds: advInstIds[emp.id] || [],
+          advanceRemaining: advRemainingMap[emp.id] || 0,
           externalDeduction: extDeduction,
           status,
         };
@@ -798,6 +817,7 @@ const Salaries = () => {
         is_approved: true,
         approved_by: user?.id ?? null,
         approved_at: nowStr,
+        payment_method: row.paymentMethod,
       }, { onConflict: 'employee_id,month_year' });
 
       if (srError) throw srError;
@@ -1198,6 +1218,7 @@ const Salaries = () => {
                   <th className={thBase}>إجمالي الإضافات</th>
                   <th className={`${thBase} border-l border-border/50`}>الإجمالي مع الراتب</th>
                   <th className={thBase}>قسط سلفة</th>
+                  <th className={thBase}>رصيد السلف المتبقي</th>
                   <th className={thBase}>استقطاعات خارجية</th>
                   <th className={thBase}>مخالفات</th>
                   <th className={thBase}>محفظة هنقرستيشن</th>
@@ -1285,6 +1306,14 @@ const Salaries = () => {
                           </div>
                         ) : <span className="text-muted-foreground/30">—</span>}
                       </td>
+                      <td className={tdClass}>
+                        {r.advanceRemaining > 0 ? (
+                          <div className="flex flex-col items-center">
+                            <span className="text-warning font-semibold">{r.advanceRemaining.toLocaleString()}</span>
+                            <span className="text-[9px] text-muted-foreground">متبقي</span>
+                          </div>
+                        ) : <span className="text-muted-foreground/30">—</span>}
+                      </td>
                       <td className={`${tdClass} text-destructive`}>{r.externalDeduction > 0 ? r.externalDeduction.toLocaleString() : <span className="text-muted-foreground/30">—</span>}</td>
                       <td className={tdClass}><EditableCell value={r.violations} onChange={v => updateRow(r.id, { violations: v })} className="text-destructive" /></td>
                       <td className={tdClass}><EditableCell value={r.walletHunger} onChange={v => updateRow(r.id, { walletHunger: v })} className="text-destructive" /></td>
@@ -1365,6 +1394,7 @@ const Salaries = () => {
                    <td className={`${tfClass} text-success`}>{totals.totalAdditions.toLocaleString()}</td>
                    <td className={`${tfClass} text-primary border-l border-border/30`}>{totals.totalWithSalary.toLocaleString()}</td>
                    <td className={`${tfClass} text-destructive`}>{totals.advance.toLocaleString()}</td>
+                   <td className={`${tfClass} text-warning`}>—</td>
                    <td className={`${tfClass} text-destructive`}>{totals.externalDed.toLocaleString()}</td>
                    <td className={`${tfClass} text-destructive`}>{totals.violations.toLocaleString()}</td>
                    <td className={`${tfClass} text-destructive`}>{totals.walletH.toLocaleString()}</td>

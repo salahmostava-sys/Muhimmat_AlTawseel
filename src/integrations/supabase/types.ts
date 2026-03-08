@@ -683,6 +683,7 @@ export type Database = {
           manual_deduction_note: string | null
           month_year: string
           net_salary: number
+          payment_method: string
           updated_at: string
         }
         Insert: {
@@ -701,6 +702,7 @@ export type Database = {
           manual_deduction_note?: string | null
           month_year: string
           net_salary?: number
+          payment_method?: string
           updated_at?: string
         }
         Update: {
@@ -719,6 +721,7 @@ export type Database = {
           manual_deduction_note?: string | null
           month_year?: string
           net_salary?: number
+          payment_method?: string
           updated_at?: string
         }
         Relationships: [

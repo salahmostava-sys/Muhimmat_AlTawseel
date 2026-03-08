@@ -1,0 +1,1 @@
+ALTER TABLE public.salary_records ADD COLUMN IF NOT EXISTS payment_method text DEFAULT 'cash' NOT NULL;
