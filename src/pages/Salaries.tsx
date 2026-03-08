@@ -690,6 +690,7 @@ const Salaries = () => {
           transfer: 0,
           advanceDeduction: advDeduction,
           advanceInstallmentIds: advInstIds[emp.id] || [],
+          advanceRemaining: advRemainingMap[emp.id] || 0,
           externalDeduction: extDeduction,
           status,
         };
