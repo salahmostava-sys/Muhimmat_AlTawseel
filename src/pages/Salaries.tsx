@@ -980,13 +980,10 @@ const Salaries = () => {
 
       {/* Toolbar */}
       <div className="flex items-center gap-2 flex-wrap">
-        <select
-          value={selectedMonth}
-          onChange={e => setSelectedMonth(e.target.value)}
-          className="h-9 px-3 rounded-lg border border-border bg-background text-sm"
-        >
-          {months.map(m => <option key={m.v} value={m.v}>{m.l}</option>)}
-        </select>
+        <div className="relative">
+          <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="بحث بالاسم..." className="pr-9 h-9 w-48" value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
         <div className="relative">
           <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="بحث بالاسم..." className="pr-9 h-9 w-48" value={search} onChange={e => setSearch(e.target.value)} />

@@ -204,14 +204,18 @@ const Deductions = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><FileDown size={24} /> الخصومات الخارجية</h1>
-          <p className="text-sm text-muted-foreground mt-1">رفع ومراجعة واعتماد خصومات الشركات</p>
+          <nav className="page-breadcrumb">
+            <span>الرئيسية</span>
+            <span className="page-breadcrumb-sep">/</span>
+            <span>الخصومات الخارجية</span>
+          </nav>
+          <h1 className="page-title flex items-center gap-2"><FileDown size={20} /> الخصومات الخارجية</h1>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="gap-2"><Download size={15} /> 📥 تحميل تقرير ▾</Button>
+            <Button variant="outline" size="sm" className="gap-2 h-8"><Download size={14} /> 📥 تحميل تقرير ▾</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={handleExport}>📊 تصدير Excel</DropdownMenuItem>
