@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { salarySchemes } from '@/data/mock';
 import { differenceInDays, parseISO } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -114,6 +113,12 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [schemes, setSchemes] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    supabase.from('salary_schemes').select('id, name').eq('status', 'active').order('name')
+      .then(({ data }) => { if (data) setSchemes(data); });
+  }, []);
 
   const [form, setForm] = useState({
     name: '',
@@ -411,7 +416,7 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
                           <SelectValue placeholder="اختر السكيمة" />
                         </SelectTrigger>
                         <SelectContent>
-                          {salarySchemes.filter(s => s.status === 'active').map(s => (
+                          {schemes.map(s => (
                             <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                           ))}
                         </SelectContent>
