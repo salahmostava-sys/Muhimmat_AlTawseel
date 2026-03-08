@@ -1516,8 +1516,17 @@ const Salaries = () => {
           <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={exportExcel}>
             <Download size={13} /> تصدير Excel
           </Button>
-          <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs text-primary border-primary/40 hover:bg-primary/10" onClick={downloadAllPDFs}>
-            <Download size={13} /> ⬇️ تحميل PDF كل مندوب
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 h-8 text-xs text-primary border-primary/40 hover:bg-primary/10"
+            onClick={startBatchZipExport}
+            disabled={batchQueue.length > 0}
+          >
+            <Archive size={13} />
+            {batchQueue.length > 0
+              ? `جارٍ التصدير ${batchIndex}/${batchQueue.length}...`
+              : 'تحميل ZIP كل الكشوف'}
           </Button>
           <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs text-primary border-primary/40 hover:bg-primary/10" onClick={exportMergedPDF}>
             <FileText size={13} /> PDF مدمج للكل
@@ -1527,6 +1536,25 @@ const Salaries = () => {
           </Button>
         </div>
       </div>
+
+      {/* Progress bar for batch ZIP export */}
+      {batchQueue.length > 0 && (
+        <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-2.5 flex items-center gap-3">
+          <Archive size={14} className="text-primary flex-shrink-0 animate-pulse" />
+          <div className="flex-1">
+            <div className="flex justify-between text-xs mb-1">
+              <span className="text-primary font-medium">جارٍ تجهيز كشوف الرواتب ({batchMonth})</span>
+              <span className="text-muted-foreground">{batchIndex} / {batchQueue.length}</span>
+            </div>
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-300"
+                style={{ width: `${(batchIndex / batchQueue.length) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Cards view */}
       {viewMode === 'cards' && (
