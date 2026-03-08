@@ -319,7 +319,7 @@ const Login = () => {
             return (
               <button key={t} onClick={() => switchTab(t)}
                 className="flex-1 h-9 rounded-lg text-sm font-semibold transition-all duration-200"
-                style={active ? { background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', color: '#fff', boxShadow: '0 2px 12px rgba(59,130,246,0.4)' } : { color: '#9ca3af' }}>
+                style={active ? { background: brandGrad, color: '#fff', boxShadow: '0 2px 12px rgba(70,95,255,0.4)' } : { color: '#9ca3af' }}>
                 {label}
               </button>
             );
