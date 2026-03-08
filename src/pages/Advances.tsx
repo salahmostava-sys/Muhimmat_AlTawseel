@@ -242,7 +242,7 @@ const EmployeeDetailModal = ({ employeeId, employeeName, advances, onClose, onAd
                           {adv.disbursement_date}
                         </td>
                         <td className="p-3 text-center">{adv.amount.toLocaleString()}</td>
-                        <td className="p-3 text-center text-green-600 dark:text-green-400">{paid.toLocaleString()}</td>
+                        <td className="p-3 text-center text-success">{paid.toLocaleString()}</td>
                         <td className="p-3 text-center text-destructive font-semibold">{rem.toLocaleString()}</td>
                         <td className="p-3 text-center">{adv.monthly_amount.toLocaleString()}</td>
                         <td className="p-3 text-center"><span className={statusStyles[adv.status]}>{statusLabels[adv.status]}</span></td>
