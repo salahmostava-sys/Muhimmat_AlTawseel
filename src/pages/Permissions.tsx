@@ -153,6 +153,16 @@ const Permissions = () => {
     setUserPermissions(perms);
   };
 
+  if (currentRole !== 'admin') {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-4">
+        <Shield size={48} className="text-muted-foreground" />
+        <p className="text-lg font-semibold text-foreground">غير مصرح</p>
+        <p className="text-sm text-muted-foreground">هذه الصفحة متاحة للمدير فقط</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Page header */}
