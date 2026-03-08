@@ -558,6 +558,7 @@ const Salaries = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { projectName } = useSystemSettings();
   const { apps: appColorsList } = useAppColors();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
