@@ -643,20 +643,20 @@ const Vehicles = () => {
                   <tr>
                     <th className="ta-th">رقم اللوحة</th>
                     <th className="ta-th">المندوب</th>
-                    <th className="text-center p-4 text-sm font-semibold text-muted-foreground">تاريخ ووقت الاستلام</th>
-                    <th className="text-center p-4 text-sm font-semibold text-muted-foreground">تاريخ ووقت الإعادة</th>
-                    <th className="text-center p-4 text-sm font-semibold text-muted-foreground">المدة</th>
-                    <th className="text-center p-4 text-sm font-semibold text-muted-foreground">الحالة</th>
-                    <th className="text-right p-4 text-sm font-semibold text-muted-foreground">ملاحظة</th>
-                    <th className="text-center p-4 text-sm font-semibold text-muted-foreground">إجراء</th>
+                    <th className="ta-th-center">تاريخ ووقت الاستلام</th>
+                    <th className="ta-th-center">تاريخ ووقت الإعادة</th>
+                    <th className="ta-th-center">المدة</th>
+                    <th className="ta-th-center">الحالة</th>
+                    <th className="ta-th">ملاحظة</th>
+                    <th className="ta-th-center">إجراء</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     Array.from({ length: 5 }).map((_, i) => (
-                      <tr key={i} className="border-b border-border/30">
+                      <tr key={i} className="ta-tr">
                         {Array.from({ length: 8 }).map((_, j) => (
-                          <td key={j} className="p-4"><div className="h-4 bg-muted rounded animate-pulse" /></td>
+                          <td key={j} className="ta-td"><div className="h-4 bg-muted rounded animate-pulse" /></td>
                         ))}
                       </tr>
                     ))
@@ -674,19 +674,19 @@ const Vehicles = () => {
                         ? format(new Date(a.returned_at), 'yyyy-MM-dd HH:mm')
                         : '—';
                       return (
-                        <tr key={a.id} className="border-b border-border/30 hover:bg-muted/20">
-                          <td className="p-4 text-sm font-mono font-semibold text-foreground">{a.vehicles?.plate_number || '—'}</td>
-                          <td className="p-4 text-sm text-foreground">{a.employees?.name || '—'}</td>
-                          <td className="p-4 text-center text-sm text-muted-foreground">{startDisplay}</td>
-                          <td className="p-4 text-center text-sm text-muted-foreground">{returnDisplay}</td>
-                          <td className="p-4 text-center text-sm text-muted-foreground">{calcDuration(a.start_at, a.returned_at)}</td>
-                          <td className="p-4 text-center">
+                        <tr key={a.id} className="ta-tr">
+                          <td className="ta-td font-mono font-semibold">{a.vehicles?.plate_number || '—'}</td>
+                          <td className="ta-td">{a.employees?.name || '—'}</td>
+                          <td className="ta-td-center text-muted-foreground">{startDisplay}</td>
+                          <td className="ta-td-center text-muted-foreground">{returnDisplay}</td>
+                          <td className="ta-td-center text-muted-foreground">{calcDuration(a.start_at, a.returned_at)}</td>
+                          <td className="ta-td-center">
                             {isActive
                               ? <span className="badge-warning">خارجة الآن</span>
                               : <span className="badge-success">مُسلَّمة</span>}
                           </td>
-                          <td className="p-4 text-sm text-muted-foreground max-w-[150px] truncate">{a.notes || '—'}</td>
-                          <td className="p-4 text-center">
+                          <td className="ta-td text-muted-foreground max-w-[150px] truncate">{a.notes || '—'}</td>
+                          <td className="ta-td-center">
                             {isActive && (
                               <Button size="sm" variant="outline" className="text-xs"
                                 onClick={() => setReturnModal({ open: true, assignment: a })}>
