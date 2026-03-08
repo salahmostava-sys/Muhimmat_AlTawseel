@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, Users, Clock, Package, Wallet, CreditCard,
   Bike, FileDown, Bell, Smartphone,
-  Settings, Map, ChevronDown, ChevronUp, Fuel, Settings2, X,
+  Settings, Map, ChevronDown, ChevronRight, Fuel, Settings2, X,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -30,19 +30,10 @@ const AppSidebar = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Group accent colors
-  const groupColors: Record<string, { bg: string; text: string; dot: string }> = {
-    hr:         { bg: 'bg-brand-500/15', text: 'text-brand-400', dot: 'bg-brand-400' },
-    finance:    { bg: 'bg-success/15',   text: 'text-success',   dot: 'bg-success' },
-    operations: { bg: 'bg-warning/15',   text: 'text-warning',   dot: 'bg-warning' },
-    settings:   { bg: 'bg-muted/40',     text: 'text-sidebar-muted', dot: 'bg-sidebar-muted' },
-  };
-
   const navGroups = [
     {
       key: 'hr',
-      label: t('hr'),
-      icon: '👥',
+      sectionLabel: t('hr'),
       items: [
         { label: t('employees'), icon: Users, path: '/employees' },
         { label: t('attendance'), icon: Clock, path: '/attendance' },
@@ -52,8 +43,7 @@ const AppSidebar = () => {
     },
     {
       key: 'finance',
-      label: t('finance'),
-      icon: '💰',
+      sectionLabel: t('finance'),
       items: [
         { label: t('payroll'), icon: Wallet, path: '/salaries' },
         { label: t('advances'), icon: CreditCard, path: '/advances' },
@@ -62,8 +52,7 @@ const AppSidebar = () => {
     },
     {
       key: 'operations',
-      label: t('operations'),
-      icon: '⚙️',
+      sectionLabel: t('operations'),
       items: [
         { label: t('orders'), icon: Package, path: '/orders' },
         { label: t('vehicles'), icon: Bike, path: '/vehicles' },
@@ -73,8 +62,7 @@ const AppSidebar = () => {
     },
     {
       key: 'settings',
-      label: t('settings'),
-      icon: '🔧',
+      sectionLabel: t('settings'),
       items: [
         { label: t('schemes'), icon: Settings, path: '/settings/schemes' },
         { label: t('users'), icon: Users, path: '/settings/users' },
@@ -90,119 +78,113 @@ const AppSidebar = () => {
     setOpenGroups(prev => ({ ...prev, [activeGroup.key]: true }));
   }
 
+  const ChevronIcon = isRTL ? ChevronDown : ChevronDown;
+
   return (
     <>
       {/* Backdrop — mobile only */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
           onClick={close}
           aria-hidden="true"
         />
       )}
 
       <aside className={cn(
-        'fixed top-0 h-screen w-64 flex flex-col z-50 overflow-hidden',
-        'bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))]',
+        'fixed top-0 h-screen w-[260px] flex flex-col z-50',
+        'bg-[hsl(var(--sidebar-background))] border-[hsl(var(--sidebar-border))]',
         'transition-transform duration-300 ease-in-out',
+        'shadow-sidebar',
         isRTL
-          ? 'right-0 border-l border-[hsl(var(--sidebar-border))]'
-          : 'left-0 border-r border-[hsl(var(--sidebar-border))]',
+          ? 'right-0 border-l'
+          : 'left-0 border-r',
         isRTL
           ? (isOpen ? 'translate-x-0' : 'translate-x-full')
           : (isOpen ? 'translate-x-0' : '-translate-x-full'),
         'lg:translate-x-0',
       )}>
-        {/* ── Logo ─────────────────────────────────────────────── */}
-        <div className="px-5 py-4 border-b border-[hsl(var(--sidebar-border))] flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3 min-w-0">
-              {settings?.logo_url ? (
-                <img
-                  src={settings.logo_url}
-                  alt="logo"
-                  className="w-9 h-9 rounded-xl object-cover flex-shrink-0"
-                />
-              ) : (
-                <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-lg font-bold flex-shrink-0 shadow-brand-sm"
-                  style={{ background: 'linear-gradient(135deg, #6172F3, #444CE7)' }}
-                >
-                  🚀
-                </div>
-              )}
-              <div className="min-w-0">
-                <h1 className="text-sm font-semibold text-[hsl(var(--sidebar-accent-foreground))] leading-tight truncate">
-                  {projectName}
-                </h1>
-                <p className="text-xs text-[hsl(var(--sidebar-muted))] truncate leading-tight mt-0.5">
-                  {projectSubtitle}
-                </p>
+
+        {/* ── Logo / Brand ─────────────────────────────────────── */}
+        <div className="h-[70px] px-6 flex items-center justify-between border-b border-[hsl(var(--sidebar-border))] flex-shrink-0">
+          <Link to="/" className="flex items-center gap-3 min-w-0">
+            {settings?.logo_url ? (
+              <img
+                src={settings.logo_url}
+                alt="logo"
+                className="w-9 h-9 rounded-xl object-cover flex-shrink-0"
+              />
+            ) : (
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-base font-bold flex-shrink-0"
+                style={{ background: 'linear-gradient(135deg, #465FFF, #3347D9)' }}
+              >
+                🚀
               </div>
-            </Link>
-            {/* Mobile close */}
-            <button
-              onClick={close}
-              className="lg:hidden w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[hsl(var(--sidebar-accent))/50] text-[hsl(var(--sidebar-muted))] flex-shrink-0 transition-colors"
-            >
-              <X size={15} />
-            </button>
-          </div>
+            )}
+            <div className="min-w-0">
+              <span className="text-sm font-bold text-[hsl(var(--sidebar-accent-foreground))] leading-tight block truncate">
+                {projectName}
+              </span>
+              {projectSubtitle && (
+                <span className="text-[11px] text-[hsl(var(--sidebar-muted))] block truncate leading-tight mt-0.5">
+                  {projectSubtitle}
+                </span>
+              )}
+            </div>
+          </Link>
+
+          {/* Mobile close */}
+          <button
+            onClick={close}
+            className="lg:hidden w-7 h-7 rounded-lg flex items-center justify-center text-[hsl(var(--sidebar-muted))] hover:bg-[hsl(var(--sidebar-accent))] transition-colors flex-shrink-0"
+          >
+            <X size={15} />
+          </button>
         </div>
 
-        {/* ── Dashboard link ───────────────────────────────────── */}
-        <div className="px-3 pt-3">
+        {/* ── Nav ──────────────────────────────────────────────── */}
+        <nav className="flex-1 overflow-y-auto py-4 px-4 space-y-1">
+
+          {/* Dashboard — always visible standalone item */}
           <Link
             to="/"
             className={cn(
-              'flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold w-full transition-all duration-200',
+              'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium w-full transition-all duration-150',
               isActive('/')
-                ? 'text-white shadow-brand-sm'
-                : 'text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))/60] hover:text-[hsl(var(--sidebar-accent-foreground))]'
+                ? 'bg-primary text-primary-foreground shadow-brand-sm'
+                : 'text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-accent-foreground))]'
             )}
-            style={isActive('/') ? { background: 'linear-gradient(135deg, #6172F3, #444CE7)' } : undefined}
           >
-            <LayoutDashboard size={16} />
+            <LayoutDashboard size={17} className={isActive('/') ? 'text-white' : 'text-[hsl(var(--sidebar-muted))]'} />
             <span>{t('dashboard')}</span>
           </Link>
-        </div>
 
-        {/* ── Nav Groups ──────────────────────────────────────── */}
-        <nav className="flex-1 overflow-y-auto py-2 px-3 space-y-0.5">
+          {/* Grouped nav items */}
           {navGroups.map(group => {
-            const gc = groupColors[group.key];
-            const isGroupActive = group.items.some(i => isActive(i.path));
+            const isGroupOpen = openGroups[group.key];
             return (
               <div key={group.key}>
-                {/* Group header */}
+                {/* Section label / collapsible trigger */}
                 <button
                   onClick={() => toggleGroup(group.key)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors hover:bg-[hsl(var(--sidebar-accent))/40] group"
+                  className="w-full flex items-center justify-between px-3 py-2 mt-2 rounded-lg transition-colors hover:bg-[hsl(var(--sidebar-accent))] group"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className={cn('w-6 h-6 rounded-lg flex items-center justify-center text-xs flex-shrink-0', gc.bg)}>
-                      {group.icon}
-                    </span>
-                    <span className={cn(
-                      'text-xs font-semibold uppercase tracking-wider transition-colors',
-                      isGroupActive
-                        ? 'text-[hsl(var(--sidebar-accent-foreground))]'
-                        : 'text-[hsl(var(--sidebar-muted))] group-hover:text-[hsl(var(--sidebar-accent-foreground))]'
-                    )}>
-                      {group.label}
-                    </span>
-                  </div>
-                  <span className="text-[hsl(var(--sidebar-muted))]">
-                    {openGroups[group.key]
-                      ? <ChevronUp size={12} />
-                      : <ChevronDown size={12} />
-                    }
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-muted))] group-hover:text-[hsl(var(--sidebar-accent-foreground))] transition-colors">
+                    {group.sectionLabel}
                   </span>
+                  <ChevronIcon
+                    size={13}
+                    className={cn(
+                      'text-[hsl(var(--sidebar-muted))] transition-transform duration-200',
+                      isGroupOpen ? 'rotate-0' : '-rotate-90'
+                    )}
+                  />
                 </button>
 
-                {/* Group items */}
-                {openGroups[group.key] && (
-                  <div className="mt-0.5 mb-1 space-y-0.5 ps-2">
+                {/* Items */}
+                {isGroupOpen && (
+                  <div className="mt-0.5 space-y-0.5">
                     {group.items.map(item => {
                       const active = isActive(item.path);
                       return (
@@ -210,22 +192,21 @@ const AppSidebar = () => {
                           key={item.path}
                           to={item.path}
                           className={cn(
-                            'relative flex items-center gap-3 px-3 py-2.5 lg:py-2 rounded-xl text-sm transition-all duration-150',
+                            'relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150',
                             active
-                              ? 'sidebar-item-active bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-accent-foreground))] font-medium'
-                              : 'text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))/60] hover:text-[hsl(var(--sidebar-accent-foreground))]'
+                              ? 'sidebar-item-active bg-[hsl(var(--sidebar-accent))] text-primary font-semibold'
+                              : 'text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-accent-foreground))]'
                           )}
+                          onClick={close}
                         >
-                          <span className={cn(
-                            'w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors',
-                            active ? `${gc.bg} ${gc.text}` : 'bg-[hsl(var(--sidebar-accent))/50] text-[hsl(var(--sidebar-muted))]'
-                          )}>
-                            <item.icon size={14} />
-                          </span>
+                          <item.icon
+                            size={16}
+                            className={cn(
+                              'flex-shrink-0 transition-colors',
+                              active ? 'text-primary' : 'text-[hsl(var(--sidebar-muted))]'
+                            )}
+                          />
                           <span>{item.label}</span>
-                          {active && (
-                            <span className={cn('w-1.5 h-1.5 rounded-full ms-auto flex-shrink-0', gc.dot)} />
-                          )}
                         </Link>
                       );
                     })}
@@ -236,25 +217,25 @@ const AppSidebar = () => {
           })}
         </nav>
 
-        {/* ── Footer / User ───────────────────────────────────── */}
-        <div className="p-3 border-t border-[hsl(var(--sidebar-border))] flex-shrink-0">
+        {/* ── Footer / User ────────────────────────────────────── */}
+        <div className="p-4 border-t border-[hsl(var(--sidebar-border))] flex-shrink-0">
           <button
             onClick={() => setShowProfile(true)}
-            className="w-full flex items-center gap-3 rounded-xl p-2.5 hover:bg-[hsl(var(--sidebar-accent))/50] transition-colors text-start group"
+            className="w-full flex items-center gap-3 rounded-xl p-2.5 hover:bg-[hsl(var(--sidebar-accent))] transition-colors text-start group"
           >
             <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 transition-all group-hover:scale-105"
-              style={{ background: 'linear-gradient(135deg, #6172F3, #444CE7)' }}
+              className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+              style={{ background: 'linear-gradient(135deg, #465FFF, #3347D9)' }}
             >
               {user?.email?.[0]?.toUpperCase() || 'A'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-[hsl(var(--sidebar-accent-foreground))] truncate">
+              <p className="text-xs font-semibold text-[hsl(var(--sidebar-accent-foreground))] truncate">
                 {user?.email}
               </p>
-              <p className="text-[10px] text-[hsl(var(--sidebar-muted))]">{t('systemAdmin')}</p>
+              <p className="text-[10px] text-[hsl(var(--sidebar-muted))] mt-0.5">{t('systemAdmin')}</p>
             </div>
-            <div className="w-1.5 h-1.5 rounded-full bg-success flex-shrink-0" title="Online" />
+            <div className="w-2 h-2 rounded-full bg-success flex-shrink-0" title="Online" />
           </button>
         </div>
 
