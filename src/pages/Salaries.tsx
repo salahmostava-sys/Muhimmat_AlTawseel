@@ -1235,11 +1235,11 @@ const Salaries = () => {
     </th>
   );
 
-  const thFrozenBase = "px-3 py-2 text-xs font-semibold text-muted-foreground whitespace-nowrap border-b border-border/50 bg-muted/60 text-right sticky z-20";
-  const thBase = "px-3 py-2 text-xs font-semibold text-muted-foreground whitespace-nowrap border-b border-border/50 bg-muted/50 text-center";
-  const tdFrozenClass = "px-3 py-2 text-xs whitespace-nowrap border-b border-border/20 bg-card sticky z-10";
-  const tdClass = "px-3 py-2 text-xs whitespace-nowrap text-center border-b border-border/20";
-  const tfClass = "px-3 py-2 text-xs font-bold whitespace-nowrap text-center bg-muted/60";
+  const thFrozenBase = "px-3 py-2 text-xs font-semibold text-muted-foreground whitespace-nowrap border border-border/60 bg-muted/60 text-right sticky z-20";
+  const thBase = "px-3 py-2 text-xs font-semibold text-muted-foreground whitespace-nowrap border border-border/60 bg-muted/50 text-center";
+  const tdFrozenClass = "px-3 py-2 text-xs whitespace-nowrap border border-border/40 bg-card sticky z-10";
+  const tdClass = "px-3 py-2 text-xs whitespace-nowrap text-center border border-border/40";
+  const tfClass = "px-3 py-2 text-xs font-bold whitespace-nowrap text-center border border-border/60 bg-muted/60";
   const stickyLeft = (offset: number) => ({ left: offset });
 
   return (
