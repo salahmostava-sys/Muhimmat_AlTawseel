@@ -54,6 +54,7 @@ const AppSidebar = () => {
         { label: t('orders'), icon: Package, path: '/orders' },
         { label: t('vehicles'), icon: Bike, path: '/vehicles' },
         { label: t('vehicleTracking'), icon: Map, path: '/vehicle-tracking' },
+        { label: t('fuel'), icon: Fuel, path: '/fuel' },
       ],
     },
     {
