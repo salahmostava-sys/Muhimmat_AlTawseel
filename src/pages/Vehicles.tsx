@@ -385,6 +385,7 @@ const calcDuration = (start: string | null, end: string | null) => {
 // ─── Main Component ───────────────────────────────────────────────────────────
 const Vehicles = () => {
   const { toast } = useToast();
+  const { permissions } = usePermissions('vehicles');
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);

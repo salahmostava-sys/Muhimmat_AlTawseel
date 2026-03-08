@@ -615,9 +615,11 @@ const Advances = () => {
                 <DropdownMenuItem onClick={handleExport}>📊 تصدير Excel</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            {permissions.can_edit && (
             <Button className="gap-2" onClick={() => { setAddDefaultEmployee(undefined); setAddOpen(true); }}>
               <Plus size={16} /> إضافة سلفة
             </Button>
+            )}
           </div>
         </div>
       </div>
