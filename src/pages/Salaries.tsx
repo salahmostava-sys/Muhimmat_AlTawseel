@@ -424,7 +424,7 @@ const Salaries = () => {
       const startDate = `${selectedMonth}-01`;
       const endDate = `${selectedMonth}-${String(daysInMonth).padStart(2, '0')}`;
 
-      const [empRes, schemesRes, advInstRes, extRes, ordersRes] = await Promise.all([
+      const [empRes, schemesRes, extRes, ordersRes] = await Promise.all([
         supabase
           .from('employees')
           .select('id, name, job_title, national_id, salary_type, base_salary, iban, city')
@@ -435,12 +435,6 @@ const Salaries = () => {
           .from('salary_schemes')
           .select('id, name, name_en, status, target_orders, target_bonus, salary_scheme_tiers(id, from_orders, to_orders, price_per_order, tier_order)')
           .eq('status', 'active'),
-
-        supabase
-          .from('advance_installments')
-          .select('advance_id, amount, advances(employee_id)')
-          .eq('month_year', selectedMonth)
-          .in('status', ['pending', 'deferred']),
 
         supabase
           .from('external_deductions')
@@ -455,15 +449,34 @@ const Salaries = () => {
           .lte('date', endDate),
       ]);
 
+      // ── Fetch advance installments in two steps to avoid nested join issues ──
+      // Step 1: get installments for this month
+      const { data: advInstData } = await supabase
+        .from('advance_installments')
+        .select('advance_id, amount')
+        .eq('month_year', selectedMonth)
+        .in('status', ['pending', 'deferred']);
+
+      // Step 2: get the advances to resolve employee_id
+      const advMap: Record<string, number> = {};
+      if (advInstData && advInstData.length > 0) {
+        const advanceIds = [...new Set(advInstData.map(i => i.advance_id))];
+        const { data: advancesData } = await supabase
+          .from('advances')
+          .select('id, employee_id')
+          .in('id', advanceIds);
+
+        const advIdToEmpMap: Record<string, string> = {};
+        advancesData?.forEach(adv => { advIdToEmpMap[adv.id] = adv.employee_id; });
+
+        advInstData.forEach(inst => {
+          const empId = advIdToEmpMap[inst.advance_id];
+          if (empId) advMap[empId] = (advMap[empId] || 0) + Number(inst.amount);
+        });
+      }
+
       const employees = empRes.data || [];
       const schemes = schemesRes.data || [];
-
-      // Build advance deductions map: employeeId -> total
-      const advMap: Record<string, number> = {};
-      advInstRes.data?.forEach(inst => {
-        const empId = (inst.advances as any)?.employee_id;
-        if (empId) advMap[empId] = (advMap[empId] || 0) + Number(inst.amount);
-      });
 
       // Build external deductions map: employeeId -> total
       const extMap: Record<string, number> = {};
