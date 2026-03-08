@@ -74,19 +74,19 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
           muted: "hsl(var(--sidebar-muted))",
         },
-        // TailAdmin brand palette
+        // TailAdmin v2.2 brand palette — True Blue #465FFF
         brand: {
-          25:  '#F5F8FF',
-          50:  '#EEF4FF',
-          100: '#E0EAFF',
-          200: '#C7D7FD',
-          300: '#A4BCFD',
-          400: '#8098F9',
-          500: '#6172F3',
-          600: '#444CE7',
-          700: '#3538CD',
-          800: '#2D31A6',
-          900: '#2D3282',
+          25:  '#F5F7FF',
+          50:  '#ECF0FF',
+          100: '#D8E0FF',
+          200: '#B0C0FF',
+          300: '#849DFF',
+          400: '#617BFF',
+          500: '#465FFF',   /* primary */
+          600: '#3347D9',
+          700: '#2433B3',
+          800: '#172290',
+          900: '#0E1575',
         },
       },
       borderRadius: {
@@ -97,10 +97,11 @@ export default {
         "3xl": "1.25rem",
       },
       boxShadow: {
-        'card': '0 1px 3px 0 rgba(0,0,0,0.06), 0 1px 2px -1px rgba(0,0,0,0.04)',
+        'card': '0 1px 2px 0 rgba(0,0,0,0.05)',
         'card-hover': '0 4px 12px 0 rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.05)',
-        'brand': '0 4px 14px 0 rgba(97,114,243,0.25)',
-        'brand-sm': '0 2px 8px 0 rgba(97,114,243,0.2)',
+        'brand': '0 4px 14px 0 rgba(70,95,255,0.30)',
+        'brand-sm': '0 2px 8px 0 rgba(70,95,255,0.22)',
+        'sidebar': '4px 0 12px 0 rgba(0,0,0,0.06)',
       },
       keyframes: {
         "accordion-down": {

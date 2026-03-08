@@ -25,6 +25,11 @@ const strengthTextColors = ['', 'text-red-400', 'text-yellow-400', 'text-green-4
 const gradientBtn =
   'w-full h-11 rounded-xl font-bold text-[15px] text-white transition-all duration-150 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-70 flex items-center justify-center gap-2';
 
+// TailAdmin v2.2 Blue
+const brandGrad = 'linear-gradient(135deg, #465FFF, #3347D9)';
+const brandShadow = '0 4px 20px rgba(70,95,255,0.35)';
+const brandShadowHover = '0 4px 28px rgba(70,95,255,0.55)';
+
 const Login = () => {
   const { signIn } = useAuth();
   const { lang, toggleLang, isRTL } = useLanguage();
@@ -175,9 +180,9 @@ const Login = () => {
       )}
 
       <button type="submit" disabled={loading} className={gradientBtn}
-        style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', boxShadow: '0 4px 20px rgba(59,130,246,0.3)' }}
-        onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 25px rgba(59,130,246,0.5)')}
-        onMouseLeave={e => (e.currentTarget.style.boxShadow = '0 4px 20px rgba(59,130,246,0.3)')}>
+        style={{ background: brandGrad, boxShadow: brandShadow }}
+        onMouseEnter={e => (e.currentTarget.style.boxShadow = brandShadowHover)}
+        onMouseLeave={e => (e.currentTarget.style.boxShadow = brandShadow)}>
         {loading ? <><Loader2 size={16} className="animate-spin" /> {isAr ? 'جاري التحقق...' : 'Signing in...'}</> : (isAr ? 'تسجيل الدخول' : 'Sign In')}
       </button>
     </form>
@@ -197,7 +202,7 @@ const Login = () => {
         </p>
       </div>
       <button onClick={() => switchTab('login')} className={gradientBtn}
-        style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', boxShadow: '0 4px 20px rgba(59,130,246,0.3)' }}>
+        style={{ background: brandGrad, boxShadow: brandShadow }}>
         {isAr ? 'العودة لتسجيل الدخول' : 'Back to Sign In'}
       </button>
     </div>
@@ -279,9 +284,9 @@ const Login = () => {
       )}
 
       <button type="submit" disabled={rLoading} className={gradientBtn}
-        style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', boxShadow: '0 4px 20px rgba(59,130,246,0.3)' }}
-        onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 25px rgba(59,130,246,0.5)')}
-        onMouseLeave={e => (e.currentTarget.style.boxShadow = '0 4px 20px rgba(59,130,246,0.3)')}>
+        style={{ background: brandGrad, boxShadow: brandShadow }}
+        onMouseEnter={e => (e.currentTarget.style.boxShadow = brandShadowHover)}
+        onMouseLeave={e => (e.currentTarget.style.boxShadow = brandShadow)}>
         {rLoading ? <><Loader2 size={16} className="animate-spin" /> {isAr ? 'جاري إنشاء الحساب...' : 'Creating account...'}</> : (isAr ? 'إنشاء الحساب' : 'Create Account')}
       </button>
     </form>
@@ -295,7 +300,7 @@ const Login = () => {
         {/* Logo */}
         <div className="flex flex-col items-center mb-6">
           <div className="w-14 h-14 rounded-2xl mb-3 flex items-center justify-center text-3xl shadow-lg"
-            style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)' }}>🚀</div>
+            style={{ background: brandGrad }}>🚀</div>
           <h1 className="text-[22px] font-extrabold text-white text-center">
             {isAr ? 'نظام إدارة التوصيل' : 'Delivery Management System'}
           </h1>
@@ -314,7 +319,7 @@ const Login = () => {
             return (
               <button key={t} onClick={() => switchTab(t)}
                 className="flex-1 h-9 rounded-lg text-sm font-semibold transition-all duration-200"
-                style={active ? { background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', color: '#fff', boxShadow: '0 2px 12px rgba(59,130,246,0.4)' } : { color: '#9ca3af' }}>
+                style={active ? { background: brandGrad, color: '#fff', boxShadow: '0 2px 12px rgba(70,95,255,0.4)' } : { color: '#9ca3af' }}>
                 {label}
               </button>
             );
@@ -341,9 +346,9 @@ const Login = () => {
         animation: 'slideInRight 0.4s ease-out 0.1s both',
       }}>
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full blur-3xl opacity-20 pointer-events-none"
-        style={{ background: 'radial-gradient(circle, #3b82f6 0%, transparent 70%)' }} />
+        style={{ background: 'radial-gradient(circle, #465FFF 0%, transparent 70%)' }} />
       <div className="absolute bottom-1/4 left-1/3 w-40 h-40 rounded-full blur-2xl opacity-15 pointer-events-none"
-        style={{ background: 'radial-gradient(circle, #8b5cf6 0%, transparent 70%)' }} />
+        style={{ background: 'radial-gradient(circle, #3347D9 0%, transparent 70%)' }} />
 
       <div className="relative z-10 text-center max-w-xs">
         <div className="relative inline-block mb-8">
@@ -369,7 +374,7 @@ const Login = () => {
           {features.map((f, i) => (
             <div key={i} className="flex items-center gap-2.5">
               <div className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                style={{ background: i % 2 === 0 ? '#3b82f6' : '#8b5cf6' }} />
+                style={{ background: '#465FFF' }} />
               <span className="text-[13px] text-gray-300">{f}</span>
             </div>
           ))}

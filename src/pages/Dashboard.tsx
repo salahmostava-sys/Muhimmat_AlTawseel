@@ -10,8 +10,8 @@ import {
 } from 'recharts';
 import { useLanguage } from '@/context/LanguageContext';
 
-// TailAdmin brand colors
-const CHART_COLORS = ['#6172F3', '#12B76A', '#F79009', '#F04438', '#7C3AED', '#0EA5E9'];
+// TailAdmin v2.2 brand colors — True Blue #465FFF
+const CHART_COLORS = ['#465FFF', '#12B76A', '#F79009', '#F04438', '#7C3AED', '#0EA5E9'];
 
 // ─── KPI Metric Card ──────────────────────────────────────────────
 interface MetricCardProps {

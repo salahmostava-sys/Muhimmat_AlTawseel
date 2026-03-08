@@ -6,105 +6,107 @@
 
 @layer base {
   :root {
-    /* ─── TailAdmin-inspired light palette ──────────────────── */
-    --background: 210 20% 98%;
-    --foreground: 220 30% 12%;
+    /* ─── TailAdmin v2.2 Light Palette ─────────────────────────── */
+    --background: 220 18% 96%;       /* #f1f5f9 cool page bg */
+    --foreground: 222 47% 11%;       /* #0f172a dark text */
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 30% 12%;
+    --card: 0 0% 100%;               /* pure white cards */
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 30% 12%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Brand: #6172F3 → HSL ~235 85% 64% */
-    --primary: 235 85% 64%;
+    /* Brand: TailAdmin Blue #465FFF → HSL 232 100% 63% */
+    --primary: 232 100% 63%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 93%;
-    --secondary-foreground: 220 25% 20%;
+    --secondary: 220 14% 95%;
+    --secondary-foreground: 222 30% 25%;
 
-    --muted: 220 14% 93%;
-    --muted-foreground: 220 10% 50%;
+    --muted: 220 14% 95%;
+    --muted-foreground: 220 9% 52%;
 
-    --accent: 235 85% 97%;
-    --accent-foreground: 235 85% 45%;
+    --accent: 232 100% 97%;          /* very light blue tint */
+    --accent-foreground: 232 100% 45%;
 
-    --destructive: 4 86% 58%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 69% 39%;
+    --success: 151 65% 42%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 36 91% 50%;
+    --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --info: 210 80% 52%;
+    --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 235 85% 64%;
+    --ring: 232 100% 63%;
 
-    --radius: 0.75rem;
+    --radius: 0.625rem;              /* 10px — TailAdmin default */
 
-    /* Sidebar stays dark always */
-    --sidebar-background: 228 39% 14%;
-    --sidebar-foreground: 220 15% 78%;
-    --sidebar-primary: 235 85% 64%;
+    /* ── Sidebar: WHITE in light mode (TailAdmin v2.2) ─────────── */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 20% 40%;
+    --sidebar-primary: 232 100% 63%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 228 35% 20%;
-    --sidebar-accent-foreground: 220 15% 90%;
-    --sidebar-border: 228 30% 22%;
-    --sidebar-ring: 235 85% 64%;
-    --sidebar-muted: 220 15% 45%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 232 100% 63%;
+    --sidebar-muted: 220 9% 60%;
   }
 
   .dark {
-    --background: 228 28% 8%;
-    --foreground: 213 18% 90%;
+    /* ─── TailAdmin v2.2 Dark Palette ──────────────────────────── */
+    --background: 222 47% 9%;        /* #0c1222 */
+    --foreground: 213 20% 92%;
 
-    --card: 228 28% 11%;
-    --card-foreground: 213 18% 90%;
+    --card: 222 40% 12%;             /* #111827 */
+    --card-foreground: 213 20% 92%;
 
-    --popover: 228 28% 10%;
-    --popover-foreground: 213 18% 90%;
+    --popover: 222 40% 11%;
+    --popover-foreground: 213 20% 92%;
 
-    --primary: 235 82% 68%;
+    --primary: 232 100% 67%;         /* slightly lighter blue */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 228 22% 18%;
-    --secondary-foreground: 213 18% 82%;
+    --secondary: 222 30% 18%;
+    --secondary-foreground: 213 20% 82%;
 
-    --muted: 228 22% 16%;
-    --muted-foreground: 213 14% 52%;
+    --muted: 222 30% 16%;
+    --muted-foreground: 213 15% 50%;
 
-    --accent: 228 30% 20%;
-    --accent-foreground: 235 82% 75%;
+    --accent: 222 35% 20%;
+    --accent-foreground: 232 100% 75%;
 
-    --destructive: 4 80% 58%;
+    --destructive: 0 80% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 55% 44%;
+    --success: 151 55% 46%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 36 88% 55%;
+    --warning: 38 88% 55%;
     --warning-foreground: 0 0% 100%;
 
-    --info: 210 75% 58%;
+    --info: 199 80% 55%;
     --info-foreground: 0 0% 100%;
 
-    --border: 228 22% 20%;
-    --input: 228 22% 20%;
-    --ring: 235 82% 68%;
+    --border: 222 28% 20%;
+    --input: 222 28% 20%;
+    --ring: 232 100% 67%;
 
-    --sidebar-background: 228 35% 7%;
-    --sidebar-foreground: 213 16% 76%;
-    --sidebar-primary: 235 82% 68%;
+    /* ── Sidebar: DARK in dark mode ─────────────────────────────── */
+    --sidebar-background: 222 47% 7%;
+    --sidebar-foreground: 213 18% 72%;
+    --sidebar-primary: 232 100% 67%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 228 30% 13%;
-    --sidebar-accent-foreground: 213 16% 86%;
-    --sidebar-border: 228 28% 14%;
-    --sidebar-ring: 235 82% 68%;
+    --sidebar-accent: 222 35% 13%;
+    --sidebar-accent-foreground: 213 18% 88%;
+    --sidebar-border: 222 30% 14%;
+    --sidebar-ring: 232 100% 67%;
     --sidebar-muted: 213 14% 42%;
   }
 }
@@ -142,9 +144,9 @@
 }
 
 @layer components {
-  /* ─── TailAdmin-style card ──────────────────────────────────── */
+  /* ─── TailAdmin v2.2 card ────────────────────────────────────── */
   .tailcard {
-    @apply bg-card rounded-2xl border border-border shadow-card p-5 transition-shadow duration-200;
+    @apply bg-card rounded-xl border border-border shadow-card p-5 transition-shadow duration-200;
   }
 
   .tailcard:hover {
@@ -153,17 +155,17 @@
 
   /* ─── KPI metric card ───────────────────────────────────────── */
   .metric-card {
-    @apply bg-card rounded-2xl border border-border p-5 shadow-card transition-all duration-200 hover:shadow-card-hover;
+    @apply bg-card rounded-xl border border-border p-5 shadow-card transition-all duration-200 hover:shadow-card-hover;
   }
 
-  /* ─── Stat card (legacy, kept for compatibility) ────────────── */
+  /* ─── Stat card ─────────────────────────────────────────────── */
   .stat-card {
-    @apply bg-card rounded-2xl border border-border p-4 sm:p-5 shadow-card transition-all duration-200 hover:shadow-card-hover hover:border-primary/20;
+    @apply bg-card rounded-xl border border-border p-4 sm:p-5 shadow-card transition-all duration-200 hover:shadow-card-hover hover:border-primary/20;
   }
 
   /* ─── Chart container ───────────────────────────────────────── */
   .chart-card {
-    @apply bg-card rounded-2xl border border-border shadow-card overflow-hidden;
+    @apply bg-card rounded-xl border border-border shadow-card overflow-hidden;
   }
 
   .chart-card-header {
@@ -174,13 +176,13 @@
     @apply text-sm font-semibold text-foreground;
   }
 
-  /* ─── TailAdmin table style ─────────────────────────────────── */
+  /* ─── Table style ───────────────────────────────────────────── */
   .ta-table-wrap {
-    @apply overflow-hidden rounded-2xl border border-border bg-card;
+    @apply overflow-hidden rounded-xl border border-border bg-card;
   }
 
   .ta-thead {
-    @apply border-b border-border bg-muted/40;
+    @apply border-b border-border bg-muted/50;
   }
 
   .ta-th {
@@ -192,18 +194,18 @@
   }
 
   .ta-tr {
-    @apply border-b border-border/60 hover:bg-muted/30 transition-colors duration-150;
+    @apply border-b border-border/60 hover:bg-muted/40 transition-colors duration-150;
   }
 
   .ta-td {
-    @apply px-4 py-3.5 text-sm text-foreground;
+    @apply px-4 py-3 text-sm text-foreground;
   }
 
   .ta-td-center {
-    @apply px-4 py-3.5 text-sm text-foreground text-center;
+    @apply px-4 py-3 text-sm text-foreground text-center;
   }
 
-  /* ─── Page header (breadcrumb + title) ─────────────────────── */
+  /* ─── Page header ────────────────────────────────────────────── */
   .page-header {
     @apply space-y-1 mb-6;
   }
@@ -241,7 +243,7 @@
     @apply inline-flex items-center bg-info/10 text-info text-xs font-medium px-2.5 py-0.5 rounded-full;
   }
 
-  /* ─── Icon box (colored bg for icons) ──────────────────────── */
+  /* ─── Icon box ───────────────────────────────────────────────── */
   .icon-box {
     @apply w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0;
   }
@@ -257,7 +259,7 @@
 
   /* ─── Responsive utilities ──────────────────────────────────── */
   .table-wrapper {
-    @apply w-full overflow-x-auto rounded-2xl border border-border bg-card shadow-card;
+    @apply w-full overflow-x-auto rounded-xl border border-border bg-card shadow-card;
     -webkit-overflow-scrolling: touch;
   }
 
@@ -291,7 +293,7 @@
   transform: translateY(-50%);
   width: 3px;
   height: 60%;
-  background: hsl(var(--sidebar-primary));
+  background: hsl(var(--primary));
   border-radius: 0 3px 3px 0;
 }
 
