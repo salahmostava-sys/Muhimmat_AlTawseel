@@ -453,6 +453,7 @@ const Salaries = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [markingPaid, setMarkingPaid] = useState<string | null>(null);
+  const [editingCell, setEditingCell] = useState<{ rowId: string; platform: string } | null>(null);
 
   // ─── Data fetching ─────────────────────────────────────────────
   useEffect(() => {
