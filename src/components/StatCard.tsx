@@ -19,14 +19,15 @@ const colorMap = {
 const StatCard = ({ title, value, icon: Icon, color, subtitle }: StatCardProps) => {
   return (
     <div className="stat-card animate-fade-in">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">{title}</p>
-          <p className="text-2xl font-bold mt-1 text-foreground">{value}</p>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs sm:text-sm text-muted-foreground leading-tight">{title}</p>
+          <p className="text-lg sm:text-2xl font-bold mt-1 text-foreground leading-tight">{value}</p>
           {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
         </div>
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorMap[color]}`}>
-          <Icon size={20} />
+        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${colorMap[color]}`}>
+          <Icon size={16} className="sm:hidden" />
+          <Icon size={20} className="hidden sm:block" />
         </div>
       </div>
     </div>
