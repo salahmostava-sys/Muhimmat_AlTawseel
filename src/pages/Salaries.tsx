@@ -1167,7 +1167,7 @@ const Salaries = () => {
                     رقم الهوية <SortIcon field="nationalId" sortField={sortField} sortDir={sortDir} />
                   </th>
                   {platforms.map(p => {
-                    const pc = PLATFORM_COLORS[p];
+                    const pc = platformColors[p];
                     const headerScheme = empPlatformScheme
                       ? Object.values(empPlatformScheme).find(m => m[p])?.[p]
                       : null;
