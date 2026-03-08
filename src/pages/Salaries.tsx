@@ -8,16 +8,15 @@ import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useAppColors, AppColorData } from '@/hooks/useAppColors';
+import { useAuth } from '@/context/AuthContext';
 
 // Kept for legacy references — populated dynamically from DB at runtime
 let PLATFORMS: string[] = [];
 const PLATFORM_COLORS: Record<string, { header: string; headerText: string; cellBg: string; valueColor: string; focusBorder: string }> = {};
 
-
 const statusLabels: Record<string, string> = { pending: 'معلّق', approved: 'معتمد', paid: 'مصروف' };
 const statusStyles: Record<string, string> = { pending: 'badge-warning', approved: 'badge-info', paid: 'badge-success' };
 
-// Generate last 6 months dynamically
 const generateMonths = () => {
   const months = [];
   const now = new Date();
@@ -31,7 +30,6 @@ const generateMonths = () => {
 };
 const months = generateMonths();
 
-// ─── Types ────────────────────────────────────────────────────────
 type SortDir = 'asc' | 'desc' | null;
 
 interface SalaryRow {
@@ -54,6 +52,7 @@ interface SalaryRow {
   foodDamage: number;
   transfer: number;
   advanceDeduction: number;
+  advanceInstallmentIds: string[]; // IDs of pending installments for this month
   externalDeduction: number;
   status: 'pending' | 'approved' | 'paid';
 }
@@ -66,19 +65,16 @@ interface SchemeData {
   target_orders: number | null;
   target_bonus: number | null;
   salary_scheme_tiers?: { from_orders: number; to_orders: number | null; price_per_order: number; tier_order: number }[];
-  // For snapshots
   snapshot?: any;
   scheme_id?: string;
 }
 
-// ─── Sort icon ─────────────────────────────────────────────────────
 const SortIcon = ({ field, sortField, sortDir }: { field: string; sortField: string | null; sortDir: SortDir }) => {
   if (sortField !== field) return <ChevronsUpDown size={10} className="inline ml-0.5 opacity-40" />;
   if (sortDir === 'asc') return <ChevronUp size={10} className="inline ml-0.5" />;
   return <ChevronDown size={10} className="inline ml-0.5" />;
 };
 
-// ─── Payslip Modal ────────────────────────────────────────────────
 interface PayslipProps { row: SalaryRow; onClose: () => void; onApprove: () => void; selectedMonth: string; }
 
 const PayslipModal = ({ row, onClose, onApprove, selectedMonth }: PayslipProps) => {
@@ -176,7 +172,7 @@ const PayslipModal = ({ row, onClose, onApprove, selectedMonth }: PayslipProps) 
           <div>
             <p className="font-semibold text-xs text-muted-foreground uppercase tracking-wide mb-2">المستقطعات</p>
             {[
-              { l: 'السلف', v: row.advanceDeduction },
+              { l: 'قسط سلفة', v: row.advanceDeduction },
               { l: 'خصومات خارجية', v: row.externalDeduction },
               { l: 'المخالفات', v: row.violations },
               { l: 'محفظة هنقرستيشن', v: row.walletHunger },
@@ -231,7 +227,6 @@ const PayslipModal = ({ row, onClose, onApprove, selectedMonth }: PayslipProps) 
   );
 };
 
-// ─── Editable number cell ─────────────────────────────────────────
 const EditableCell = ({
   value, onChange, className = '', min = 0, accentColor,
 }: {
@@ -273,7 +268,6 @@ const EditableCell = ({
   );
 };
 
-// ─── Import Modal ─────────────────────────────────────────────────
 const ImportModal = ({ onClose }: { onClose: () => void }) => {
   const { toast } = useToast();
   const [preview, setPreview] = useState<Record<string, string>[]>([]);
@@ -371,7 +365,6 @@ const ImportModal = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
-// ─── Salary calculator from scheme tiers ─────────────────────────
 function calcSalaryFromTiers(
   orders: number,
   tiers: { from_orders: number; to_orders: number | null; price_per_order: number; tier_order: number }[],
@@ -398,6 +391,7 @@ function calcSalaryFromTiers(
 // ─── Main Salaries Page ───────────────────────────────────────────
 const Salaries = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedMonth, setSelectedMonth] = useState(months[0].v);
@@ -408,6 +402,7 @@ const Salaries = () => {
   const [sortDir, setSortDir] = useState<SortDir>(null);
   const [loadingData, setLoadingData] = useState(true);
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [markingPaid, setMarkingPaid] = useState<string | null>(null);
 
   // ─── Data fetching ─────────────────────────────────────────────
   useEffect(() => {
@@ -443,16 +438,15 @@ const Salaries = () => {
           .lte('date', endDate),
       ]);
 
-      // ── Fetch advance installments in two steps to avoid nested join issues ──
-      // Step 1: get installments for this month
+      // ── Fetch advance installments with their IDs ──
       const { data: advInstData } = await supabase
         .from('advance_installments')
-        .select('advance_id, amount')
+        .select('id, advance_id, amount')
         .eq('month_year', selectedMonth)
         .in('status', ['pending', 'deferred']);
 
-      // Step 2: get the advances to resolve employee_id
       const advMap: Record<string, number> = {};
+      const advInstIds: Record<string, string[]> = {};
       if (advInstData && advInstData.length > 0) {
         const advanceIds = [...new Set(advInstData.map(i => i.advance_id))];
         const { data: advancesData } = await supabase
@@ -465,20 +459,22 @@ const Salaries = () => {
 
         advInstData.forEach(inst => {
           const empId = advIdToEmpMap[inst.advance_id];
-          if (empId) advMap[empId] = (advMap[empId] || 0) + Number(inst.amount);
+          if (empId) {
+            advMap[empId] = (advMap[empId] || 0) + Number(inst.amount);
+            if (!advInstIds[empId]) advInstIds[empId] = [];
+            advInstIds[empId].push(inst.id);
+          }
         });
       }
 
       const employees = empRes.data || [];
       const schemes = schemesRes.data || [];
 
-      // Build external deductions map: employeeId -> total
       const extMap: Record<string, number> = {};
       extRes.data?.forEach(d => {
         extMap[d.employee_id] = (extMap[d.employee_id] || 0) + Number(d.amount);
       });
 
-      // Build orders map: employeeId -> { appName -> totalOrders }
       const ordMap: Record<string, Record<string, number>> = {};
       ordersRes.data?.forEach(r => {
         const appName = (r.apps as any)?.name || 'غير معروف';
@@ -486,7 +482,6 @@ const Salaries = () => {
         ordMap[r.employee_id][appName] = (ordMap[r.employee_id][appName] || 0) + r.orders_count;
       });
 
-      // Build salary rows
       const newRows: SalaryRow[] = employees.map(emp => {
         const empOrders = ordMap[emp.id] || {};
         const registeredApps = Object.keys(empOrders).filter(k => empOrders[k] > 0);
@@ -494,24 +489,21 @@ const Salaries = () => {
         const platformOrders: Record<string, number> = {};
         const platformSalaries: Record<string, number> = {};
 
-        // For each platform with orders, calculate salary using active scheme
         PLATFORMS.forEach(p => {
           const orders = empOrders[p] || 0;
           platformOrders[p] = orders;
           if (orders === 0) { platformSalaries[p] = 0; return; }
-          // Find scheme matching this platform name (by name or name_en)
           const scheme = schemes.find(s =>
             s.name.includes(p) || (s.name_en && s.name_en.toLowerCase().includes(p.toLowerCase()))
           );
           if (scheme && scheme.salary_scheme_tiers) {
             platformSalaries[p] = calcSalaryFromTiers(orders, scheme.salary_scheme_tiers, scheme.target_orders, scheme.target_bonus);
           } else if (schemes.length > 0 && scheme === undefined) {
-            // fallback: use first active scheme's tiers if no platform-specific scheme
             const fallback = schemes[0];
             if (fallback?.salary_scheme_tiers) {
               platformSalaries[p] = calcSalaryFromTiers(orders, fallback.salary_scheme_tiers, fallback.target_orders, fallback.target_bonus);
             } else {
-              platformSalaries[p] = orders * 5; // default fallback rate
+              platformSalaries[p] = orders * 5;
             }
           } else {
             platformSalaries[p] = orders * 5;
@@ -520,7 +512,6 @@ const Salaries = () => {
 
         const advDeduction = advMap[emp.id] || 0;
         const extDeduction = extMap[emp.id] || 0;
-
         const cityLabel = emp.city === 'makkah' ? 'مكة' : emp.city === 'jeddah' ? 'جدة' : '—';
         const bankAccount = emp.iban ? emp.iban.slice(-6) : '';
 
@@ -544,6 +535,7 @@ const Salaries = () => {
           foodDamage: 0,
           transfer: 0,
           advanceDeduction: advDeduction,
+          advanceInstallmentIds: advInstIds[emp.id] || [],
           externalDeduction: extDeduction,
           status: 'pending' as const,
         };
@@ -556,7 +548,6 @@ const Salaries = () => {
     fetchAllData();
   }, [selectedMonth]);
 
-  // ─── Computed values ───────────────────────────────────────────
   const computeRow = useCallback((r: SalaryRow) => {
     const totalPlatformSalary = Object.values(r.platformSalaries).reduce((s, v) => s + v, 0);
     const totalAdditions = r.incentives + r.sickAllowance;
@@ -622,7 +613,6 @@ const Salaries = () => {
     setRows(prev => prev.map(r => {
       if (r.id !== id) return r;
       const newOrders = { ...r.platformOrders, [platform]: value };
-      // Recalculate platform salary — will use 5 SAR/order as simple fallback
       const newSalaries = { ...r.platformSalaries, [platform]: value * 5 };
       return { ...r, platformOrders: newOrders, platformSalaries: newSalaries };
     }));
@@ -631,6 +621,53 @@ const Salaries = () => {
   const approveRow = (id: string) => {
     updateRow(id, { status: 'approved' });
     toast({ title: '✅ تم اعتماد الراتب' });
+  };
+
+  // ── Mark as PAID: update installments + complete advance if fully paid ──
+  const markAsPaid = async (row: SalaryRow) => {
+    if (row.advanceInstallmentIds.length === 0) {
+      updateRow(row.id, { status: 'paid' });
+      toast({ title: '✅ تم تسجيل الصرف' });
+      return;
+    }
+
+    setMarkingPaid(row.id);
+    try {
+      const now = new Date().toISOString();
+
+      // Mark installments as deducted
+      await supabase
+        .from('advance_installments')
+        .update({ status: 'deducted', deducted_at: now })
+        .in('id', row.advanceInstallmentIds);
+
+      // For each advance linked to these installments, check if fully paid
+      const { data: instData } = await supabase
+        .from('advance_installments')
+        .select('advance_id, status')
+        .in('id', row.advanceInstallmentIds);
+
+      if (instData) {
+        const advanceIds = [...new Set(instData.map(i => i.advance_id))];
+        for (const advId of advanceIds) {
+          const { data: allInsts } = await supabase
+            .from('advance_installments')
+            .select('status')
+            .eq('advance_id', advId);
+
+          const allDone = allInsts?.every(i => i.status === 'deducted');
+          if (allDone) {
+            await supabase.from('advances').update({ status: 'completed' }).eq('id', advId);
+          }
+        }
+      }
+
+      updateRow(row.id, { status: 'paid' });
+      toast({ title: '✅ تم الصرف وتحديث أقساط السلفة' });
+    } catch (err: any) {
+      toast({ title: 'خطأ أثناء تحديث السلفة', description: err.message, variant: 'destructive' });
+    }
+    setMarkingPaid(null);
   };
 
   const approveAll = () => {
@@ -661,7 +698,7 @@ const Salaries = () => {
       row['بدل مرضي'] = r.sickAllowance;
       row['إجمالي الإضافات'] = c.totalAdditions;
       row['المجموع مع الراتب'] = c.totalWithSalary;
-      row['السلف'] = r.advanceDeduction;
+      row['قسط سلفة'] = r.advanceDeduction;
       row['خصومات خارجية'] = r.externalDeduction;
       row['المخالفات'] = r.violations;
       row['محفظة هنقرستيشن'] = r.walletHunger;
@@ -788,19 +825,16 @@ const Salaries = () => {
           ))}
         </div>
         <div className="flex gap-2 mr-auto items-center">
-          {/* View mode toggle */}
           <div className="flex rounded-lg border border-border overflow-hidden">
             <button
               onClick={() => setViewMode('table')}
               className={`px-2.5 py-1.5 flex items-center gap-1 text-xs transition-colors ${viewMode === 'table' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
-              title="عرض جدول"
             >
               <Table2 size={13} /> جدول
             </button>
             <button
               onClick={() => setViewMode('cards')}
               className={`px-2.5 py-1.5 flex items-center gap-1 text-xs border-r border-l border-border transition-colors ${viewMode === 'cards' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
-              title="عرض بطاقات"
             >
               <LayoutGrid size={13} /> بطاقات
             </button>
@@ -819,7 +853,7 @@ const Salaries = () => {
         </div>
       </div>
 
-      {/* Cards view for large teams */}
+      {/* Cards view */}
       {viewMode === 'cards' && (
         <div>
           {loadingData ? (
@@ -842,7 +876,6 @@ const Salaries = () => {
                 const c = computeRow(r);
                 return (
                   <div key={r.id} className="bg-card border border-border/50 rounded-xl p-4 hover:shadow-md transition-shadow flex flex-col gap-3">
-                    {/* Employee name */}
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold flex-shrink-0">
                         {r.employeeName.slice(0, 1)}
@@ -853,20 +886,15 @@ const Salaries = () => {
                       </div>
                       <span className={statusStyles[r.status]}>{statusLabels[r.status]}</span>
                     </div>
-
-                    {/* Platform orders summary */}
                     {r.registeredApps.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {r.registeredApps.map(app => (
-                          <span key={app} className="text-[10px] px-1.5 py-0.5 rounded-md font-medium"
-                            style={{ backgroundColor: PLATFORM_COLORS[app]?.cellBg || 'hsl(var(--muted))', color: PLATFORM_COLORS[app]?.valueColor || 'hsl(var(--foreground))' }}>
+                          <span key={app} className="text-[10px] px-1.5 py-0.5 rounded-md font-medium bg-muted text-muted-foreground">
                             {app}: {r.platformOrders[app] || 0}
                           </span>
                         ))}
                       </div>
                     )}
-
-                    {/* Financial summary */}
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div className="bg-muted/40 rounded-lg p-2">
                         <p className="text-muted-foreground">الراتب الأساسي</p>
@@ -877,26 +905,25 @@ const Salaries = () => {
                         <p className="font-bold text-destructive">{c.totalDeductions > 0 ? `-${c.totalDeductions.toLocaleString()}` : '—'} {c.totalDeductions > 0 ? 'ر.س' : ''}</p>
                       </div>
                     </div>
-
-                    {/* Deductions breakdown (only if any) */}
-                    {(r.advanceDeduction > 0 || r.externalDeduction > 0) && (
-                      <div className="text-[10px] text-muted-foreground flex gap-3 border-t border-border/30 pt-2">
-                        {r.advanceDeduction > 0 && <span>سلفة: <span className="text-destructive font-semibold">{r.advanceDeduction.toLocaleString()}</span></span>}
-                        {r.externalDeduction > 0 && <span>خارجي: <span className="text-destructive font-semibold">{r.externalDeduction.toLocaleString()}</span></span>}
+                    {r.advanceDeduction > 0 && (
+                      <div className="text-[10px] bg-orange-50 dark:bg-orange-950/20 rounded px-2 py-1 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800">
+                        💳 قسط سلفة: <span className="font-bold">{r.advanceDeduction.toLocaleString()} ر.س</span>
                       </div>
                     )}
-
-                    {/* Net salary */}
                     <div className="flex items-center justify-between bg-success/10 rounded-lg px-3 py-2 mt-auto">
                       <span className="text-xs text-muted-foreground">الصافي</span>
                       <span className="text-base font-black text-success">{c.netSalary.toLocaleString()} ر.س</span>
                     </div>
-
-                    {/* Actions */}
                     <div className="flex gap-2">
                       {r.status === 'pending' && (
                         <Button size="sm" variant="outline" className="flex-1 h-7 text-xs gap-1 text-success border-success/30 hover:bg-success/10" onClick={() => approveRow(r.id)}>
                           <CheckCircle size={11} /> اعتماد
+                        </Button>
+                      )}
+                      {r.status === 'approved' && (
+                        <Button size="sm" variant="outline" className="flex-1 h-7 text-xs gap-1 text-primary border-primary/30 hover:bg-primary/10"
+                          onClick={() => markAsPaid(r)} disabled={markingPaid === r.id}>
+                          {markingPaid === r.id ? '...' : '✅ تم الصرف'}
                         </Button>
                       )}
                       <Button size="sm" variant="outline" className="flex-1 h-7 text-xs gap-1" onClick={() => setPayslipRow(r)}>
@@ -926,7 +953,6 @@ const Salaries = () => {
           <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-380px)]">
             <table className="text-sm border-collapse" style={{ minWidth: 2200 }}>
               <thead className="sticky top-0 z-30">
-                {/* Group headers */}
                 <tr className="bg-muted/70 border-b border-border/50">
                   <th colSpan={3} className={`${thFrozenBase} border-l border-border/50`} style={stickyLeft(0)}>بيانات المندوب</th>
                   <th colSpan={7} className="px-3 py-2 text-xs font-semibold text-primary whitespace-nowrap border-b border-border/50 bg-muted/40 text-center border-l border-border/50">
@@ -939,7 +965,6 @@ const Salaries = () => {
                   <th colSpan={2} className="px-3 py-2 text-xs font-semibold text-muted-foreground whitespace-nowrap border-b border-border/50 bg-muted/40 text-center border-l border-border/50">معلومات الصرف</th>
                   <th colSpan={3} className="px-3 py-2 text-xs font-semibold text-muted-foreground whitespace-nowrap border-b border-border/50 bg-muted/40 text-center">الإجراءات</th>
                 </tr>
-                {/* Column headers */}
                 <tr className="bg-muted/50">
                   <th className={`${thFrozenBase} w-44 cursor-pointer hover:text-foreground select-none`} style={stickyLeft(0)} onClick={() => handleSort('employeeName')}>
                     الاسم <SortIcon field="employeeName" sortField={sortField} sortDir={sortDir} />
@@ -954,7 +979,7 @@ const Salaries = () => {
                     const pc = PLATFORM_COLORS[p];
                     return (
                       <th key={p} className="px-3 py-2 text-xs font-semibold whitespace-nowrap border-b border-border/50 text-center cursor-pointer select-none hover:opacity-90 transition-opacity"
-                        style={{ backgroundColor: pc.header, color: pc.headerText }}
+                        style={{ backgroundColor: pc?.header, color: pc?.headerText }}
                         onClick={() => handleSort(p)}>
                         {p} <SortIcon field={p} sortField={sortField} sortDir={sortDir} />
                       </th>
@@ -965,7 +990,7 @@ const Salaries = () => {
                   <th className="px-3 py-2 text-xs font-semibold text-muted-foreground whitespace-nowrap border-b border-border/50 bg-muted/50 text-center">بدل مرضي</th>
                   <ThSort field="totalAdditions" label="إجمالي الإضافات" className="text-success bg-muted/50 text-muted-foreground" />
                   <th className="px-3 py-2 text-xs font-semibold text-primary whitespace-nowrap border-b border-border/50 bg-muted/50 text-center border-l border-border/50">المجموع مع الراتب</th>
-                  <ThSort field="advanceDeduction" label="السلف" className="text-destructive bg-muted/50 text-muted-foreground" />
+                  <ThSort field="advanceDeduction" label="قسط سلفة" className="text-destructive bg-muted/50 text-muted-foreground" />
                   <th className="px-3 py-2 text-xs font-semibold text-muted-foreground whitespace-nowrap border-b border-border/50 bg-muted/50 text-center">خصومات خارجية</th>
                   <th className="px-3 py-2 text-xs font-semibold text-muted-foreground whitespace-nowrap border-b border-border/50 bg-muted/50 text-center">المخالفات</th>
                   <th className="px-3 py-2 text-xs font-semibold text-muted-foreground whitespace-nowrap border-b border-border/50 bg-muted/50 text-center">محفظة هنقر</th>
@@ -979,6 +1004,7 @@ const Salaries = () => {
                   <th className="px-3 py-2 text-xs font-semibold text-muted-foreground whitespace-nowrap border-b border-border/50 bg-muted/50 text-center border-l border-border/50">المدينة</th>
                   <ThSort field="status" label="الحالة" className="bg-muted/50 text-muted-foreground" />
                   <th className="px-3 py-2 text-xs font-semibold text-muted-foreground whitespace-nowrap border-b border-border/50 bg-muted/50 text-center">اعتماد</th>
+                  <th className="px-3 py-2 text-xs font-semibold text-muted-foreground whitespace-nowrap border-b border-border/50 bg-muted/50 text-center">تم الصرف</th>
                   <th className="px-3 py-2 text-xs font-semibold text-muted-foreground whitespace-nowrap border-b border-border/50 bg-muted/50 text-center">PDF</th>
                 </tr>
               </thead>
@@ -1004,13 +1030,13 @@ const Salaries = () => {
                       {PLATFORMS.map(p => {
                         const pc = PLATFORM_COLORS[p];
                         return (
-                          <td key={p} className={tdClass} style={{ backgroundColor: r.registeredApps.includes(p) ? pc.cellBg : undefined }}>
+                          <td key={p} className={tdClass} style={{ backgroundColor: r.registeredApps.includes(p) ? pc?.cellBg : undefined }}>
                             {r.registeredApps.includes(p) ? (
                               <div className="flex flex-col items-center gap-0.5">
                                 <EditableCell
                                   value={r.platformOrders[p] || 0}
                                   onChange={v => updatePlatformOrders(r.id, p, v)}
-                                  accentColor={pc.valueColor}
+                                  accentColor={pc?.valueColor}
                                 />
                                 <span className="text-muted-foreground/60 text-[10px]">
                                   = {(r.platformSalaries[p] || 0).toLocaleString()} ر.س
@@ -1027,7 +1053,14 @@ const Salaries = () => {
                       <td className={tdClass}><EditableCell value={r.sickAllowance} onChange={v => updateRow(r.id, { sickAllowance: v })} className="text-success" /></td>
                       <td className={`${tdClass} text-success font-semibold`}>{c.totalAdditions.toLocaleString()}</td>
                       <td className={`${tdClass} font-bold text-primary border-l border-border/20`}>{c.totalWithSalary.toLocaleString()}</td>
-                      <td className={`${tdClass} text-destructive`}>{r.advanceDeduction > 0 ? r.advanceDeduction.toLocaleString() : <span className="text-muted-foreground/30">—</span>}</td>
+                      <td className={`${tdClass}`}>
+                        {r.advanceDeduction > 0 ? (
+                          <div className="flex flex-col items-center">
+                            <span className="text-destructive font-semibold">{r.advanceDeduction.toLocaleString()}</span>
+                            <span className="text-[9px] text-orange-500">قسط سلفة</span>
+                          </div>
+                        ) : <span className="text-muted-foreground/30">—</span>}
+                      </td>
                       <td className={`${tdClass} text-destructive`}>{r.externalDeduction > 0 ? r.externalDeduction.toLocaleString() : <span className="text-muted-foreground/30">—</span>}</td>
                       <td className={tdClass}><EditableCell value={r.violations} onChange={v => updateRow(r.id, { violations: v })} className="text-destructive" /></td>
                       <td className={tdClass}><EditableCell value={r.walletHunger} onChange={v => updateRow(r.id, { walletHunger: v })} className="text-destructive" /></td>
@@ -1056,6 +1089,18 @@ const Salaries = () => {
                         {r.status === 'pending' && (
                           <button onClick={() => approveRow(r.id)} className="text-success hover:text-success/70 transition-colors" title="اعتماد">
                             <CheckCircle size={14} />
+                          </button>
+                        )}
+                      </td>
+                      <td className={tdClass}>
+                        {r.status === 'approved' && (
+                          <button
+                            onClick={() => markAsPaid(r)}
+                            disabled={markingPaid === r.id}
+                            className="text-primary hover:text-primary/70 transition-colors text-xs font-semibold"
+                            title="تم الصرف"
+                          >
+                            {markingPaid === r.id ? '...' : '✅'}
                           </button>
                         )}
                       </td>
@@ -1090,13 +1135,13 @@ const Salaries = () => {
                   <td className={`${tfClass} text-success text-base`}>{totals.net.toLocaleString()}</td>
                   <td className={tfClass}>{totals.transfer.toLocaleString()}</td>
                   <td className={`${tfClass} border-l border-border/30`}>{totals.remaining.toLocaleString()}</td>
-                   <td className={tfClass} colSpan={5}></td>
-                 </tr>
-               </tbody>
-             </table>
-           </div>
-         )}
-       </div>
+                  <td className={tfClass} colSpan={6}></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
       )}
 
       {payslipRow && (
