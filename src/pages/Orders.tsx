@@ -442,7 +442,7 @@ const MonthSummary = () => {
               <tr className="border-b border-border/50 bg-muted/30">
                 <th className="text-right p-4 font-semibold text-muted-foreground sticky right-0 bg-muted/30">المندوب</th>
                 {apps.map(app => {
-                  const c = appColor(app.name);
+                  const c = getAppColor(appColorsList, app.name);
                   return (
                     <th key={app.id} className="text-center p-3 font-semibold min-w-[80px]"
                       style={{ backgroundColor: c.bg, color: c.text }}>
