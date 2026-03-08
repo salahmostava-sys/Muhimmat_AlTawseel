@@ -998,10 +998,6 @@ const Salaries = () => {
           <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="بحث بالاسم..." className="pr-9 h-9 w-48" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <div className="relative">
-          <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="بحث بالاسم..." className="pr-9 h-9 w-48" value={search} onChange={e => setSearch(e.target.value)} />
-        </div>
         <div className="flex gap-1">
           {[{ v: 'all', l: 'الكل' }, { v: 'pending', l: 'معلّق' }, { v: 'approved', l: 'معتمد' }, { v: 'paid', l: 'مصروف' }].map(s => (
             <button key={s.v} onClick={() => setStatusFilter(s.v)}
