@@ -554,6 +554,24 @@ const Salaries = () => {
         ordMap[r.employee_id][appName] = (ordMap[r.employee_id][appName] || 0) + r.orders_count;
       });
 
+      // ── Build emp→platform→scheme map from employee_apps + employee_scheme ──
+      const builtEmpPlatformScheme: Record<string, Record<string, SchemeData>> = {};
+      empSchemeRes.data?.forEach((ea: any) => {
+        const appName = ea.apps?.name;
+        if (!appName) return;
+        const empId = ea.employee_id;
+        // employee_scheme is an array (one emp can have multiple schemes)
+        const schemeLinks = Array.isArray(ea.employee_scheme) ? ea.employee_scheme : [];
+        for (const link of schemeLinks) {
+          const s = link.salary_schemes;
+          if (!s) continue;
+          if (!builtEmpPlatformScheme[empId]) builtEmpPlatformScheme[empId] = {};
+          builtEmpPlatformScheme[empId][appName] = s as SchemeData;
+          break; // first assignment wins per platform
+        }
+      });
+      setEmpPlatformScheme(builtEmpPlatformScheme);
+
       const newRows: SalaryRow[] = employees.map(emp => {
         const empOrders = ordMap[emp.id] || {};
         const registeredApps = Object.keys(empOrders).filter(k => empOrders[k] > 0);
@@ -565,18 +583,16 @@ const Salaries = () => {
           const orders = empOrders[p] || 0;
           platformOrders[p] = orders;
           if (orders === 0) { platformSalaries[p] = 0; return; }
-          const scheme = schemes.find(s =>
+
+          // Priority: employee-specific scheme → name-match → fallback first scheme
+          const empScheme = builtEmpPlatformScheme[emp.id]?.[p];
+          const nameScheme = schemes.find(s =>
             s.name.includes(p) || (s.name_en && s.name_en.toLowerCase().includes(p.toLowerCase()))
           );
+          const scheme = empScheme || nameScheme || (schemes.length > 0 ? schemes[0] : null);
+
           if (scheme && scheme.salary_scheme_tiers) {
             platformSalaries[p] = calcSalaryFromTiers(orders, scheme.salary_scheme_tiers, scheme.target_orders, scheme.target_bonus);
-          } else if (schemes.length > 0 && scheme === undefined) {
-            const fallback = schemes[0];
-            if (fallback?.salary_scheme_tiers) {
-              platformSalaries[p] = calcSalaryFromTiers(orders, fallback.salary_scheme_tiers, fallback.target_orders, fallback.target_bonus);
-            } else {
-              platformSalaries[p] = orders * 5;
-            }
           } else {
             platformSalaries[p] = orders * 5;
           }
