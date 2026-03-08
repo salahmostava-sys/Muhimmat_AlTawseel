@@ -44,7 +44,6 @@ const AppSidebar = () => {
         { label: t('payroll'), icon: Wallet, path: '/salaries' },
         { label: t('advances'), icon: CreditCard, path: '/advances' },
         { label: t('deductions'), icon: FileDown, path: '/deductions' },
-        
       ],
     },
     {
@@ -77,8 +76,8 @@ const AppSidebar = () => {
 
   return (
     <aside className={cn(
-      "fixed top-0 h-screen w-64 bg-sidebar text-sidebar-foreground flex flex-col z-50",
-      isRTL ? "right-0 border-l border-sidebar-border" : "left-0 border-r border-sidebar-border"
+      'fixed top-0 h-screen w-64 bg-sidebar text-sidebar-foreground flex flex-col z-50',
+      isRTL ? 'right-0 border-l border-sidebar-border' : 'left-0 border-r border-sidebar-border'
     )}>
       {/* Logo */}
       <div className="p-5 border-b border-sidebar-border flex-shrink-0">
@@ -87,8 +86,8 @@ const AppSidebar = () => {
             🚀
           </div>
           <div>
-            <h1 className="text-sm font-bold text-sidebar-accent-foreground leading-tight">نظام التوصيل</h1>
-            <p className="text-xs text-sidebar-muted">إدارة المناديب</p>
+            <h1 className="text-sm font-bold text-sidebar-accent-foreground leading-tight">{t('appName')}</h1>
+            <p className="text-xs text-sidebar-muted">{t('appSubtitle')}</p>
           </div>
         </Link>
       </div>
@@ -151,11 +150,11 @@ const AppSidebar = () => {
       <div className="p-4 border-t border-sidebar-border flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground text-sm font-bold">
-            {user?.email?.[0]?.toUpperCase() || 'أ'}
+            {user?.email?.[0]?.toUpperCase() || 'A'}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-sidebar-accent-foreground truncate">{user?.email}</p>
-            <p className="text-xs text-sidebar-muted">مدير النظام</p>
+            <p className="text-xs text-sidebar-muted">{t('systemAdmin')}</p>
           </div>
         </div>
       </div>
