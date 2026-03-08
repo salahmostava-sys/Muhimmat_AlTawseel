@@ -906,6 +906,8 @@ export type Database = {
           id: string
           notes: string | null
           reason: string | null
+          returned_at: string | null
+          start_at: string | null
           start_date: string
           vehicle_id: string
         }
@@ -917,6 +919,8 @@ export type Database = {
           id?: string
           notes?: string | null
           reason?: string | null
+          returned_at?: string | null
+          start_at?: string | null
           start_date?: string
           vehicle_id: string
         }
@@ -928,6 +932,8 @@ export type Database = {
           id?: string
           notes?: string | null
           reason?: string | null
+          returned_at?: string | null
+          start_at?: string | null
           start_date?: string
           vehicle_id?: string
         }
@@ -950,6 +956,7 @@ export type Database = {
       }
       vehicles: {
         Row: {
+          authorization_expiry: string | null
           brand: string | null
           created_at: string
           id: string
@@ -964,6 +971,7 @@ export type Database = {
           year: number | null
         }
         Insert: {
+          authorization_expiry?: string | null
           brand?: string | null
           created_at?: string
           id?: string
@@ -978,6 +986,7 @@ export type Database = {
           year?: number | null
         }
         Update: {
+          authorization_expiry?: string | null
           brand?: string | null
           created_at?: string
           id?: string
@@ -1028,7 +1037,13 @@ export type Database = {
         | "not_sponsored"
         | "absconded"
         | "terminated"
-      vehicle_status: "active" | "maintenance" | "inactive"
+      vehicle_status:
+        | "active"
+        | "maintenance"
+        | "inactive"
+        | "breakdown"
+        | "rental"
+        | "ended"
       vehicle_type: "motorcycle" | "car"
     }
     CompositeTypes: {
@@ -1175,7 +1190,14 @@ export const Constants = {
         "absconded",
         "terminated",
       ],
-      vehicle_status: ["active", "maintenance", "inactive"],
+      vehicle_status: [
+        "active",
+        "maintenance",
+        "inactive",
+        "breakdown",
+        "rental",
+        "ended",
+      ],
       vehicle_type: ["motorcycle", "car"],
     },
   },
