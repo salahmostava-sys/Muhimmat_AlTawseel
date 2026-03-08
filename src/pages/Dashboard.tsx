@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import { Users, Wallet, CreditCard, UserCheck, TrendingUp, DollarSign, Bell, ArrowUpRight, Package, MapPin, ShieldCheck, FileText, Car } from 'lucide-react';
 import AlertsList from '@/components/AlertsList';
 import { supabase } from '@/integrations/supabase/client';
