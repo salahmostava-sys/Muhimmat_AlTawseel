@@ -332,7 +332,7 @@ const Employees = () => {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Page header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div className="page-header mb-0">
