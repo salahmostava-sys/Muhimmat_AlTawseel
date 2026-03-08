@@ -4,6 +4,7 @@ import {
   Fuel, TrendingUp, DollarSign, Package,
   X, Check, Activity,
 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -549,15 +550,30 @@ const FuelPage = () => {
           <Search size={15} className="absolute start-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="بحث باسم المندوب..." className="ps-9 h-9" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <Button variant="outline" className="gap-2" onClick={() => setShowImport(true)}>
-          <Upload size={15} /> استيراد GPS
-        </Button>
         <Button className="gap-2" onClick={() => { setEditRow(null); setShowManual(true); }}>
           <Plus size={15} /> إدخال يدوي
         </Button>
-        <Button variant="outline" className="gap-2" onClick={handleExport}>
-          <Download size={15} /> تصدير Excel
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="gap-2"><Download size={15} /> 📥 تحميل ▾</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleExport}>📊 تصدير Excel</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setShowImport(true)}>
+              <Upload size={14} className="ml-2" /> استيراد GPS
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              const headers = [['اسم المندوب', 'الكيلومترات', 'تكلفة البنزين (ر.س)', 'ملاحظات']];
+              const ws = XLSX.utils.aoa_to_sheet(headers);
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, 'قالب');
+              XLSX.writeFile(wb, 'template_fuel.xlsx');
+            }}>📋 تحميل القالب</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => window.print()}>🖨️ طباعة</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Table */}

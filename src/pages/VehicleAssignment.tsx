@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Plus, RotateCcw, ClipboardList, CheckCircle, Clock } from 'lucide-react';
+import { Search, Plus, RotateCcw, ClipboardList, CheckCircle, Clock, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import * as XLSX from '@e965/xlsx';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -304,6 +306,39 @@ const VehicleAssignment = () => {
             <Plus size={16} /> تسجيل تسليم جديد
           </Button>
         )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="gap-2"><Download size={15} /> 📥 تحميل ▾</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => {
+              const rows = filtered.map(a => ({
+                'المركبة': a.vehicles?.plate_number || '',
+                'النوع': a.vehicles?.type === 'motorcycle' ? 'موتوسيكل' : 'سيارة',
+                'المندوب': a.employees?.name || '',
+                'تاريخ الاستلام': a.start_at ? format(new Date(a.start_at), 'yyyy-MM-dd HH:mm') : '',
+                'تاريخ الإعادة': a.returned_at ? format(new Date(a.returned_at), 'yyyy-MM-dd HH:mm') : '',
+                'الحالة': a.returned_at ? 'تم الإعادة' : 'قيد الاستخدام',
+                'السبب': a.reason || '',
+                'ملاحظات': a.notes || '',
+              }));
+              const ws = XLSX.utils.json_to_sheet(rows);
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, 'تسليم المركبات');
+              XLSX.writeFile(wb, `تسليم_المركبات_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+            }}>📊 تصدير Excel</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => {
+              const headers = [['رقم اللوحة', 'اسم المندوب', 'تاريخ الاستلام', 'السبب', 'ملاحظات']];
+              const ws = XLSX.utils.aoa_to_sheet(headers);
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, 'قالب');
+              XLSX.writeFile(wb, 'template_assignments.xlsx');
+            }}>📋 تحميل القالب</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => window.print()}>🖨️ طباعة</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Stats */}

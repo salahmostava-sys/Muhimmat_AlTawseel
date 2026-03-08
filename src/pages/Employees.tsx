@@ -1,12 +1,13 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import {
-  Search, Plus, Upload, Download, Eye, Edit, Trash2,
+  Search, Plus, Download, Upload, Printer, Eye, Edit, Trash2,
   ChevronUp, ChevronDown, ChevronsUpDown, Pencil, Check, Loader2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useLanguage } from '@/context/LanguageContext';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -184,6 +185,7 @@ const SkeletonRow = () => (
 // ─── Main Component ───────────────────────────────────────────────────────────
 const Employees = () => {
   const { t } = useTranslation();
+  const { lang } = useLanguage();
   const { toast } = useToast();
   const { permissions } = usePermissions('employees');
   const [data, setData] = useState<Employee[]>([]);
@@ -366,23 +368,28 @@ const Employees = () => {
         </div>
         <div className="flex gap-2 flex-wrap">
           {permissions.can_edit && (
-          <Button onClick={() => { setEditEmployee(null); setShowAddModal(true); }} className="gap-2">
-            <Plus size={16} /> {t('addEmployee')}
-          </Button>
-          )}
-          {permissions.can_edit && (
-          <Button variant="outline" className="gap-2" onClick={() => importRef.current?.click()}>
-            <Upload size={15} /> {t('importExcel')}
-          </Button>
+            <Button onClick={() => { setEditEmployee(null); setShowAddModal(true); }} className="gap-2">
+              <Plus size={16} /> {t('addEmployee')}
+            </Button>
           )}
           <input ref={importRef} type="file" accept=".xlsx,.xls" className="hidden" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2"><Download size={15} /> 📥 {t('downloadReport')} ▾</Button>
+              <Button variant="outline" className="gap-2"><Download size={15} /> {t('downloadReport')} ▾</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleExport}>📊 {t('exportExcel')}</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {permissions.can_edit && (
+                <DropdownMenuItem onClick={() => importRef.current?.click()}>
+                  <Upload size={14} className="ml-2" /> {t('importExcel')}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={handleTemplate}>📋 {t('downloadTemplate')}</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => window.print()}>
+                <Printer size={14} className="ml-2" /> {lang === 'ar' ? 'طباعة' : 'Print'}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -454,8 +461,8 @@ const Employees = () => {
                 <Th field="bank_account_number" label={t('bankAccount')} />
                 <Th label={t('documents')} sortable={false} />
                 <Th field="status" label={t('status')} />
-                <Th label={t('actions')} sortable={false} />
                 <Th field="email" label={t('email')} />
+                <Th label={t('actions')} sortable={false} />
               </tr>
             </thead>
             <tbody>
@@ -553,6 +560,12 @@ const Employees = () => {
                         renderDisplay={() => <StatusBadge status={emp.status} />}
                       />
                     </td>
+                    <td className="px-3 py-2.5 text-sm" dir="ltr">
+                      {emp.email
+                        ? <a href={`mailto:${emp.email}`} className="text-primary hover:underline" title={`إرسال بريد إلى ${emp.email}`}>{emp.email}</a>
+                        : <span className="text-muted-foreground/40">—</span>
+                      }
+                    </td>
                     <td className="px-3 py-2.5">
                       <div className="flex gap-1">
                         <button onClick={() => setSelectedEmployee(emp.id)} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" title={t('view')}>
@@ -577,12 +590,6 @@ const Employees = () => {
                           </button>
                         )}
                       </div>
-                    </td>
-                    <td className="px-3 py-2.5 text-sm" dir="ltr">
-                      {emp.email
-                        ? <a href={`mailto:${emp.email}`} className="text-primary hover:underline" title={`إرسال بريد إلى ${emp.email}`}>{emp.email}</a>
-                        : <span className="text-muted-foreground/40">—</span>
-                      }
                     </td>
                   </tr>
                 );

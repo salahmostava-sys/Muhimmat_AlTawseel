@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Search, Wallet, Download, CheckCircle, Printer, Upload, FileUp, ChevronUp, ChevronDown, ChevronsUpDown, LayoutGrid, Table2, AlertTriangle, FileText, Settings2, Globe, Archive } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import * as XLSX from '@e965/xlsx';
@@ -1587,27 +1588,32 @@ const Salaries = () => {
               <CheckCircle size={13} /> اعتماد الكل ({pendingCount})
             </Button>
           )}
-          <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={exportExcel}>
-            <Download size={13} /> تصدير Excel
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1.5 h-8 text-xs text-primary border-primary/40 hover:bg-primary/10"
-            onClick={startBatchZipExport}
-            disabled={batchQueue.length > 0}
-          >
-            <Archive size={13} />
-            {batchQueue.length > 0
-              ? `جارٍ التصدير ${batchIndex}/${batchQueue.length}...`
-              : 'تحميل ZIP كل الكشوف'}
-          </Button>
-          <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs text-primary border-primary/40 hover:bg-primary/10" onClick={exportMergedPDF}>
-            <FileText size={13} /> PDF مدمج للكل
-          </Button>
-          <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={() => setShowImport(true)}>
-            <FileUp size={13} /> استيراد Excel
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs"><Download size={13} /> 📥 تحميل ▾</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={exportExcel}>📊 تصدير Excel</DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={startBatchZipExport}
+                disabled={batchQueue.length > 0}
+              >
+                <Archive size={13} className="ml-2" />
+                {batchQueue.length > 0 ? `جارٍ التصدير ${batchIndex}/${batchQueue.length}...` : 'تحميل ZIP كل الكشوف'}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportMergedPDF}>
+                <FileText size={13} className="ml-2" /> PDF مدمج للكل
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setShowImport(true)}>
+                <FileUp size={13} className="ml-2" /> استيراد Excel
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => window.print()}>
+                <Printer size={13} className="ml-2" /> طباعة
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
