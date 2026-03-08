@@ -39,6 +39,8 @@ const App = () => (
           <LanguageProvider>
             <Routes>
               <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route
                 path="/*"
                 element={
