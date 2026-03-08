@@ -167,6 +167,7 @@ const translations: Record<SlipLanguage, SlipTranslations> = {
     statusApproved: 'منظور شدہ',
     statusPaid: 'ادا شدہ',
     payBank: '🏦 بینک',
+    sectionEarnings: 'آمدنی',
     payCash: '💵 نقد',
     sectionPlatforms: 'پلیٹ فارم کے مطابق آرڈرز',
     orders: 'آرڈر',
