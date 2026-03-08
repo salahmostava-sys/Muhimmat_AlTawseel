@@ -4,7 +4,12 @@ import { initReactI18next } from 'react-i18next';
 const resources = {
   ar: {
     translation: {
-      // Nav
+      // ─── Branding ────────────────────────────────────────────
+      appName: 'نظام التوصيل',
+      appSubtitle: 'إدارة المناديب',
+      systemAdmin: 'مدير النظام',
+
+      // ─── Nav ─────────────────────────────────────────────────
       dashboard: 'لوحة التحكم',
       employees: 'الموظفون',
       attendance: 'الحضور والانصراف',
@@ -22,11 +27,13 @@ const resources = {
       permissions: 'الصلاحيات',
       reports: 'التقارير',
       settings: 'الإعدادات',
-      // Departments
+
+      // ─── Departments ─────────────────────────────────────────
       hr: 'الموارد البشرية',
       finance: 'المالية',
       operations: 'العمليات',
-      // Actions
+
+      // ─── Actions ─────────────────────────────────────────────
       add: 'إضافة',
       edit: 'تعديل',
       delete: 'حذف',
@@ -40,7 +47,23 @@ const resources = {
       print: 'طباعة',
       approve: 'موافقة',
       reject: 'رفض',
-      // Status
+      view: 'عرض',
+      back: 'رجوع',
+      close: 'إغلاق',
+      confirm: 'تأكيد',
+      clearAll: 'مسح الكل',
+      downloadReport: 'تحميل تقرير',
+      exportExcel: 'تصدير Excel (القائمة المفلترة)',
+      downloadTemplate: 'تحميل قالب الاستيراد',
+      importExcel: 'استيراد Excel',
+      addEmployee: 'إضافة مندوب',
+      editEmployee: 'تعديل بيانات المندوب',
+      saveChanges: 'حفظ التعديلات',
+      saveEmployee: 'حفظ المندوب',
+      saving: 'جاري الحفظ...',
+      saved: 'تم',
+
+      // ─── Status ──────────────────────────────────────────────
       active: 'نشط',
       inactive: 'موقوف',
       ended: 'منتهي',
@@ -49,9 +72,13 @@ const resources = {
       leave: 'إجازة',
       sick: 'مريض',
       late: 'متأخر',
-      // Common
+      allStatuses: 'كل الحالات',
+      all: 'الكل',
+
+      // ─── Employee Fields ──────────────────────────────────────
       name: 'الاسم',
-      phone: 'الجوال',
+      fullName: 'الاسم الكامل',
+      phone: 'رقم الجوال',
       status: 'الحالة',
       date: 'التاريخ',
       amount: 'المبلغ',
@@ -60,18 +87,78 @@ const resources = {
       year: 'السنة',
       total: 'الإجمالي',
       salary: 'الراتب',
+      nationalId: 'رقم الهوية الوطنية',
+      bankAccount: 'رقم الحساب البنكي',
+      city: 'المدينة',
+      joinDate: 'تاريخ الانضمام',
+      residencyExpiry: 'انتهاء الإقامة',
+      residencyDays: 'المتبقي (أيام)',
+      residencyStatus: 'حالة الإقامة',
+      licenseStatus: 'الرخصة',
+      sponsorshipStatus: 'الكفالة',
+      jobTitle: 'المسمى الوظيفي',
+      email: 'البريد الإلكتروني',
+      photo: 'الصورة',
+      documents: 'المستندات',
+      actions: 'إجراءات',
+      salaryType: 'نوع الراتب',
+      results: 'نتيجة',
+      registeredEmployees: 'مندوب مسجل',
+      noEmployees: 'لا يوجد موظفون',
+      noEmployeesHint: 'أضف مندوبين جدد أو عدّل فلاتر البحث',
+      searchPlaceholder: 'بحث بالاسم، الهاتف، الهوية...',
+      clickToEdit: 'انقر للتعديل',
+
+      // ─── City ────────────────────────────────────────────────
+      makkah: 'مكة',
+      jeddah: 'جدة',
+
+      // ─── License ─────────────────────────────────────────────
+      hasLicense: 'لديه رخصة',
+      noLicense: 'ليس لديه رخصة',
+      applied: 'تم التقديم',
+
+      // ─── Sponsorship ─────────────────────────────────────────
+      sponsored: 'على الكفالة',
+      notSponsored: 'ليس على الكفالة',
+      absconded: 'هروب',
+      terminated: 'انتهاء الخدمة',
+
+      // ─── Residency ───────────────────────────────────────────
+      allResidencies: 'كل الإقامات',
+      residencyUrgent: '🔴 عاجل <30 يوم',
+      residencyWarning: '🟠 تحذير <60 يوم',
+      residencySafe: '🟢 آمن',
+      residencyValid: 'صالحة',
+      residencyExpired: 'منتهية',
+
+      // ─── Salary Types ─────────────────────────────────────────
+      byOrders: 'طلبات',
+      shift: 'دوام',
+
+      // ─── Common ──────────────────────────────────────────────
       noData: 'لا توجد بيانات',
       loading: 'جاري التحميل...',
-      // Auth
+      errorLoading: 'خطأ في جلب البيانات',
+      errorSaving: 'خطأ في الحفظ',
+
+      // ─── Auth ────────────────────────────────────────────────
       login: 'تسجيل الدخول',
       logout: 'تسجيل الخروج',
-      email: 'البريد الإلكتروني',
       password: 'كلمة المرور',
       loginTitle: 'مرحباً بك',
       loginSubtitle: 'سجّل دخولك لإدارة نظام التوصيل',
       forgotPassword: 'نسيت كلمة المرور؟',
-      // Roles
-      admin: 'مدير',
+      resetPassword: 'إعادة تعيين كلمة المرور',
+      sendResetLink: 'إرسال رابط الاسترداد',
+      backToLogin: 'العودة لتسجيل الدخول',
+      rememberMe: 'تذكرني',
+      noAccount: 'ليس لديك حساب؟',
+      hasAccount: 'لديك حساب بالفعل؟',
+      register: 'إنشاء حساب',
+
+      // ─── Roles ───────────────────────────────────────────────
+      admin: 'مدير النظام',
       hr_role: 'موارد بشرية',
       finance_role: 'مالية',
       operations_role: 'عمليات',
@@ -80,7 +167,12 @@ const resources = {
   },
   en: {
     translation: {
-      // Nav
+      // ─── Branding ────────────────────────────────────────────
+      appName: 'Delivery System',
+      appSubtitle: 'Rider Management',
+      systemAdmin: 'System Admin',
+
+      // ─── Nav ─────────────────────────────────────────────────
       dashboard: 'Dashboard',
       employees: 'Employees',
       attendance: 'Attendance',
@@ -98,11 +190,13 @@ const resources = {
       permissions: 'Permissions',
       reports: 'Reports',
       settings: 'Settings',
-      // Departments
+
+      // ─── Departments ─────────────────────────────────────────
       hr: 'Human Resources',
       finance: 'Finance',
       operations: 'Operations',
-      // Actions
+
+      // ─── Actions ─────────────────────────────────────────────
       add: 'Add',
       edit: 'Edit',
       delete: 'Delete',
@@ -116,17 +210,37 @@ const resources = {
       print: 'Print',
       approve: 'Approve',
       reject: 'Reject',
-      // Status
+      view: 'View',
+      back: 'Back',
+      close: 'Close',
+      confirm: 'Confirm',
+      clearAll: 'Clear All',
+      downloadReport: 'Download Report',
+      exportExcel: 'Export Excel (Filtered List)',
+      downloadTemplate: 'Download Import Template',
+      importExcel: 'Import Excel',
+      addEmployee: 'Add Rider',
+      editEmployee: 'Edit Rider',
+      saveChanges: 'Save Changes',
+      saveEmployee: 'Save Rider',
+      saving: 'Saving...',
+      saved: 'Saved',
+
+      // ─── Status ──────────────────────────────────────────────
       active: 'Active',
-      inactive: 'Inactive',
+      inactive: 'Suspended',
       ended: 'Ended',
       present: 'Present',
       absent: 'Absent',
       leave: 'Leave',
       sick: 'Sick',
       late: 'Late',
-      // Common
+      allStatuses: 'All Statuses',
+      all: 'All',
+
+      // ─── Employee Fields ──────────────────────────────────────
       name: 'Name',
+      fullName: 'Full Name',
       phone: 'Phone',
       status: 'Status',
       date: 'Date',
@@ -136,18 +250,78 @@ const resources = {
       year: 'Year',
       total: 'Total',
       salary: 'Salary',
+      nationalId: 'National ID',
+      bankAccount: 'Bank Account',
+      city: 'City',
+      joinDate: 'Join Date',
+      residencyExpiry: 'Residency Expiry',
+      residencyDays: 'Remaining (Days)',
+      residencyStatus: 'Residency Status',
+      licenseStatus: 'License',
+      sponsorshipStatus: 'Sponsorship',
+      jobTitle: 'Job Title',
+      email: 'Email',
+      photo: 'Photo',
+      documents: 'Documents',
+      actions: 'Actions',
+      salaryType: 'Salary Type',
+      results: 'result(s)',
+      registeredEmployees: 'rider(s) registered',
+      noEmployees: 'No employees found',
+      noEmployeesHint: 'Add new riders or adjust your search filters',
+      searchPlaceholder: 'Search by name, phone, ID...',
+      clickToEdit: 'Click to edit',
+
+      // ─── City ────────────────────────────────────────────────
+      makkah: 'Makkah',
+      jeddah: 'Jeddah',
+
+      // ─── License ─────────────────────────────────────────────
+      hasLicense: 'Has License',
+      noLicense: 'No License',
+      applied: 'Applied',
+
+      // ─── Sponsorship ─────────────────────────────────────────
+      sponsored: 'Sponsored',
+      notSponsored: 'Not Sponsored',
+      absconded: 'Absconded',
+      terminated: 'Terminated',
+
+      // ─── Residency ───────────────────────────────────────────
+      allResidencies: 'All Residencies',
+      residencyUrgent: '🔴 Urgent <30 days',
+      residencyWarning: '🟠 Warning <60 days',
+      residencySafe: '🟢 Safe',
+      residencyValid: 'Valid',
+      residencyExpired: 'Expired',
+
+      // ─── Salary Types ─────────────────────────────────────────
+      byOrders: 'By Orders',
+      shift: 'Fixed Monthly',
+
+      // ─── Common ──────────────────────────────────────────────
       noData: 'No data available',
       loading: 'Loading...',
-      // Auth
+      errorLoading: 'Error loading data',
+      errorSaving: 'Error saving',
+
+      // ─── Auth ────────────────────────────────────────────────
       login: 'Sign In',
       logout: 'Sign Out',
-      email: 'Email',
       password: 'Password',
       loginTitle: 'Welcome Back',
       loginSubtitle: 'Sign in to manage your delivery system',
       forgotPassword: 'Forgot password?',
-      // Roles
-      admin: 'Admin',
+      resetPassword: 'Reset Password',
+      sendResetLink: 'Send Reset Link',
+      backToLogin: 'Back to Login',
+      rememberMe: 'Remember me',
+      noAccount: "Don't have an account?",
+      hasAccount: 'Already have an account?',
+      register: 'Create Account',
+
+      // ─── Roles ───────────────────────────────────────────────
+      admin: 'System Admin',
       hr_role: 'HR',
       finance_role: 'Finance',
       operations_role: 'Operations',
