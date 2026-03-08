@@ -613,6 +613,13 @@ const Employees = () => {
         />
       )}
 
+      {showImportModal && (
+        <ImportEmployeesModal
+          onClose={() => setShowImportModal(false)}
+          onSuccess={() => { setShowImportModal(false); fetchEmployees(); }}
+        />
+      )}
+
       <AlertDialog open={!!deleteEmployee} onOpenChange={open => !open && setDeleteEmployee(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

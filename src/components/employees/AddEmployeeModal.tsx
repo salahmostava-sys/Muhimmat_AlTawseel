@@ -350,6 +350,9 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
               <F label="الاسم الكامل" required error={errors.name}>
                 <Input value={form.name} onChange={e => setField('name', e.target.value)} placeholder="أحمد محمد العمري" />
               </F>
+              <F label="كود الموظف">
+                <Input value={form.employee_code} onChange={e => setField('employee_code', e.target.value)} placeholder="EMP-001" dir="ltr" />
+              </F>
               <F label="المسمى الوظيفي">
                 <Input value={form.job_title} onChange={e => setField('job_title', e.target.value)} placeholder="مندوب توصيل" />
               </F>
@@ -380,6 +383,9 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
               </F>
               <F label="تاريخ الانضمام">
                 <Input type="date" value={form.join_date} onChange={e => setField('join_date', e.target.value)} />
+              </F>
+              <F label="تاريخ الميلاد">
+                <Input type="date" value={form.birth_date} onChange={e => setField('birth_date', e.target.value)} />
               </F>
               <F label="لغة كشف الراتب">
                 <div className="flex gap-2 mt-1">
