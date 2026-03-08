@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { X, Upload, CheckCircle, AlertTriangle, XCircle, Info, Download, Loader2 } from 'lucide-react';
+import { X, Upload, CheckCircle, AlertTriangle, XCircle, Info, Download, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
@@ -24,7 +24,8 @@ interface ParsedEmployee {
   salary_type: 'orders' | 'shift';
   rowCategory: 'active_delivery' | 'accident' | 'absconded' | 'supervisor';
   _rowIndex: number;
-  _error?: string;
+  _errors: string[];
+  _warnings: string[];
 }
 
 interface ImportSummary {
@@ -33,6 +34,7 @@ interface ImportSummary {
   absconded: number;
   supervisor: number;
   errors: number;
+  warnings: number;
 }
 
 interface Props {
@@ -72,7 +74,6 @@ const SUPERVISOR_KEYWORDS = ['ميكانيكى', 'ميكانيكي', 'مشرف',
 const parseDate = (val: any): string | null => {
   if (!val) return null;
   if (typeof val === 'number') {
-    // Excel serial date
     const date = XLSX.SSF.parse_date_code(val);
     if (date) {
       const d = new Date(date.y, date.m - 1, date.d);
@@ -83,19 +84,12 @@ const parseDate = (val: any): string | null => {
   if (typeof val === 'string') {
     const s = val.trim();
     if (!s) return null;
-    // Try common Arabic/English formats
-    const formats = [
-      // dd/mm/yyyy or d/m/yyyy
-      /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/,
-      // yyyy-mm-dd
-      /^(\d{4})-(\d{2})-(\d{2})$/,
-    ];
-    const match1 = s.match(formats[0]);
+    const match1 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if (match1) {
       const d = new Date(`${match1[3]}-${match1[2].padStart(2,'0')}-${match1[1].padStart(2,'0')}`);
       if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
     }
-    const match2 = s.match(formats[1]);
+    const match2 = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (match2) return s;
     const d = new Date(s);
     if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
@@ -103,9 +97,11 @@ const parseDate = (val: any): string | null => {
   return null;
 };
 
+const isValidPhone = (phone?: string) => !phone || /^[0-9+\s\-]{7,15}$/.test(phone);
+const isValidEmail = (email?: string) => !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isValidNationalId = (id?: string) => !id || /^[0-9]{10}$/.test(id);
+
 const parseRow = (row: any[], rowIndex: number): ParsedEmployee | null => {
-  // Columns are 1-indexed in spec, 0-indexed in array
-  // Row might have headers or start from row 2; we handle raw row array
   const col = (i: number) => {
     const v = row[i - 1];
     return v !== undefined && v !== null ? String(v).trim() : undefined;
@@ -114,6 +110,9 @@ const parseRow = (row: any[], rowIndex: number): ParsedEmployee | null => {
 
   const name = col(8);
   if (!name) return null;
+
+  const _errors: string[] = [];
+  const _warnings: string[] = [];
 
   const employee_code = col(2) || undefined;
   const national_id = col(3) || undefined;
@@ -135,10 +134,17 @@ const parseRow = (row: any[], rowIndex: number): ParsedEmployee | null => {
   const birth_date = parseDate(colRaw(13));
   const email = col(14) || undefined;
 
-  // salary_type
+  // Validation
+  if (!national_id) _warnings.push('رقم الهوية مفقود');
+  else if (!isValidNationalId(national_id)) _errors.push('رقم الهوية يجب أن يكون 10 أرقام');
+
+  if (phone && !isValidPhone(phone)) _warnings.push('رقم الهاتف قد يكون غير صحيح');
+  if (email && !isValidEmail(email)) _errors.push('البريد الإلكتروني غير صحيح');
+  if (!city) _warnings.push('المدينة غير محددة');
+  if (base_salary !== null && base_salary < 0) _errors.push('الراتب لا يمكن أن يكون سالباً');
+
   const salary_type: 'orders' | 'shift' = job_title?.includes('مندوب') ? 'orders' : 'shift';
 
-  // Platform / status logic from col 9
   let platform: string | null = null;
   let status: 'active' | 'inactive' = 'active';
   let sponsorship_status: 'sponsored' | 'not_sponsored' | 'absconded' | 'terminated' = sponsorCol7 || 'not_sponsored';
@@ -162,7 +168,6 @@ const parseRow = (row: any[], rowIndex: number): ParsedEmployee | null => {
     platform = null;
     rowCategory = 'supervisor';
   } else if (platformRaw === '') {
-    // No platform info
     rowCategory = 'supervisor';
   }
 
@@ -183,6 +188,8 @@ const parseRow = (row: any[], rowIndex: number): ParsedEmployee | null => {
     salary_type,
     rowCategory,
     _rowIndex: rowIndex,
+    _errors,
+    _warnings,
   };
 };
 
@@ -198,6 +205,8 @@ const ImportEmployeesModal = ({ onClose, onSuccess }: Props) => {
   const [progress, setProgress] = useState(0);
   const [progressLabel, setProgressLabel] = useState('');
   const [errors, setErrors] = useState<{ name: string; error: string }[]>([]);
+  const [showAllRows, setShowAllRows] = useState(false);
+  const [previewFilter, setPreviewFilter] = useState<'all' | 'errors' | 'warnings'>('all');
 
   const handleFile = useCallback((file: File) => {
     setFileName(file.name);
@@ -209,10 +218,9 @@ const ImportEmployeesModal = ({ onClose, onSuccess }: Props) => {
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
 
-        // Find first row with actual name data (skip headers)
         let startRow = 1;
         for (let i = 0; i < Math.min(5, rows.length); i++) {
-          const nameCell = rows[i][7]; // col 8 = index 7
+          const nameCell = rows[i][7];
           if (nameCell && typeof nameCell === 'string' && nameCell.trim().length > 1 && !/اسم|name/i.test(nameCell)) {
             startRow = i;
             break;
@@ -232,7 +240,8 @@ const ImportEmployeesModal = ({ onClose, onSuccess }: Props) => {
           accident: employees.filter(e => e.rowCategory === 'accident').length,
           absconded: employees.filter(e => e.rowCategory === 'absconded').length,
           supervisor: employees.filter(e => e.rowCategory === 'supervisor').length,
-          errors: employees.filter(e => e._error).length,
+          errors: employees.filter(e => e._errors.length > 0).length,
+          warnings: employees.filter(e => e._warnings.length > 0).length,
         };
 
         setParsed(employees);
@@ -246,22 +255,25 @@ const ImportEmployeesModal = ({ onClose, onSuccess }: Props) => {
   }, [toast]);
 
   const handleConfirm = async () => {
+    const criticalErrors = parsed.filter(e => e._errors.length > 0);
+    if (criticalErrors.length > 0 && !window.confirm(`يوجد ${criticalErrors.length} صف به أخطاء. هل تريد الاستمرار وتخطّي هذه الصفوف؟`)) return;
+
     setImporting(true);
     setStep(3);
     setProgress(0);
     const importErrors: { name: string; error: string }[] = [];
-    const total = parsed.length;
+    const validRows = parsed.filter(e => e._errors.length === 0);
+    const total = validRows.length;
     const BATCH = 20;
 
-    // Fetch apps for platform linking
     const { data: appsData } = await supabase.from('apps').select('id, name').eq('is_active', true);
     const appsMap: Record<string, string> = {};
     (appsData || []).forEach(a => { appsMap[a.name] = a.id; });
 
     let done = 0;
 
-    for (let i = 0; i < parsed.length; i += BATCH) {
-      const batch = parsed.slice(i, i + BATCH);
+    for (let i = 0; i < validRows.length; i += BATCH) {
+      const batch = validRows.slice(i, i + BATCH);
 
       for (const emp of batch) {
         try {
@@ -283,7 +295,6 @@ const ImportEmployeesModal = ({ onClose, onSuccess }: Props) => {
 
           let empId: string | null = null;
 
-          // Check by employee_code first
           if (emp.employee_code) {
             const { data: existing } = await supabase
               .from('employees')
@@ -296,7 +307,6 @@ const ImportEmployeesModal = ({ onClose, onSuccess }: Props) => {
             }
           }
 
-          // Check by national_id
           if (!empId && emp.national_id) {
             const { data: existing } = await supabase
               .from('employees')
@@ -309,7 +319,6 @@ const ImportEmployeesModal = ({ onClose, onSuccess }: Props) => {
             }
           }
 
-          // Insert new
           if (!empId) {
             payload.status = payload.status || 'active';
             const { data: newEmp, error: insErr } = await supabase
@@ -321,7 +330,6 @@ const ImportEmployeesModal = ({ onClose, onSuccess }: Props) => {
             empId = (newEmp as any).id;
           }
 
-          // Link platform → employee_apps
           if (empId && emp.platform && appsMap[emp.platform]) {
             const appId = appsMap[emp.platform];
             await supabase
@@ -361,18 +369,27 @@ const ImportEmployeesModal = ({ onClose, onSuccess }: Props) => {
     XLSX.writeFile(wb, 'import_errors.xlsx');
   };
 
-  const previewRows = parsed.slice(0, 10);
-
-  const statusLabel = (emp: ParsedEmployee) => {
+  const rowCategoryLabel = (emp: ParsedEmployee) => {
     if (emp.rowCategory === 'active_delivery') return { text: 'نشط — مندوب', cls: 'badge-success' };
     if (emp.rowCategory === 'accident') return { text: 'موقوف — حادث', cls: 'badge-warning' };
     if (emp.rowCategory === 'absconded') return { text: 'هروب', cls: 'badge-urgent' };
     return { text: 'مشرف/ميكانيكي', cls: 'bg-muted text-muted-foreground text-xs font-medium px-2 py-0.5 rounded-full' };
   };
 
+  // Filter for preview
+  const filteredRows = previewFilter === 'errors'
+    ? parsed.filter(e => e._errors.length > 0)
+    : previewFilter === 'warnings'
+    ? parsed.filter(e => e._warnings.length > 0 && e._errors.length === 0)
+    : parsed;
+
+  const displayRows = showAllRows ? filteredRows : filteredRows.slice(0, 15);
+  const criticalCount = parsed.filter(e => e._errors.length > 0).length;
+  const warningCount = parsed.filter(e => e._warnings.length > 0).length;
+
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-card rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-border/50">
+      <div className="bg-card rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col border border-border/50">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
           <h2 className="text-lg font-bold text-foreground">استيراد بيانات الموظفين</h2>
@@ -383,7 +400,7 @@ const ImportEmployeesModal = ({ onClose, onSuccess }: Props) => {
 
         {/* Step indicator */}
         <div className="flex items-center gap-0 px-6 pt-4 pb-2 shrink-0">
-          {['رفع الملف', 'معاينة', 'استيراد'].map((s, i) => (
+          {['رفع الملف', 'معاينة وتحقق', 'استيراد'].map((s, i) => (
             <div key={s} className="flex items-center flex-1 last:flex-none">
               <div className="flex items-center gap-2">
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${i + 1 < step ? 'bg-success text-success-foreground' : i + 1 === step ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
@@ -421,7 +438,7 @@ const ImportEmployeesModal = ({ onClose, onSuccess }: Props) => {
             </div>
           )}
 
-          {/* ── Step 2: Preview ── */}
+          {/* ── Step 2: Preview + Validation ── */}
           {step === 2 && summary && (
             <div className="space-y-4">
               {/* Summary cards */}
@@ -429,59 +446,160 @@ const ImportEmployeesModal = ({ onClose, onSuccess }: Props) => {
                 <div className="bg-success/10 rounded-xl p-3 text-center">
                   <CheckCircle size={18} className="text-success mx-auto mb-1" />
                   <p className="text-xl font-bold text-success">{summary.active_delivery}</p>
-                  <p className="text-xs text-muted-foreground">مندوب توصيل نشط</p>
+                  <p className="text-xs text-muted-foreground">✅ مندوب توصيل نشط</p>
                 </div>
                 <div className="bg-warning/10 rounded-xl p-3 text-center">
                   <AlertTriangle size={18} className="text-warning mx-auto mb-1" />
                   <p className="text-xl font-bold text-warning">{summary.accident}</p>
-                  <p className="text-xs text-muted-foreground">حادث (موقوف)</p>
+                  <p className="text-xs text-muted-foreground">⚠️ حادث (موقوف)</p>
                 </div>
                 <div className="bg-destructive/10 rounded-xl p-3 text-center">
                   <XCircle size={18} className="text-destructive mx-auto mb-1" />
                   <p className="text-xl font-bold text-destructive">{summary.absconded}</p>
-                  <p className="text-xs text-muted-foreground">هروب (غير نشط)</p>
+                  <p className="text-xs text-muted-foreground">🔴 هروب (غير نشط)</p>
                 </div>
                 <div className="bg-muted rounded-xl p-3 text-center">
                   <Info size={18} className="text-muted-foreground mx-auto mb-1" />
                   <p className="text-xl font-bold text-foreground">{summary.supervisor}</p>
-                  <p className="text-xs text-muted-foreground">مشرف/ميكانيكي</p>
+                  <p className="text-xs text-muted-foreground">ℹ️ مشرف/ميكانيكي</p>
                 </div>
               </div>
 
-              <p className="text-xs text-muted-foreground">معاينة أول 10 صفوف:</p>
+              {/* Validation summary */}
+              {(criticalCount > 0 || warningCount > 0) && (
+                <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
+                  <p className="text-sm font-semibold text-foreground">نتائج التحقق من البيانات</p>
+                  <div className="flex flex-wrap gap-2">
+                    {criticalCount > 0 && (
+                      <span className="flex items-center gap-1.5 text-xs bg-destructive/10 text-destructive border border-destructive/20 px-3 py-1.5 rounded-full font-medium">
+                        <AlertCircle size={13} />
+                        {criticalCount} صف به أخطاء — سيتم تخطّيها
+                      </span>
+                    )}
+                    {warningCount > 0 && (
+                      <span className="flex items-center gap-1.5 text-xs bg-warning/10 text-warning border border-warning/20 px-3 py-1.5 rounded-full font-medium">
+                        <AlertTriangle size={13} />
+                        {warningCount} صف به تحذيرات — ستُستورد مع إشارة
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1.5 text-xs bg-success/10 text-success border border-success/20 px-3 py-1.5 rounded-full font-medium">
+                      <CheckCircle size={13} />
+                      {parsed.length - criticalCount} صف جاهز للاستيراد
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Filter tabs */}
+              <div className="flex items-center justify-between">
+                <div className="flex gap-1">
+                  {[
+                    { key: 'all', label: `الكل (${parsed.length})` },
+                    ...(criticalCount > 0 ? [{ key: 'errors', label: `🔴 أخطاء (${criticalCount})` }] : []),
+                    ...(warningCount > 0 ? [{ key: 'warnings', label: `⚠️ تحذيرات (${warningCount})` }] : []),
+                  ].map(f => (
+                    <button
+                      key={f.key}
+                      onClick={() => { setPreviewFilter(f.key as any); setShowAllRows(false); }}
+                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${previewFilter === f.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'}`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {showAllRows ? filteredRows.length : Math.min(15, filteredRows.length)} من {filteredRows.length} صف
+                </p>
+              </div>
 
               {/* Preview table */}
               <div className="overflow-x-auto rounded-lg border border-border">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-border bg-muted/50">
-                      <th className="px-3 py-2 text-start text-muted-foreground font-medium">الاسم</th>
-                      <th className="px-3 py-2 text-start text-muted-foreground font-medium">الكود</th>
-                      <th className="px-3 py-2 text-start text-muted-foreground font-medium">المنصة</th>
-                      <th className="px-3 py-2 text-start text-muted-foreground font-medium">المدينة</th>
-                      <th className="px-3 py-2 text-start text-muted-foreground font-medium">الحالة</th>
+                      <th className="px-3 py-2 text-start text-muted-foreground font-medium whitespace-nowrap">#</th>
+                      <th className="px-3 py-2 text-start text-muted-foreground font-medium whitespace-nowrap">الاسم</th>
+                      <th className="px-3 py-2 text-start text-muted-foreground font-medium whitespace-nowrap">الكود</th>
+                      <th className="px-3 py-2 text-start text-muted-foreground font-medium whitespace-nowrap">رقم الهوية</th>
+                      <th className="px-3 py-2 text-start text-muted-foreground font-medium whitespace-nowrap">الراتب</th>
+                      <th className="px-3 py-2 text-start text-muted-foreground font-medium whitespace-nowrap">المنصة</th>
+                      <th className="px-3 py-2 text-start text-muted-foreground font-medium whitespace-nowrap">المدينة</th>
+                      <th className="px-3 py-2 text-start text-muted-foreground font-medium whitespace-nowrap">الجنسية</th>
+                      <th className="px-3 py-2 text-start text-muted-foreground font-medium whitespace-nowrap">الهاتف</th>
+                      <th className="px-3 py-2 text-start text-muted-foreground font-medium whitespace-nowrap">الحالة</th>
+                      <th className="px-3 py-2 text-start text-muted-foreground font-medium whitespace-nowrap">تحقق</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {previewRows.map((emp, i) => {
-                      const st = statusLabel(emp);
+                    {displayRows.map((emp, i) => {
+                      const st = rowCategoryLabel(emp);
+                      const hasError = emp._errors.length > 0;
+                      const hasWarning = emp._warnings.length > 0;
                       return (
-                        <tr key={i} className="border-b border-border/50 hover:bg-muted/20">
-                          <td className="px-3 py-2 font-medium text-foreground">{emp.name}</td>
-                          <td className="px-3 py-2 text-muted-foreground">{emp.employee_code || '—'}</td>
-                          <td className="px-3 py-2 text-muted-foreground">{emp.platform || '—'}</td>
-                          <td className="px-3 py-2 text-muted-foreground">
-                            {emp.city === 'makkah' ? 'مكة' : emp.city === 'jeddah' ? 'جدة' : '—'}
+                        <tr
+                          key={i}
+                          className={`border-b border-border/50 ${hasError ? 'bg-destructive/5' : hasWarning ? 'bg-warning/5' : 'hover:bg-muted/20'}`}
+                        >
+                          <td className="px-3 py-2 text-muted-foreground">{emp._rowIndex}</td>
+                          <td className="px-3 py-2 font-medium text-foreground whitespace-nowrap">{emp.name}</td>
+                          <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{emp.employee_code || '—'}</td>
+                          <td className={`px-3 py-2 whitespace-nowrap font-mono text-xs ${emp._errors.some(e => e.includes('هوية')) ? 'text-destructive' : 'text-muted-foreground'}`}>
+                            {emp.national_id || <span className="text-warning">⚠️ مفقود</span>}
                           </td>
-                          <td className="px-3 py-2"><span className={st.cls}>{st.text}</span></td>
+                          <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
+                            {emp.base_salary !== null && emp.base_salary !== undefined ? `${emp.base_salary.toLocaleString()} ر.س` : '—'}
+                          </td>
+                          <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{emp.platform || '—'}</td>
+                          <td className="px-3 py-2 whitespace-nowrap">
+                            {emp.city === 'makkah'
+                              ? <span className="bg-accent/20 text-accent-foreground px-1.5 py-0.5 rounded text-xs">مكة</span>
+                              : emp.city === 'jeddah'
+                              ? <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-xs">جدة</span>
+                              : <span className="text-warning text-xs">⚠️ غير محدد</span>}
+                          </td>
+                          <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{emp.nationality || '—'}</td>
+                          <td className={`px-3 py-2 whitespace-nowrap font-mono text-xs ${emp._warnings.some(w => w.includes('هاتف')) ? 'text-warning' : 'text-muted-foreground'}`}>
+                            {emp.phone || '—'}
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap"><span className={st.cls}>{st.text}</span></td>
+                          <td className="px-3 py-2 whitespace-nowrap min-w-[160px]">
+                            {hasError ? (
+                              <div className="space-y-0.5">
+                                {emp._errors.map((e, ei) => (
+                                  <div key={ei} className="flex items-center gap-1 text-destructive">
+                                    <AlertCircle size={10} className="flex-shrink-0" />
+                                    <span>{e}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : hasWarning ? (
+                              <div className="space-y-0.5">
+                                {emp._warnings.map((w, wi) => (
+                                  <div key={wi} className="flex items-center gap-1 text-warning">
+                                    <AlertTriangle size={10} className="flex-shrink-0" />
+                                    <span>{w}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="flex items-center gap-1 text-success">
+                                <CheckCircle size={11} /> صحيح
+                              </span>
+                            )}
+                          </td>
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
               </div>
-              {parsed.length > 10 && (
-                <p className="text-xs text-muted-foreground text-center">... و {parsed.length - 10} موظف آخر</p>
+              {filteredRows.length > 15 && !showAllRows && (
+                <button
+                  onClick={() => setShowAllRows(true)}
+                  className="w-full text-xs text-muted-foreground hover:text-foreground py-2 border border-dashed border-border rounded-lg transition-colors"
+                >
+                  عرض جميع {filteredRows.length} صف...
+                </button>
               )}
             </div>
           )}
@@ -503,13 +621,13 @@ const ImportEmployeesModal = ({ onClose, onSuccess }: Props) => {
                   {errors.length === 0 ? (
                     <>
                       <CheckCircle size={48} className="text-success mx-auto" />
-                      <p className="text-lg font-bold text-foreground">✅ تم استيراد {parsed.length} موظف بنجاح</p>
+                      <p className="text-lg font-bold text-foreground">✅ تم استيراد {parsed.filter(e => e._errors.length === 0).length} موظف بنجاح</p>
                     </>
                   ) : (
                     <>
                       <AlertTriangle size={48} className="text-warning mx-auto" />
                       <p className="text-lg font-bold text-foreground">
-                        ✅ نجح {parsed.length - errors.length} | ⚠️ فشل {errors.length}
+                        ✅ نجح {parsed.filter(e => e._errors.length === 0).length - errors.length} | ⚠️ فشل {errors.length}
                       </p>
                       <Button variant="outline" size="sm" onClick={downloadErrorReport} className="gap-2">
                         <Download size={14} /> تحميل تقرير الأخطاء
@@ -523,21 +641,31 @@ const ImportEmployeesModal = ({ onClose, onSuccess }: Props) => {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border shrink-0">
-          {step === 1 && (
-            <Button variant="outline" onClick={onClose}>إلغاء</Button>
-          )}
-          {step === 2 && (
-            <>
-              <Button variant="outline" onClick={() => setStep(1)}>رجوع</Button>
-              <Button onClick={handleConfirm} className="gap-2">
-                تأكيد استيراد {parsed.length} موظف
-              </Button>
-            </>
-          )}
-          {step === 3 && !importing && (
-            <Button onClick={onClose}>إغلاق</Button>
-          )}
+        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-border shrink-0">
+          <div>
+            {step === 2 && criticalCount > 0 && (
+              <p className="text-xs text-destructive flex items-center gap-1.5">
+                <AlertCircle size={13} />
+                {criticalCount} صف سيتم تخطّيه بسبب أخطاء
+              </p>
+            )}
+          </div>
+          <div className="flex gap-3">
+            {step === 1 && (
+              <Button variant="outline" onClick={onClose}>إلغاء</Button>
+            )}
+            {step === 2 && (
+              <>
+                <Button variant="outline" onClick={() => setStep(1)}>رجوع</Button>
+                <Button onClick={handleConfirm} className="gap-2" disabled={parsed.filter(e => e._errors.length === 0).length === 0}>
+                  تأكيد استيراد {parsed.filter(e => e._errors.length === 0).length} موظف
+                </Button>
+              </>
+            )}
+            {step === 3 && !importing && (
+              <Button onClick={onClose}>إغلاق</Button>
+            )}
+          </div>
         </div>
       </div>
     </div>
