@@ -525,12 +525,18 @@ const MonthSummary = () => {
 
 // ─── Page ────────────────────────────────────────────────────────────
 const Orders = () => (
-  <div className="space-y-6" dir="rtl">
-    <div>
-      <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-        <Package size={24} /> الطلبات اليومية
-      </h1>
-      <p className="text-sm text-muted-foreground mt-1">إدخال ومتابعة طلبات المناديب — Grid الشهري</p>
+  <div className="space-y-3" dir="rtl">
+    <div className="flex items-center justify-between gap-3 flex-wrap">
+      <div>
+        <nav className="page-breadcrumb">
+          <span>الرئيسية</span>
+          <span className="page-breadcrumb-sep">/</span>
+          <span>الطلبات اليومية</span>
+        </nav>
+        <h1 className="page-title flex items-center gap-2">
+          <Package size={18} /> الطلبات اليومية
+        </h1>
+      </div>
     </div>
     <Tabs defaultValue="grid" dir="rtl">
       <TabsList>

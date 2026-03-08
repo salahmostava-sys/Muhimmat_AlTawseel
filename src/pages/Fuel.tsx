@@ -479,21 +479,22 @@ const FuelPage = () => {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            ⛽ الوقود والكيلومترات
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">تتبع استهلاك الوقود ومسافات المناديب</p>
+          <nav className="page-breadcrumb">
+            <span>الرئيسية</span>
+            <span className="page-breadcrumb-sep">/</span>
+            <span>الوقود والكيلومترات</span>
+          </nav>
+          <h1 className="page-title">⛽ الوقود والكيلومترات</h1>
         </div>
-        {/* Month/Year filter */}
         <div className="flex items-center gap-2">
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-32 h-9"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-28 h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               {MONTHS.map(m => <SelectItem key={m.v} value={m.v}>{m.l}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-24 h-9"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-20 h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
             </SelectContent>
@@ -510,7 +511,7 @@ const FuelPage = () => {
       </div>
 
       {/* Toolbar */}
-      <div className="bg-card rounded-xl border border-border/50 shadow-sm p-4 flex flex-wrap gap-3 items-center">
+      <div className="flex flex-wrap gap-2 items-center">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={15} className="absolute start-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="بحث باسم المندوب..." className="ps-9 h-9" value={search} onChange={e => setSearch(e.target.value)} />

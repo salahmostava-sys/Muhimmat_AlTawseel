@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ClipboardCheck, CalendarDays, Download } from 'lucide-react';
+import { ClipboardCheck, CalendarDays, Download, BarChart2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import DailyAttendance from '@/components/attendance/DailyAttendance';
 import MonthlyRecord from '@/components/attendance/MonthlyRecord';
+import AttendanceStats from '@/components/attendance/AttendanceStats';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTranslation } from 'react-i18next';
 import * as XLSX from 'xlsx';
@@ -100,9 +101,13 @@ const Attendance = () => {
             <ClipboardCheck size={16} />
             {lang === 'ar' ? 'التسجيل اليومي' : 'Daily Record'}
           </TabsTrigger>
-          <TabsTrigger value="monthly" className="gap-2">
+        <TabsTrigger value="monthly" className="gap-2">
             <CalendarDays size={16} />
             {lang === 'ar' ? 'السجل الشهري' : 'Monthly Record'}
+          </TabsTrigger>
+          <TabsTrigger value="stats" className="gap-2">
+            <BarChart2 size={16} />
+            {lang === 'ar' ? 'الإحصائيات' : 'Statistics'}
           </TabsTrigger>
         </TabsList>
 
@@ -112,6 +117,10 @@ const Attendance = () => {
 
         <TabsContent value="monthly">
           <MonthlyRecord selectedMonth={Number(selectedMonth)} selectedYear={Number(selectedYear)} />
+        </TabsContent>
+
+        <TabsContent value="stats">
+          <AttendanceStats selectedMonth={Number(selectedMonth)} selectedYear={Number(selectedYear)} />
         </TabsContent>
       </Tabs>
     </div>
