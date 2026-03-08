@@ -334,15 +334,14 @@ const Employees = () => {
   return (
     <div className="space-y-4">
       {/* Page header */}
-      <div className="flex items-start justify-between flex-wrap gap-3">
-        <div className="page-header mb-0">
-          <div className="page-breadcrumb">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <nav className="page-breadcrumb">
             <span>{t('hr')}</span>
             <span className="page-breadcrumb-sep">/</span>
             <span className="text-foreground font-medium">{t('employees')}</span>
-          </div>
+          </nav>
           <h1 className="page-title">{t('employees')}</h1>
-          <p className="page-subtitle">{filtered.length} {t('results')} / {data.length} {t('registeredEmployees')}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           {permissions.can_edit && (
