@@ -610,7 +610,7 @@ const Vehicles = () => {
         {/* ── Tab 2: Tracking Log ── */}
         <TabsContent value="tracking">
           {/* Info banner */}
-          <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4 text-sm text-blue-700 dark:text-blue-300 flex items-start gap-2">
+          <div className="bg-accent/30 border border-info/20 rounded-xl p-3 mb-4 text-sm text-info flex items-start gap-2">
             <span>💡</span>
             <span>يمكنك معرفة من كان يقود المركبة وقت أي مخالفة من خلال هذا السجل</span>
           </div>
@@ -636,13 +636,13 @@ const Vehicles = () => {
             </Button>
           </div>
 
-          <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
+          <div className="ta-table-wrap shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border/50 bg-muted/30">
-                    <th className="text-right p-4 text-sm font-semibold text-muted-foreground">رقم اللوحة</th>
-                    <th className="text-right p-4 text-sm font-semibold text-muted-foreground">المندوب</th>
+                <thead className="ta-thead">
+                  <tr>
+                    <th className="ta-th">رقم اللوحة</th>
+                    <th className="ta-th">المندوب</th>
                     <th className="text-center p-4 text-sm font-semibold text-muted-foreground">تاريخ ووقت الاستلام</th>
                     <th className="text-center p-4 text-sm font-semibold text-muted-foreground">تاريخ ووقت الإعادة</th>
                     <th className="text-center p-4 text-sm font-semibold text-muted-foreground">المدة</th>
