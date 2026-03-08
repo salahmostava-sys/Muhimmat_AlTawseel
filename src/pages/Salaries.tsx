@@ -807,7 +807,8 @@ const Salaries = () => {
       if (scheme && scheme.salary_scheme_tiers) {
         salary = calcSalaryFromTiers(value, scheme.salary_scheme_tiers, scheme.target_orders, scheme.target_bonus);
       } else {
-        salary = value * 5;
+        // No scheme assigned → 0 salary (user needs to assign scheme)
+        salary = 0;
       }
       const newSalaries = { ...r.platformSalaries, [platform]: salary };
       const isDirty = r.status !== 'pending' ? true : r.isDirty;
