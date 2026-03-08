@@ -1185,7 +1185,7 @@ const Salaries = () => {
               </thead>
               <tbody>
                 {rows.map(r => {
-                  const c = computed[r.id];
+                  const c = computeRow(r);
                   if (!c) return null;
                   return (
                     <tr key={r.id} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
