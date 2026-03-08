@@ -286,14 +286,15 @@ const Dashboard = () => {
   return (
     <div className="space-y-4 animate-fade-in">
       {/* ── Row 0: Page header ──────────────────────────────── */}
-      <div className="page-header">
-        <div className="page-breadcrumb">
-          <span>{lang === 'ar' ? 'الرئيسية' : 'Home'}</span>
-          <span className="page-breadcrumb-sep">/</span>
-          <span className="text-foreground font-medium">{lang === 'ar' ? 'لوحة التحكم' : 'Dashboard'}</span>
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-1">
+        <div>
+          <nav className="page-breadcrumb">
+            <span>{lang === 'ar' ? 'الرئيسية' : 'Home'}</span>
+            <span className="page-breadcrumb-sep">/</span>
+            <span className="text-foreground font-medium">{lang === 'ar' ? 'لوحة التحكم' : 'Dashboard'}</span>
+          </nav>
+          <h1 className="page-title">{lang === 'ar' ? 'لوحة التحكم' : 'Dashboard'}</h1>
         </div>
-        <h1 className="page-title">{lang === 'ar' ? 'لوحة التحكم' : 'Dashboard'}</h1>
-        <p className="page-subtitle">{lang === 'ar' ? 'نظرة عامة على النظام' : 'System overview'}</p>
       </div>
 
       {/* ── Row 1: KPI cards ────────────────────────────────── */}

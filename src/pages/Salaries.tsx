@@ -937,17 +937,25 @@ const Salaries = () => {
 
   return (
     <div className="space-y-4 h-full flex flex-col" dir="rtl">
-      {/* Page header breadcrumb */}
-      <div className="page-header">
-        <nav className="page-breadcrumb">
-          <span>الرئيسية</span>
-          <span className="page-breadcrumb-sep">/</span>
-          <span>الرواتب الشهرية</span>
-        </nav>
-        <h1 className="page-title flex items-center gap-2"><Wallet size={20} /> الرواتب الشهرية</h1>
-        <p className="page-subtitle">
-          محاسبة تفصيلية لرواتب المناديب — {months.find(m => m.v === selectedMonth)?.l}
-        </p>
+      {/* Page header */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <nav className="page-breadcrumb">
+            <span>الرئيسية</span>
+            <span className="page-breadcrumb-sep">/</span>
+            <span>الرواتب الشهرية</span>
+          </nav>
+          <h1 className="page-title flex items-center gap-2"><Wallet size={20} /> الرواتب الشهرية</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={selectedMonth}
+            onChange={e => setSelectedMonth(e.target.value)}
+            className="h-8 px-2 rounded-lg border border-border bg-background text-xs"
+          >
+            {months.map(m => <option key={m.v} value={m.v}>{m.l}</option>)}
+          </select>
+        </div>
       </div>
 
       {/* Summary cards */}
