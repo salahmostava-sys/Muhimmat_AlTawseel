@@ -621,6 +621,23 @@ const FuelPage = () => {
                         <td className={`px-4 py-3 text-center ${costPerKmColor(costPerKm)}`}>
                           {costPerKm !== null ? `${costPerKm.toFixed(3)} ر.س/كم` : '—'}
                         </td>
+                        {/* Vehicle column */}
+                        <td className="px-4 py-3 text-center">
+                          {row.vehicle ? (
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span className="text-xs font-semibold text-foreground">
+                                {row.vehicle.type === 'motorcycle' ? '🏍️' : '🚗'} {row.vehicle.plate_number}
+                              </span>
+                              {(row.vehicle.brand || row.vehicle.model) && (
+                                <span className="text-[10px] text-muted-foreground">
+                                  {[row.vehicle.brand, row.vehicle.model].filter(Boolean).join(' ')}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground/40 text-xs">—</span>
+                          )}
+                        </td>
                         <td className="px-4 py-3 text-center">
                           {orders > 0
                             ? <span className="font-semibold text-foreground">{orders.toLocaleString()}</span>
