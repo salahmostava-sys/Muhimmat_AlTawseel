@@ -1,17 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Users, Wallet, CreditCard, UserCheck, TrendingUp, DollarSign, Bell, ArrowUpRight } from 'lucide-react';
+import { Users, Wallet, CreditCard, UserCheck, TrendingUp, DollarSign, Bell, ArrowUpRight, Package } from 'lucide-react';
 import AlertsList from '@/components/AlertsList';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subDays, formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
 } from 'recharts';
 import { useLanguage } from '@/context/LanguageContext';
-
-// TailAdmin v2.2 brand colors — True Blue #465FFF
-const CHART_COLORS = ['#465FFF', '#12B76A', '#F79009', '#F04438', '#7C3AED', '#0EA5E9'];
+import { useAppColors } from '@/hooks/useAppColors';
 
 // ─── KPI Metric Card ──────────────────────────────────────────────
 interface MetricCardProps {
@@ -88,9 +85,56 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
+// ─── Platform Order Card ──────────────────────────────────────────
+interface PlatformCardProps {
+  name: string;
+  orders: number;
+  totalOrders: number;
+  employeeCount: number;
+  brandColor: string;
+  textColor: string;
+}
+
+const PlatformCard = ({ name, orders, totalOrders, employeeCount, brandColor, textColor }: PlatformCardProps) => {
+  const pct = totalOrders > 0 ? Math.round((orders / totalOrders) * 100) : 0;
+  return (
+    <div className="bg-card border border-border/50 rounded-xl p-4 flex flex-col gap-3 hover:shadow-md transition-shadow">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <span
+          className="text-xs font-bold px-2.5 py-1 rounded-lg"
+          style={{ backgroundColor: brandColor, color: textColor }}
+        >
+          {name}
+        </span>
+        <span className="text-xs text-muted-foreground">{employeeCount} مندوب</span>
+      </div>
+      {/* Orders count */}
+      <div>
+        <p className="text-3xl font-extrabold text-foreground leading-none">{orders.toLocaleString()}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">طلب هذا الشهر</p>
+      </div>
+      {/* Progress bar */}
+      <div className="space-y-1">
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>النسبة من الإجمالي</span>
+          <span className="font-semibold" style={{ color: brandColor }}>{pct}%</span>
+        </div>
+        <div className="h-2 rounded-full bg-muted overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{ width: `${pct}%`, backgroundColor: brandColor }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── Dashboard ────────────────────────────────────────────────────
 const Dashboard = () => {
   const { lang } = useLanguage();
+  const { apps: appColors } = useAppColors();
 
   const [kpis, setKpis] = useState({
     activeEmployees: 0,
@@ -99,8 +143,10 @@ const Dashboard = () => {
     activeAdvances: 0,
     totalAdvancesAmount: 0,
     totalSalaries: 0,
+    totalOrders: 0,
   });
-  const [ordersByApp, setOrdersByApp] = useState<{ app: string; orders: number }[]>([]);
+  const [ordersByApp, setOrdersByApp] = useState<{ app: string; orders: number; appId: string }[]>([]);
+  const [employeeCountByApp, setEmployeeCountByApp] = useState<Record<string, number>>({});
   const [attendanceWeek, setAttendanceWeek] = useState<{ day: string; present: number; absent: number; leave: number }[]>([]);
   const [recentActivity, setRecentActivity] = useState<{ text: string; time: string; icon: typeof Users }[]>([
     { text: 'لا توجد نشاطات حديثة', time: '', icon: TrendingUp },
@@ -114,14 +160,15 @@ const Dashboard = () => {
       const currentMonth = format(new Date(), 'yyyy-MM');
       const sixDaysAgo = format(subDays(new Date(), 6), 'yyyy-MM-dd');
 
-      const [empRes, attRes, advRes, ordersRes, weekAttRes, salaryRes, auditRes] = await Promise.all([
+      const [empRes, attRes, advRes, ordersRes, weekAttRes, salaryRes, auditRes, empAppsRes] = await Promise.all([
         supabase.from('employees').select('id', { count: 'exact', head: true }).eq('status', 'active'),
         supabase.from('attendance').select('status').eq('date', today),
         supabase.from('advances').select('amount').eq('status', 'active'),
-        supabase.from('daily_orders').select('app_id, orders_count, apps(name)').gte('date', currentMonth + '-01').lte('date', today),
+        supabase.from('daily_orders').select('app_id, orders_count, apps(id, name)').gte('date', currentMonth + '-01').lte('date', today),
         supabase.from('attendance').select('date, status').gte('date', sixDaysAgo).lte('date', today),
         supabase.from('salary_records').select('net_salary').eq('month_year', currentMonth),
         supabase.from('audit_log').select('action, table_name, created_at').order('created_at', { ascending: false }).limit(6),
+        supabase.from('employee_apps').select('app_id, apps(name)').eq('status', 'active'),
       ]);
 
       const activeEmployees = empRes.count || 0;
@@ -131,14 +178,27 @@ const Dashboard = () => {
       const activeAdvances = advRes.data?.length || 0;
       const totalAdvancesAmount = advRes.data?.reduce((s, a) => s + (Number(a.amount) || 0), 0) || 0;
       const totalSalaries = salaryRes.data?.reduce((s, r) => s + (Number(r.net_salary) || 0), 0) || 0;
-      setKpis({ activeEmployees, presentToday, absentToday, activeAdvances, totalAdvancesAmount, totalSalaries });
 
-      const appTotals: Record<string, number> = {};
+      // Build app orders map
+      const appTotals: Record<string, { orders: number; appId: string }> = {};
       ordersRes.data?.forEach(r => {
         const name = (r.apps as any)?.name || 'غير معروف';
-        appTotals[name] = (appTotals[name] || 0) + r.orders_count;
+        const appId = (r.apps as any)?.id || r.app_id;
+        if (!appTotals[name]) appTotals[name] = { orders: 0, appId };
+        appTotals[name].orders += r.orders_count;
       });
-      setOrdersByApp(Object.entries(appTotals).map(([app, orders]) => ({ app, orders })));
+      const ordersArr = Object.entries(appTotals).map(([app, d]) => ({ app, orders: d.orders, appId: d.appId }));
+      const totalOrders = ordersArr.reduce((s, r) => s + r.orders, 0);
+      setOrdersByApp(ordersArr);
+      setKpis({ activeEmployees, presentToday, absentToday, activeAdvances, totalAdvancesAmount, totalSalaries, totalOrders });
+
+      // Employee count per app
+      const empByApp: Record<string, number> = {};
+      empAppsRes.data?.forEach(r => {
+        const name = (r.apps as any)?.name;
+        if (name) empByApp[name] = (empByApp[name] || 0) + 1;
+      });
+      setEmployeeCountByApp(empByApp);
 
       const weekMap: Record<string, { present: number; absent: number; leave: number }> = {};
       weekAttRes.data?.forEach(r => {
@@ -210,11 +270,12 @@ const Dashboard = () => {
       subtitle: lang === 'ar' ? `${kpis.activeAdvances} سلف نشطة` : `${kpis.activeAdvances} active`,
     },
     {
-      title: lang === 'ar' ? 'السلف النشطة' : 'Active Advances',
-      value: loading ? '—' : kpis.activeAdvances,
-      icon: DollarSign,
-      iconBg: 'bg-brand-50 dark:bg-brand-500/15',
-      iconColor: 'text-brand-500',
+      title: lang === 'ar' ? 'إجمالي الطلبات' : 'Total Orders',
+      value: loading ? '—' : kpis.totalOrders.toLocaleString(),
+      icon: Package,
+      iconBg: 'bg-orange-100 dark:bg-orange-500/15',
+      iconColor: 'text-orange-500',
+      subtitle: lang === 'ar' ? 'هذا الشهر' : 'This month',
     },
     {
       title: lang === 'ar' ? 'التنبيهات' : 'Alerts',
@@ -224,6 +285,12 @@ const Dashboard = () => {
       iconColor: 'text-destructive',
     },
   ];
+
+  // Grid cols for platform cards
+  const platformGridCols =
+    ordersByApp.length <= 2 ? 'grid-cols-1 sm:grid-cols-2' :
+    ordersByApp.length === 3 ? 'grid-cols-1 sm:grid-cols-3' :
+    'grid-cols-2 sm:grid-cols-3 xl:grid-cols-4';
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -274,64 +341,73 @@ const Dashboard = () => {
         <AlertsList />
       </div>
 
-      {/* ── Bottom row ─────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Orders by platform donut */}
-        <ChartCard title={lang === 'ar' ? 'الطلبات حسب التطبيق' : 'Orders by Platform'}>
-          {ordersByApp.length === 0 ? (
-            <div className="h-52 flex items-center justify-center text-muted-foreground text-sm">
-              {lang === 'ar' ? 'لا توجد بيانات طلبات' : 'No orders data'}
+      {/* ── Platform orders cards ──────────────────────────── */}
+      <div className="chart-card animate-fade-in">
+        <div className="chart-card-header">
+          <h3 className="chart-card-title">{lang === 'ar' ? 'الطلبات حسب المنصة' : 'Orders by Platform'}</h3>
+          {!loading && kpis.totalOrders > 0 && (
+            <span className="text-xs text-muted-foreground">
+              {lang === 'ar' ? `الإجمالي: ${kpis.totalOrders.toLocaleString()} طلب` : `Total: ${kpis.totalOrders.toLocaleString()} orders`}
+            </span>
+          )}
+        </div>
+        <div className="p-5">
+          {loading ? (
+            <div className={`grid ${platformGridCols} gap-3`}>
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-muted/40 rounded-xl h-32 animate-pulse" />
+              ))}
+            </div>
+          ) : ordersByApp.length === 0 ? (
+            <div className="h-24 flex items-center justify-center text-muted-foreground text-sm">
+              {lang === 'ar' ? 'لا توجد بيانات طلبات لهذا الشهر' : 'No orders data this month'}
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={210}>
-              <PieChart>
-                <Pie
-                  data={ordersByApp}
-                  dataKey="orders"
-                  nameKey="app"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={85}
-                  paddingAngle={3}
-                >
-                  {ordersByApp.map((_, i) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={0} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-                <Legend
-                  iconType="circle"
-                  iconSize={8}
-                  formatter={(value) => <span className="text-xs text-muted-foreground">{value}</span>}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className={`grid ${platformGridCols} gap-3`}>
+              {ordersByApp
+                .sort((a, b) => b.orders - a.orders)
+                .map(({ app, orders }) => {
+                  const colorData = appColors.find(a => a.name === app);
+                  const brandColor = colorData?.brand_color || '#6366f1';
+                  const textColor = colorData?.text_color || '#ffffff';
+                  return (
+                    <PlatformCard
+                      key={app}
+                      name={app}
+                      orders={orders}
+                      totalOrders={kpis.totalOrders}
+                      employeeCount={employeeCountByApp[app] || 0}
+                      brandColor={brandColor}
+                      textColor={textColor}
+                    />
+                  );
+                })}
+            </div>
           )}
-        </ChartCard>
-
-        {/* Recent activity */}
-        <ChartCard title={lang === 'ar' ? 'آخر النشاطات' : 'Recent Activity'}>
-          <div className="space-y-1 -mx-1">
-            {recentActivity.map((item, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted/40 transition-colors"
-              >
-                <div className="icon-box-sm bg-brand-50 dark:bg-brand-500/15 flex-shrink-0">
-                  <item.icon size={14} className="text-brand-500" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-foreground truncate">{item.text}</p>
-                  {item.time && (
-                    <p className="text-xs text-muted-foreground">{item.time}</p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </ChartCard>
+        </div>
       </div>
+
+      {/* ── Recent activity ────────────────────────────────── */}
+      <ChartCard title={lang === 'ar' ? 'آخر النشاطات' : 'Recent Activity'}>
+        <div className="space-y-1 -mx-1">
+          {recentActivity.map((item, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted/40 transition-colors"
+            >
+              <div className="icon-box-sm bg-brand-50 dark:bg-brand-500/15 flex-shrink-0">
+                <item.icon size={14} className="text-brand-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-foreground truncate">{item.text}</p>
+                {item.time && (
+                  <p className="text-xs text-muted-foreground">{item.time}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </ChartCard>
     </div>
   );
 };
