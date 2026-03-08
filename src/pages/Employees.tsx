@@ -366,23 +366,28 @@ const Employees = () => {
         </div>
         <div className="flex gap-2 flex-wrap">
           {permissions.can_edit && (
-          <Button onClick={() => { setEditEmployee(null); setShowAddModal(true); }} className="gap-2">
-            <Plus size={16} /> {t('addEmployee')}
-          </Button>
-          )}
-          {permissions.can_edit && (
-          <Button variant="outline" className="gap-2" onClick={() => importRef.current?.click()}>
-            <Upload size={15} /> {t('importExcel')}
-          </Button>
+            <Button onClick={() => { setEditEmployee(null); setShowAddModal(true); }} className="gap-2">
+              <Plus size={16} /> {t('addEmployee')}
+            </Button>
           )}
           <input ref={importRef} type="file" accept=".xlsx,.xls" className="hidden" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2"><Download size={15} /> 📥 {t('downloadReport')} ▾</Button>
+              <Button variant="outline" className="gap-2"><Download size={15} /> {t('downloadReport')} ▾</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleExport}>📊 {t('exportExcel')}</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {permissions.can_edit && (
+                <DropdownMenuItem onClick={() => importRef.current?.click()}>
+                  <Upload size={14} className="ml-2" /> {t('importExcel')}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={handleTemplate}>📋 {t('downloadTemplate')}</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => window.print()}>
+                <Printer size={14} className="ml-2" /> {lang === 'ar' ? 'طباعة' : 'Print'}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
