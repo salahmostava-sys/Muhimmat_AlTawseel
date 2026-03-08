@@ -346,9 +346,9 @@ const Login = () => {
         animation: 'slideInRight 0.4s ease-out 0.1s both',
       }}>
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full blur-3xl opacity-20 pointer-events-none"
-        style={{ background: 'radial-gradient(circle, #3b82f6 0%, transparent 70%)' }} />
+        style={{ background: 'radial-gradient(circle, #465FFF 0%, transparent 70%)' }} />
       <div className="absolute bottom-1/4 left-1/3 w-40 h-40 rounded-full blur-2xl opacity-15 pointer-events-none"
-        style={{ background: 'radial-gradient(circle, #8b5cf6 0%, transparent 70%)' }} />
+        style={{ background: 'radial-gradient(circle, #3347D9 0%, transparent 70%)' }} />
 
       <div className="relative z-10 text-center max-w-xs">
         <div className="relative inline-block mb-8">
