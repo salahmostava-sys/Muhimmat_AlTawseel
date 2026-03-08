@@ -38,7 +38,7 @@ const Attendance = () => {
   };
 
   return (
-    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="space-y-4" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Page header breadcrumb */}
       <div className="page-header">
         <nav className="page-breadcrumb">

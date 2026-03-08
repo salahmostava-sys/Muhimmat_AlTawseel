@@ -275,7 +275,7 @@ const Dashboard = () => {
       </div>
 
       {/* ── Bottom row ─────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Orders by platform donut */}
         <ChartCard title={lang === 'ar' ? 'الطلبات حسب التطبيق' : 'Orders by Platform'}>
           {ordersByApp.length === 0 ? (

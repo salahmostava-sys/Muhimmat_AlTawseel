@@ -283,7 +283,7 @@ const Apps = () => {
   const filteredEmployees = appEmployees.filter(e => e.name.includes(search));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Page header */}
       <div className="page-header">
         <nav className="page-breadcrumb">

@@ -268,7 +268,7 @@ const Alerts = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+      <div className="bg-card rounded-xl border border-border/50 p-3 space-y-2">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 max-w-sm">
             <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />

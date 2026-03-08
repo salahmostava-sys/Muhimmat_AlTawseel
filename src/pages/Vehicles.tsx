@@ -481,7 +481,7 @@ const Vehicles = () => {
   };
 
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-4" dir="rtl">
       {/* Page header breadcrumb */}
       <div className="page-header">
         <nav className="page-breadcrumb">
