@@ -217,7 +217,7 @@ const Alerts = () => {
   const infoCount = filtered.filter(a => a.severity === 'info').length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Page header breadcrumb */}
       <div className="page-header">
         <nav className="page-breadcrumb">
@@ -244,7 +244,7 @@ const Alerts = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <div className="stat-card border-r-4 border-r-destructive cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSeverityFilter(severityFilter === 'urgent' ? 'all' : 'urgent')}>
           <p className="text-sm text-muted-foreground">عاجل</p>
           <p className="text-3xl font-bold text-destructive mt-1">{urgentCount}</p>
@@ -268,7 +268,7 @@ const Alerts = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+      <div className="bg-card rounded-xl border border-border/50 p-3 space-y-2">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 max-w-sm">
             <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />

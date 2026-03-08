@@ -593,7 +593,7 @@ const Advances = () => {
   };
 
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-4" dir="rtl">
       {/* Page header breadcrumb */}
       <div className="page-header">
         <nav className="page-breadcrumb">
@@ -625,7 +625,7 @@ const Advances = () => {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: 'عدد السلف النشطة', value: stats.activeCount, color: 'text-primary' },
           { label: 'إجمالي المبالغ المتبقية', value: `${stats.totalRemaining.toLocaleString()} ر.س`, color: 'text-destructive' },
@@ -657,7 +657,7 @@ const Advances = () => {
 
       {/* Cards Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="bg-card rounded-xl border border-border/50 p-5 space-y-3 animate-pulse">
               <div className="h-4 bg-muted rounded w-2/3" />

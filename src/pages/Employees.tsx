@@ -332,7 +332,7 @@ const Employees = () => {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Page header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div className="page-header mb-0">
@@ -369,7 +369,7 @@ const Employees = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-card rounded-xl border border-border/50 shadow-sm p-4 flex flex-wrap gap-3 items-center">
+      <div className="bg-card rounded-xl border border-border/50 shadow-sm p-3 flex flex-wrap gap-2 items-center">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={15} className="absolute start-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -466,7 +466,7 @@ const Employees = () => {
                       }
                     </td>
                     <td className="px-3 py-2.5">
-                      <button onClick={() => setSelectedEmployee(emp.id)} className="text-sm font-semibold text-foreground hover:text-primary transition-colors text-start">
+                      <button onClick={() => setSelectedEmployee(emp.id)} className="text-sm font-semibold text-foreground hover:text-primary transition-colors text-start whitespace-nowrap">
                         {emp.name}
                       </button>
                     </td>

@@ -862,7 +862,7 @@ const Salaries = () => {
   const stickyLeft = (offset: number) => ({ left: offset });
 
   return (
-    <div className="space-y-5 h-full flex flex-col" dir="rtl">
+    <div className="space-y-4 h-full flex flex-col" dir="rtl">
       {/* Page header breadcrumb */}
       <div className="page-header">
         <nav className="page-breadcrumb">
@@ -877,7 +877,7 @@ const Salaries = () => {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="stat-card">
           <p className="text-xs text-muted-foreground">إجمالي الرواتب</p>
           <p className="text-2xl font-bold text-primary mt-1">{totalNet.toLocaleString()} <span className="text-xs">ر.س</span></p>

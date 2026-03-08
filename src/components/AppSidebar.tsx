@@ -170,11 +170,11 @@ const AppSidebar = () => {
                   onClick={() => toggleGroup(group.key)}
                   className="w-full flex items-center justify-between px-3 py-2 mt-2 rounded-lg transition-colors hover:bg-[hsl(var(--sidebar-accent))] group"
                 >
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-muted))] group-hover:text-[hsl(var(--sidebar-accent-foreground))] transition-colors">
+                  <span className="text-sm font-medium text-[hsl(var(--sidebar-muted))] group-hover:text-[hsl(var(--sidebar-accent-foreground))] transition-colors">
                     {group.sectionLabel}
                   </span>
                   <ChevronIcon
-                    size={13}
+                    size={14}
                     className={cn(
                       'text-[hsl(var(--sidebar-muted))] transition-transform duration-200',
                       isGroupOpen ? 'rotate-0' : '-rotate-90'
@@ -195,7 +195,7 @@ const AppSidebar = () => {
                             'relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150',
                             active
                               ? 'sidebar-item-active bg-[hsl(var(--sidebar-accent))] text-primary font-semibold'
-                              : 'text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-accent-foreground))]'
+                              : 'font-normal text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-accent-foreground))]'
                           )}
                           onClick={close}
                         >

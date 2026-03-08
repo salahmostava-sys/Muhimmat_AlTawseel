@@ -226,7 +226,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="space-y-5 animate-fade-in">
+    <div className="space-y-4 animate-fade-in">
       {/* ── Page header ────────────────────────────────────── */}
       <div className="page-header">
         <div className="page-breadcrumb">
@@ -246,7 +246,7 @@ const Dashboard = () => {
       </div>
 
       {/* ── Charts row ─────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Weekly attendance bar chart */}
         <div className="lg:col-span-2">
           <ChartCard title={lang === 'ar' ? 'الحضور هذا الأسبوع' : 'Weekly Attendance'}>
@@ -275,7 +275,7 @@ const Dashboard = () => {
       </div>
 
       {/* ── Bottom row ─────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Orders by platform donut */}
         <ChartCard title={lang === 'ar' ? 'الطلبات حسب التطبيق' : 'Orders by Platform'}>
           {ordersByApp.length === 0 ? (
