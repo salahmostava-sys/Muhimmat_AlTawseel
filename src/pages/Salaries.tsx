@@ -740,12 +740,15 @@ const Salaries = () => {
 
   return (
     <div className="space-y-5 h-full flex flex-col" dir="rtl">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <Wallet size={24} /> الرواتب الشهرية
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
+      {/* Page header breadcrumb */}
+      <div className="page-header">
+        <nav className="page-breadcrumb">
+          <span>الرئيسية</span>
+          <span className="page-breadcrumb-sep">/</span>
+          <span>الرواتب الشهرية</span>
+        </nav>
+        <h1 className="page-title flex items-center gap-2"><Wallet size={20} /> الرواتب الشهرية</h1>
+        <p className="page-subtitle">
           محاسبة تفصيلية لرواتب المناديب — {months.find(m => m.v === selectedMonth)?.l}
         </p>
       </div>

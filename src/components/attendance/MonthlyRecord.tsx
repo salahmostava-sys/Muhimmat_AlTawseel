@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useLanguage } from '@/context/LanguageContext';
 
-const MONTHS = [
-  'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-  'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
-];
+const MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 type Employee = { id: string; name: string; national_id: string | null; salary_type: string; base_salary: number };
 type AttendanceRow = { employee_id: string; status: string };
@@ -15,6 +14,9 @@ interface Props {
 }
 
 const MonthlyRecord = ({ selectedMonth, selectedYear }: Props) => {
+  const { lang, isRTL } = useLanguage();
+  const MONTHS = lang === 'ar' ? MONTHS_AR : MONTHS_EN;
+
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [attendanceRows, setAttendanceRows] = useState<AttendanceRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,47 +73,64 @@ const MonthlyRecord = ({ selectedMonth, selectedYear }: Props) => {
     { presentDays: 0, absentDays: 0, leaveDays: 0, sickDays: 0, lateDays: 0, unpaidLeaveDays: 0, totalHours: 0, earnedSalary: 0 }
   );
 
+  const t = {
+    employee:    lang === 'ar' ? 'المندوب'       : 'Employee',
+    nationalId:  lang === 'ar' ? 'رقم الهوية'    : 'National ID',
+    present:     lang === 'ar' ? 'حضور'           : 'Present',
+    absent:      lang === 'ar' ? 'غياب'           : 'Absent',
+    leave:       lang === 'ar' ? 'إجازة'          : 'Leave',
+    sick:        lang === 'ar' ? 'مريض'           : 'Sick',
+    late:        lang === 'ar' ? 'متأخر'          : 'Late',
+    unpaid:      lang === 'ar' ? 'بدون راتب'      : 'Unpaid',
+    hours:       lang === 'ar' ? 'ساعات العمل'    : 'Work Hours',
+    earned:      lang === 'ar' ? 'المستحق'        : 'Earned',
+    total:       lang === 'ar' ? 'الإجمالي'       : 'Total',
+    noData:      lang === 'ar' ? 'لا توجد بيانات لهذا الشهر' : 'No data for this month',
+    hoursUnit:   lang === 'ar' ? 'س'              : 'h',
+    sarUnit:     lang === 'ar' ? 'ر.س'            : 'SAR',
+    monthPeriod: `${MONTHS[selectedMonth]} ${selectedYear}`,
+  };
+
   return (
     <div className="space-y-5">
-      {/* Table */}
-      <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
+      <div className="ta-table-wrap shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border/50 bg-muted/30">
-                <th className="text-right p-3 font-semibold text-muted-foreground sticky right-0 bg-muted/30">المندوب</th>
-                <th className="text-right p-3 font-semibold text-muted-foreground">رقم الهوية</th>
-                <th className="text-center p-3 font-semibold text-muted-foreground"><span className="badge-success">حضور</span></th>
-                <th className="text-center p-3 font-semibold text-muted-foreground"><span className="badge-urgent">غياب</span></th>
-                <th className="text-center p-3 font-semibold text-muted-foreground"><span className="badge-warning">إجازة</span></th>
-                <th className="text-center p-3 font-semibold text-muted-foreground">
-                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">مريض</span>
+            <thead className="ta-thead">
+              <tr>
+                <th className={`ta-th sticky ${isRTL ? 'right-0' : 'left-0'} bg-muted/40`}>{t.employee}</th>
+                <th className="ta-th">{t.nationalId}</th>
+                <th className="ta-th-center"><span className="badge-success">{t.present}</span></th>
+                <th className="ta-th-center"><span className="badge-urgent">{t.absent}</span></th>
+                <th className="ta-th-center"><span className="badge-warning">{t.leave}</span></th>
+                <th className="ta-th-center">
+                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">{t.sick}</span>
                 </th>
-                <th className="text-center p-3 font-semibold text-muted-foreground">
-                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">متأخر</span>
+                <th className="ta-th-center">
+                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">{t.late}</span>
                 </th>
-                <th className="text-center p-3 font-semibold text-muted-foreground">
-                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground">بدون راتب</span>
+                <th className="ta-th-center">
+                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground">{t.unpaid}</span>
                 </th>
-                <th className="text-center p-3 font-semibold text-muted-foreground">ساعات العمل</th>
-                <th className="text-center p-3 font-semibold text-muted-foreground">المستحق</th>
+                <th className="ta-th-center">{t.hours}</th>
+                <th className="ta-th-center">{t.earned}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="border-b border-border/30">
+                  <tr key={i} className="ta-tr">
                     {Array.from({ length: 10 }).map((_, j) => (
-                      <td key={j} className="p-3"><div className="h-4 bg-muted rounded animate-pulse" /></td>
+                      <td key={j} className="ta-td"><div className="h-4 bg-muted rounded animate-pulse" /></td>
                     ))}
                   </tr>
                 ))
               ) : data.length === 0 ? (
-                <tr><td colSpan={10} className="p-10 text-center text-muted-foreground">لا توجد بيانات لهذا الشهر</td></tr>
+                <tr><td colSpan={10} className="p-10 text-center text-muted-foreground">{t.noData}</td></tr>
               ) : (
                 data.map(row => (
-                  <tr key={row.id} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
-                    <td className="p-3 sticky right-0 bg-card">
+                  <tr key={row.id} className="ta-tr">
+                    <td className={`ta-td sticky ${isRTL ? 'right-0' : 'left-0'} bg-card`}>
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
                           {row.name.charAt(0)}
@@ -119,32 +138,32 @@ const MonthlyRecord = ({ selectedMonth, selectedYear }: Props) => {
                         <span className="font-medium text-foreground whitespace-nowrap">{row.name}</span>
                       </div>
                     </td>
-                    <td className="p-3 text-muted-foreground font-mono text-xs" dir="ltr">{row.national_id || '—'}</td>
-                    <td className="p-3 text-center font-semibold text-green-600 dark:text-green-400">{row.presentDays}</td>
-                    <td className="p-3 text-center font-semibold text-destructive">{row.absentDays}</td>
-                    <td className="p-3 text-center font-semibold text-yellow-600 dark:text-yellow-400">{row.leaveDays}</td>
-                    <td className="p-3 text-center font-semibold text-purple-600 dark:text-purple-400">{row.sickDays}</td>
-                    <td className="p-3 text-center text-orange-600 dark:text-orange-400">{row.lateDays}</td>
-                    <td className="p-3 text-center text-muted-foreground">{row.unpaidLeaveDays}</td>
-                    <td className="p-3 text-center text-muted-foreground">{row.totalHours} س</td>
-                    <td className="p-3 text-center font-semibold text-foreground">{row.earnedSalary.toLocaleString()} ر.س</td>
+                    <td className="ta-td text-muted-foreground font-mono text-xs" dir="ltr">{row.national_id || '—'}</td>
+                    <td className="ta-td-center font-semibold text-green-600 dark:text-green-400">{row.presentDays}</td>
+                    <td className="ta-td-center font-semibold text-destructive">{row.absentDays}</td>
+                    <td className="ta-td-center font-semibold text-yellow-600 dark:text-yellow-400">{row.leaveDays}</td>
+                    <td className="ta-td-center font-semibold text-purple-600 dark:text-purple-400">{row.sickDays}</td>
+                    <td className="ta-td-center text-orange-600 dark:text-orange-400">{row.lateDays}</td>
+                    <td className="ta-td-center text-muted-foreground">{row.unpaidLeaveDays}</td>
+                    <td className="ta-td-center text-muted-foreground">{row.totalHours} {t.hoursUnit}</td>
+                    <td className="ta-td-center font-semibold text-foreground">{row.earnedSalary.toLocaleString()} {t.sarUnit}</td>
                   </tr>
                 ))
               )}
             </tbody>
             {!loading && data.length > 0 && (
               <tfoot>
-                <tr className="bg-muted/40 font-semibold">
-                  <td className="p-3 sticky right-0 bg-muted/40 text-foreground">الإجمالي</td>
-                  <td className="p-3" />
-                  <td className="p-3 text-center text-green-600 dark:text-green-400">{totals.presentDays}</td>
-                  <td className="p-3 text-center text-destructive">{totals.absentDays}</td>
-                  <td className="p-3 text-center text-yellow-600 dark:text-yellow-400">{totals.leaveDays}</td>
-                  <td className="p-3 text-center text-purple-600 dark:text-purple-400">{totals.sickDays}</td>
-                  <td className="p-3 text-center text-orange-600 dark:text-orange-400">{totals.lateDays}</td>
-                  <td className="p-3 text-center text-muted-foreground">{totals.unpaidLeaveDays}</td>
-                  <td className="p-3 text-center text-muted-foreground">{totals.totalHours} س</td>
-                  <td className="p-3 text-center text-foreground">{totals.earnedSalary.toLocaleString()} ر.س</td>
+                <tr className="bg-muted/40 font-semibold border-t-2 border-border">
+                  <td className={`ta-td sticky ${isRTL ? 'right-0' : 'left-0'} bg-muted/40 text-foreground`}>{t.total}</td>
+                  <td className="ta-td" />
+                  <td className="ta-td-center text-green-600 dark:text-green-400">{totals.presentDays}</td>
+                  <td className="ta-td-center text-destructive">{totals.absentDays}</td>
+                  <td className="ta-td-center text-yellow-600 dark:text-yellow-400">{totals.leaveDays}</td>
+                  <td className="ta-td-center text-purple-600 dark:text-purple-400">{totals.sickDays}</td>
+                  <td className="ta-td-center text-orange-600 dark:text-orange-400">{totals.lateDays}</td>
+                  <td className="ta-td-center text-muted-foreground">{totals.unpaidLeaveDays}</td>
+                  <td className="ta-td-center text-muted-foreground">{totals.totalHours} {t.hoursUnit}</td>
+                  <td className="ta-td-center text-foreground">{totals.earnedSalary.toLocaleString()} {t.sarUnit}</td>
                 </tr>
               </tfoot>
             )}

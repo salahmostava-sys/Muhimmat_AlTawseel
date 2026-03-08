@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
+import { ar, enUS } from 'date-fns/locale';
 import {
   CalendarIcon, CheckCircle2, XCircle, Clock,
   Palmtree, Stethoscope, UserCheck, Save, Plus
@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useLanguage } from '@/context/LanguageContext';
 
 type AttendanceStatus = 'present' | 'absent' | 'leave' | 'sick' | 'late' | 'unpaid_leave';
 
@@ -27,16 +28,25 @@ interface AttendanceRecord {
 
 type Employee = { id: string; name: string; salary_type: string; job_title?: string | null };
 
-const statusConfig: Record<AttendanceStatus, { label: string; icon: typeof CheckCircle2; activeClass: string; hoverClass: string }> = {
+const statusConfigAr = {
   present:      { label: 'حاضر',             icon: CheckCircle2, activeClass: 'bg-green-100 text-green-700 border-green-400 dark:bg-green-900/30 dark:text-green-400',   hoverClass: 'hover:bg-green-50 hover:text-green-700 hover:border-green-300 dark:hover:bg-green-900/20' },
   absent:       { label: 'غائب',             icon: XCircle,      activeClass: 'bg-red-100 text-red-700 border-red-400 dark:bg-red-900/30 dark:text-red-400',             hoverClass: 'hover:bg-red-50 hover:text-red-700 hover:border-red-300 dark:hover:bg-red-900/20' },
   leave:        { label: 'إجازة',            icon: Palmtree,     activeClass: 'bg-yellow-100 text-yellow-700 border-yellow-400 dark:bg-yellow-900/30 dark:text-yellow-400', hoverClass: 'hover:bg-yellow-50 hover:text-yellow-700 hover:border-yellow-300' },
   sick:         { label: 'مريض',             icon: Stethoscope,  activeClass: 'bg-purple-100 text-purple-700 border-purple-400 dark:bg-purple-900/30 dark:text-purple-400', hoverClass: 'hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300' },
   late:         { label: 'متأخر',            icon: Clock,        activeClass: 'bg-orange-100 text-orange-700 border-orange-400 dark:bg-orange-900/30 dark:text-orange-400', hoverClass: 'hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300' },
-  unpaid_leave: { label: 'إجازة بدون راتب',  icon: Palmtree,     activeClass: 'bg-muted text-muted-foreground border-border',                                              hoverClass: 'hover:bg-muted/70 hover:text-foreground' },
+  unpaid_leave: { label: 'إجازة بدون راتب', icon: Palmtree,     activeClass: 'bg-muted text-muted-foreground border-border',                                              hoverClass: 'hover:bg-muted/70 hover:text-foreground' },
 };
 
-const STATUS_KEYS = Object.keys(statusConfig) as AttendanceStatus[];
+const statusConfigEn = {
+  present:      { label: 'Present',      icon: CheckCircle2, activeClass: 'bg-green-100 text-green-700 border-green-400 dark:bg-green-900/30 dark:text-green-400',   hoverClass: 'hover:bg-green-50 hover:text-green-700 hover:border-green-300 dark:hover:bg-green-900/20' },
+  absent:       { label: 'Absent',       icon: XCircle,      activeClass: 'bg-red-100 text-red-700 border-red-400 dark:bg-red-900/30 dark:text-red-400',             hoverClass: 'hover:bg-red-50 hover:text-red-700 hover:border-red-300 dark:hover:bg-red-900/20' },
+  leave:        { label: 'Leave',        icon: Palmtree,     activeClass: 'bg-yellow-100 text-yellow-700 border-yellow-400 dark:bg-yellow-900/30 dark:text-yellow-400', hoverClass: 'hover:bg-yellow-50 hover:text-yellow-700 hover:border-yellow-300' },
+  sick:         { label: 'Sick',         icon: Stethoscope,  activeClass: 'bg-purple-100 text-purple-700 border-purple-400 dark:bg-purple-900/30 dark:text-purple-400', hoverClass: 'hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300' },
+  late:         { label: 'Late',         icon: Clock,        activeClass: 'bg-orange-100 text-orange-700 border-orange-400 dark:bg-orange-900/30 dark:text-orange-400', hoverClass: 'hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300' },
+  unpaid_leave: { label: 'Unpaid Leave', icon: Palmtree,     activeClass: 'bg-muted text-muted-foreground border-border',                                              hoverClass: 'hover:bg-muted/70 hover:text-foreground' },
+};
+
+const STATUS_KEYS = Object.keys(statusConfigAr) as AttendanceStatus[];
 
 interface Props {
   selectedMonth: number;
@@ -44,11 +54,14 @@ interface Props {
 }
 
 const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
+  const { lang, isRTL } = useLanguage();
+  const statusConfig = lang === 'ar' ? statusConfigAr : statusConfigEn;
+  const dateLocale = lang === 'ar' ? ar : enUS;
+
   const [date, setDate] = useState<Date>(() => {
     const d = new Date();
     d.setMonth(selectedMonth);
     d.setFullYear(selectedYear);
-    // clamp to valid day
     const lastDay = new Date(selectedYear, selectedMonth + 1, 0).getDate();
     if (d.getDate() > lastDay) d.setDate(lastDay);
     return d;
@@ -58,7 +71,6 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Update date when month/year changes
   useEffect(() => {
     setDate(prev => {
       const d = new Date(prev);
@@ -70,7 +82,6 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
     });
   }, [selectedMonth, selectedYear]);
 
-  // Fetch employees once
   useEffect(() => {
     supabase.from('employees').select('id, name, salary_type, job_title')
       .eq('status', 'active').order('name')
@@ -80,11 +91,9 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
       });
   }, []);
 
-  // Fetch existing records when date changes
   useEffect(() => {
     if (employees.length === 0) return;
     const dateStr = format(date, 'yyyy-MM-dd');
-
     supabase.from('attendance').select('*').eq('date', dateStr)
       .then(({ data }) => {
         const initial: Record<string, AttendanceRecord> = {};
@@ -114,7 +123,7 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
       Object.keys(updated).forEach(id => { updated[id] = { ...updated[id], status: 'present' }; });
       return updated;
     });
-    toast({ title: 'تم تسجيل الكل حاضرين ✅' });
+    toast({ title: lang === 'ar' ? 'تم تسجيل الكل حاضرين ✅' : 'All marked as present ✅' });
   };
 
   const handleSave = async () => {
@@ -123,7 +132,6 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
     const toSave = Object.values(records).filter(r => r.status !== null);
     let saved = 0;
 
-    // Map 'unpaid_leave' → 'leave' for DB compatibility (note saved alongside)
     const dbStatusMap: Record<AttendanceStatus, 'present' | 'absent' | 'leave' | 'sick' | 'late'> = {
       present: 'present', absent: 'absent', leave: 'leave',
       sick: 'sick', late: 'late', unpaid_leave: 'leave',
@@ -131,7 +139,7 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
     for (const r of toSave) {
       const noteText = [
         r.note,
-        r.status === 'unpaid_leave' ? 'إجازة بدون راتب' : '',
+        r.status === 'unpaid_leave' ? (lang === 'ar' ? 'إجازة بدون راتب' : 'Unpaid Leave') : '',
         r.customStatus,
       ].filter(Boolean).join(' | ') || null;
       const payload = {
@@ -149,7 +157,12 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
     }
 
     setSaving(false);
-    toast({ title: `تم حفظ حضور ${saved} مندوب بنجاح ✅`, description: `يوم ${format(date, 'dd MMMM yyyy', { locale: ar })}` });
+    toast({
+      title: lang === 'ar'
+        ? `تم حفظ حضور ${saved} مندوب بنجاح ✅`
+        : `Saved attendance for ${saved} employees ✅`,
+      description: format(date, 'dd MMMM yyyy', { locale: dateLocale }),
+    });
   };
 
   const summary = Object.values(records).reduce((acc, r) => {
@@ -158,6 +171,14 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
   }, {} as Record<string, number>);
 
   const savedCount = Object.values(records).filter(r => r.status !== null).length;
+
+  const colHeaders = {
+    employee: lang === 'ar' ? 'المندوب' : 'Employee',
+    status:   lang === 'ar' ? 'الحالة' : 'Status',
+    checkIn:  lang === 'ar' ? 'وقت الحضور' : 'Check In',
+    checkOut: lang === 'ar' ? 'وقت الانصراف' : 'Check Out',
+    note:     lang === 'ar' ? 'ملاحظة' : 'Note',
+  };
 
   return (
     <div className="space-y-5">
@@ -168,7 +189,7 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
             <PopoverTrigger asChild>
               <Button variant="outline" className={cn('w-[210px] justify-start gap-2 font-normal')}>
                 <CalendarIcon size={16} />
-                {format(date, 'dd MMMM yyyy', { locale: ar })}
+                {format(date, 'dd MMMM yyyy', { locale: dateLocale })}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -183,14 +204,20 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
               />
             </PopoverContent>
           </Popover>
-          <span className="text-sm text-muted-foreground">{employees.length} مندوب نشط</span>
+          <span className="text-sm text-muted-foreground">
+            {employees.length} {lang === 'ar' ? 'مندوب نشط' : 'active employees'}
+          </span>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={markAllPresent} className="gap-2">
-            <UserCheck size={16} /> تسجيل الكل حاضرين
+            <UserCheck size={16} />
+            {lang === 'ar' ? 'تسجيل الكل حاضرين' : 'Mark All Present'}
           </Button>
           <Button onClick={handleSave} disabled={saving || savedCount === 0} className="gap-2">
-            <Save size={16} /> {saving ? 'جاري الحفظ...' : `حفظ الحضور (${savedCount})`}
+            <Save size={16} />
+            {saving
+              ? (lang === 'ar' ? 'جاري الحفظ...' : 'Saving...')
+              : `${lang === 'ar' ? 'حفظ الحضور' : 'Save Attendance'} (${savedCount})`}
           </Button>
         </div>
       </div>
@@ -202,50 +229,58 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
             {statusConfig[key].label}: {summary[key]}
           </span>
         ) : null)}
-        {savedCount === 0 && <span className="text-xs text-muted-foreground">لم يُحدَّد أي حضور بعد</span>}
+        {savedCount === 0 && (
+          <span className="text-xs text-muted-foreground">
+            {lang === 'ar' ? 'لم يُحدَّد أي حضور بعد' : 'No attendance recorded yet'}
+          </span>
+        )}
       </div>
 
       {/* Table */}
-      <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
+      <div className="ta-table-wrap shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead>
-              <tr className="border-b border-border/50 bg-muted/30">
-                <th className="text-right p-4 text-sm font-semibold text-muted-foreground sticky right-0 bg-muted/30 min-w-[160px]">المندوب</th>
-                <th className="text-right p-4 text-sm font-semibold text-muted-foreground min-w-[420px]">الحالة</th>
-                <th className="text-right p-4 text-sm font-semibold text-muted-foreground">وقت الحضور</th>
-                <th className="text-right p-4 text-sm font-semibold text-muted-foreground">وقت الانصراف</th>
-                <th className="text-right p-4 text-sm font-semibold text-muted-foreground min-w-[180px]">ملاحظة</th>
+            <thead className="ta-thead">
+              <tr>
+                <th className={`ta-th sticky ${isRTL ? 'right-0' : 'left-0'} bg-muted/40 min-w-[160px]`}>{colHeaders.employee}</th>
+                <th className="ta-th min-w-[420px]">{colHeaders.status}</th>
+                <th className="ta-th-center">{colHeaders.checkIn}</th>
+                <th className="ta-th-center">{colHeaders.checkOut}</th>
+                <th className="ta-th min-w-[180px]">{colHeaders.note}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="border-b border-border/30">
+                  <tr key={i} className="ta-tr">
                     {Array.from({ length: 5 }).map((_, j) => (
-                      <td key={j} className="p-4"><div className="h-4 bg-muted rounded animate-pulse" /></td>
+                      <td key={j} className="ta-td"><div className="h-4 bg-muted rounded animate-pulse" /></td>
                     ))}
                   </tr>
                 ))
               ) : employees.map(emp => {
                 const record = records[emp.id] ?? { status: null, checkIn: '', checkOut: '', note: '', customStatus: '', showCustomInput: false, employeeId: emp.id };
                 return (
-                  <tr key={emp.id} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
+                  <tr key={emp.id} className="ta-tr">
                     {/* Name */}
-                    <td className="p-4 sticky right-0 bg-card">
+                    <td className={`ta-td sticky ${isRTL ? 'right-0' : 'left-0'} bg-card`}>
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">
                           {emp.name.charAt(0)}
                         </div>
                         <div>
                           <p className="text-sm font-medium text-foreground whitespace-nowrap">{emp.name}</p>
-                          <p className="text-xs text-muted-foreground">{emp.job_title || (emp.salary_type === 'orders' ? 'طلبات' : 'دوام')}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {emp.job_title || (emp.salary_type === 'orders'
+                              ? (lang === 'ar' ? 'طلبات' : 'Orders')
+                              : (lang === 'ar' ? 'دوام' : 'Shift'))}
+                          </p>
                         </div>
                       </div>
                     </td>
 
                     {/* Status buttons */}
-                    <td className="p-3">
+                    <td className="ta-td">
                       <div className="flex flex-col gap-2">
                         <div className="flex gap-1.5 flex-wrap">
                           {STATUS_KEYS.map(key => {
@@ -273,7 +308,7 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
                             <Input
                               value={record.customStatus}
                               onChange={e => updateRecord(emp.id, 'customStatus', e.target.value)}
-                              placeholder="حالة مخصصة..."
+                              placeholder={lang === 'ar' ? 'حالة مخصصة...' : 'Custom status...'}
                               className="text-xs h-7 max-w-[200px]"
                             />
                           </div>
@@ -282,14 +317,15 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
                             onClick={() => updateRecord(emp.id, 'showCustomInput', true)}
                             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors w-fit"
                           >
-                            <Plus size={11} /> إضافة حالة مخصصة
+                            <Plus size={11} />
+                            {lang === 'ar' ? 'إضافة حالة مخصصة' : 'Add custom status'}
                           </button>
                         )}
                       </div>
                     </td>
 
                     {/* Check in */}
-                    <td className="p-3">
+                    <td className="ta-td-center">
                       <Input
                         type="time"
                         value={record.checkIn}
@@ -300,7 +336,7 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
                     </td>
 
                     {/* Check out */}
-                    <td className="p-3">
+                    <td className="ta-td-center">
                       <Input
                         type="time"
                         value={record.checkOut}
@@ -311,9 +347,9 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
                     </td>
 
                     {/* Note */}
-                    <td className="p-3">
+                    <td className="ta-td">
                       <Input
-                        placeholder="ملاحظة اختيارية..."
+                        placeholder={lang === 'ar' ? 'ملاحظة اختيارية...' : 'Optional note...'}
                         value={record.note}
                         onChange={e => updateRecord(emp.id, 'note', e.target.value)}
                         className="text-sm min-w-[160px]"
