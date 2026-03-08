@@ -1306,6 +1306,14 @@ const Salaries = () => {
                           </div>
                         ) : <span className="text-muted-foreground/30">—</span>}
                       </td>
+                      <td className={tdClass}>
+                        {r.advanceRemaining > 0 ? (
+                          <div className="flex flex-col items-center">
+                            <span className="text-warning font-semibold">{r.advanceRemaining.toLocaleString()}</span>
+                            <span className="text-[9px] text-muted-foreground">متبقي</span>
+                          </div>
+                        ) : <span className="text-muted-foreground/30">—</span>}
+                      </td>
                       <td className={`${tdClass} text-destructive`}>{r.externalDeduction > 0 ? r.externalDeduction.toLocaleString() : <span className="text-muted-foreground/30">—</span>}</td>
                       <td className={tdClass}><EditableCell value={r.violations} onChange={v => updateRow(r.id, { violations: v })} className="text-destructive" /></td>
                       <td className={tdClass}><EditableCell value={r.walletHunger} onChange={v => updateRow(r.id, { walletHunger: v })} className="text-destructive" /></td>
