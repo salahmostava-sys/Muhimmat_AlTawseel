@@ -36,7 +36,6 @@ interface Props {
 }
 
 const STEPS = ['البيانات الأساسية', 'الإقامة والوثائق', 'نوع الراتب', 'رفع المستندات'];
-const APPS = ['هنقرستيشن', 'جاهز', 'كيتا', 'توبو', 'نينجا', 'تويو', 'أمازون'];
 
 const SectionTitle = ({ title }: { title: string }) => (
   <div className="flex items-center gap-3 mb-5">
@@ -114,10 +113,25 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [schemes, setSchemes] = useState<{ id: string; name: string }[]>([]);
+  const [availableApps, setAvailableApps] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
-    supabase.from('salary_schemes').select('id, name').eq('status', 'active').order('name')
-      .then(({ data }) => { if (data) setSchemes(data); });
+    Promise.all([
+      supabase.from('salary_schemes').select('id, name').eq('status', 'active').order('name'),
+      supabase.from('apps').select('id, name').eq('is_active', true).order('name'),
+    ]).then(([schemesRes, appsRes]) => {
+      if (schemesRes.data) setSchemes(schemesRes.data);
+      if (appsRes.data) setAvailableApps(appsRes.data);
+    });
+    // If editing, load current employee_apps
+    if (editEmployee) {
+      supabase.from('employee_apps').select('app_id, apps(name)').eq('employee_id', editEmployee.id)
+        .then(({ data }) => {
+          if (data) {
+            setForm(f => ({ ...f, selected_apps: data.map((ea: any) => ea.apps?.name).filter(Boolean) }));
+          }
+        });
+    }
   }, []);
 
   const [form, setForm] = useState({
@@ -254,6 +268,20 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
       }
       if (Object.keys(updates).length > 0) {
         await supabase.from('employees').update(updates).eq('id', empId);
+      }
+
+      // Sync employee_apps: delete old, insert new
+      await supabase.from('employee_apps').delete().eq('employee_id', empId);
+      if (form.selected_apps.length > 0) {
+        const appsToInsert = form.selected_apps
+          .map(appName => {
+            const appData = availableApps.find(a => a.name === appName);
+            return appData ? { employee_id: empId, app_id: appData.id, status: 'active' } : null;
+          })
+          .filter(Boolean) as { employee_id: string; app_id: string; status: string }[];
+        if (appsToInsert.length > 0) {
+          await supabase.from('employee_apps').insert(appsToInsert);
+        }
       }
 
       toast({
@@ -399,10 +427,10 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
               )}
               <SectionTitle title="── المنصات المرتبطة ──" />
               <div className="flex flex-wrap gap-2">
-                {APPS.map(app => (
-                  <button key={app} type="button" onClick={() => toggleApp(app)}
-                    className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${form.selected_apps.includes(app) ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/50'}`}>
-                    {app}
+                {availableApps.map(app => (
+                  <button key={app.id} type="button" onClick={() => toggleApp(app.name)}
+                    className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${form.selected_apps.includes(app.name) ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/50'}`}>
+                    {app.name}
                   </button>
                 ))}
               </div>

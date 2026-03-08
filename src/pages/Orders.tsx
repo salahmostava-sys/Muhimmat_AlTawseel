@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
-import { useAppColors } from '@/hooks/useAppColors';
+import { useAppColors, getAppColor } from '@/hooks/useAppColors';
 
 // ─── Types ──────────────────────────────────────────────────────────
 type Employee = { id: string; name: string; salary_type: string; status: string; sponsorship_status: string | null };
@@ -21,11 +21,10 @@ const monthLabel = (y: number, m: number) =>
 const dateStr = (y: number, m: number, d: number) =>
   `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
-// Module-level fallback — each component uses useAppColors() for DB-driven colors
-const appColor = (_name: string) => ({ bg: 'hsl(var(--primary))', text: '#fff', cellBg: 'rgba(0,0,0,0.03)', val: 'hsl(var(--primary))' });
 
 // ─── SpreadsheetGrid ─────────────────────────────────────────────────
 const SpreadsheetGrid = () => {
+  const { apps: appColorsList } = useAppColors();
   const { toast } = useToast();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -200,7 +199,7 @@ const SpreadsheetGrid = () => {
             الكل
           </button>
           {apps.map(app => {
-            const c = appColor(app.name);
+            const c = getAppColor(appColorsList, app.name);
             const isActive = selectedApp === app.name;
             return (
               <button key={app.id} onClick={() => setSelectedApp(app.name)}
@@ -244,7 +243,7 @@ const SpreadsheetGrid = () => {
                   // Multi-app: columns per app
                   <>
                     {visibleApps.map(app => {
-                      const c = appColor(app.name);
+                      const c = getAppColor(appColorsList, app.name);
                       return (
                         <th key={app.id} className="text-center px-2 py-2.5 font-semibold min-w-[80px] border-l border-border"
                           style={{ backgroundColor: c.bg, color: c.text }}>
@@ -289,7 +288,7 @@ const SpreadsheetGrid = () => {
                       // Multi-app columns: monthly total per app
                       <>
                         {visibleApps.map(app => {
-                          const c = appColor(app.name);
+                          const c = getAppColor(appColorsList, app.name);
                           const appMonthTotal = dayArr.reduce((s, d) => s + getVal(emp.id, app.id, d), 0);
                           return (
                             <td key={app.id} className="text-center px-2 py-2 font-semibold border-l border-border/30" style={{ backgroundColor: c.cellBg, color: c.val }}>
@@ -309,7 +308,7 @@ const SpreadsheetGrid = () => {
                           const isEditing = editing?.key === key;
                           const dow = new Date(year, month - 1, d).getDay();
                           const isWeekend = dow === 5 || dow === 6;
-                          const c = appId ? appColor(visibleApps[0]?.name ?? '') : { cellBg: '', val: 'inherit' };
+                          const c = appId ? getAppColor(appColorsList, visibleApps[0]?.name ?? '') : { cellBg: '', val: 'inherit' };
                           return (
                             <td key={d}
                               className={`text-center p-0 border-l border-border/30 ${isWeekend ? 'bg-destructive/5' : ''}`}
@@ -341,7 +340,7 @@ const SpreadsheetGrid = () => {
                 {isMultiApp ? (
                   <>
                     {visibleApps.map(app => {
-                      const c = appColor(app.name);
+                      const c = getAppColor(appColorsList, app.name);
                       const appTotal = filteredEmployees.reduce((s, e) => s + dayArr.reduce((ss, d) => ss + getVal(e.id, app.id, d), 0), 0);
                       return (
                         <td key={app.id} className="text-center px-2 py-2 border-l border-border/30 font-bold" style={{ color: c.val }}>
@@ -380,6 +379,7 @@ const SpreadsheetGrid = () => {
 
 // ─── Month Summary ─────────────────────────────────────────────────
 const MonthSummary = () => {
+  const { apps: appColorsList } = useAppColors();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -442,7 +442,7 @@ const MonthSummary = () => {
               <tr className="border-b border-border/50 bg-muted/30">
                 <th className="text-right p-4 font-semibold text-muted-foreground sticky right-0 bg-muted/30">المندوب</th>
                 {apps.map(app => {
-                  const c = appColor(app.name);
+                  const c = getAppColor(appColorsList, app.name);
                   return (
                     <th key={app.id} className="text-center p-3 font-semibold min-w-[80px]"
                       style={{ backgroundColor: c.bg, color: c.text }}>
@@ -475,7 +475,7 @@ const MonthSummary = () => {
                       </div>
                     </td>
                     {apps.map(app => {
-                      const c = appColor(app.name);
+                      const c = getAppColor(appColorsList, app.name);
                       const appTotal = dayArr.reduce((s, d) => s + (data[`${emp.id}::${app.id}::${d}`] ?? 0), 0);
                       return (
                         <td key={app.id} className="text-center p-3 font-semibold" style={{ color: appTotal > 0 ? c.val : undefined }}>
@@ -494,7 +494,7 @@ const MonthSummary = () => {
                 <tr className="bg-muted/30 font-semibold border-t-2 border-border">
                   <td className="p-4 sticky right-0 bg-muted/40 text-foreground">الإجمالي</td>
                   {apps.map(app => {
-                    const c = appColor(app.name);
+                    const c = getAppColor(appColorsList, app.name);
                     const appGrandTotal = employees.reduce((s, e) =>
                       s + dayArr.reduce((ss, d) => ss + (data[`${e.id}::${app.id}::${d}`] ?? 0), 0), 0);
                     return (

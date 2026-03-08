@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { format, differenceInDays, parseISO } from 'date-fns';
+import { usePermissions } from '@/hooks/usePermissions';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type VehicleStatus = 'active' | 'maintenance' | 'breakdown' | 'rental' | 'ended';
@@ -384,6 +385,7 @@ const calcDuration = (start: string | null, end: string | null) => {
 // ─── Main Component ───────────────────────────────────────────────────────────
 const Vehicles = () => {
   const { toast } = useToast();
+  const { permissions } = usePermissions('vehicles');
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -502,9 +504,11 @@ const Vehicles = () => {
                 <DropdownMenuItem onClick={handleExportAssignments}>📋 سجل التسليم Excel</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            {permissions.can_edit && (
             <Button className="gap-2" onClick={() => { setEditVehicle(null); setVehicleFormOpen(true); }}>
               <Plus size={16} /> إضافة مركبة
             </Button>
+            )}
           </div>
         </div>
       </div>

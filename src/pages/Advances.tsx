@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
+import { usePermissions } from '@/hooks/usePermissions';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type AdvanceStatus = 'active' | 'completed' | 'paused';
@@ -518,6 +519,7 @@ const AddAdvanceModalInline = ({ open, onClose, onSaved, defaultEmployeeId, allA
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const Advances = () => {
   const { toast } = useToast();
+  const { permissions } = usePermissions('advances');
   const [advances, setAdvances] = useState<Advance[]>([]);
   const [employees, setEmployees] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -613,9 +615,11 @@ const Advances = () => {
                 <DropdownMenuItem onClick={handleExport}>📊 تصدير Excel</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            {permissions.can_edit && (
             <Button className="gap-2" onClick={() => { setAddDefaultEmployee(undefined); setAddOpen(true); }}>
               <Plus size={16} /> إضافة سلفة
             </Button>
+            )}
           </div>
         </div>
       </div>

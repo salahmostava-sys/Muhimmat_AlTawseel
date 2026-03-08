@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from 'react-i18next';
+import { usePermissions } from '@/hooks/usePermissions';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type Employee = {
@@ -180,6 +181,7 @@ const SkeletonRow = () => (
 const Employees = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { permissions } = usePermissions('employees');
   const [data, setData] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -343,12 +345,16 @@ const Employees = () => {
           <p className="page-subtitle">{filtered.length} {t('results')} / {data.length} {t('registeredEmployees')}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
+          {permissions.can_edit && (
           <Button onClick={() => { setEditEmployee(null); setShowAddModal(true); }} className="gap-2">
             <Plus size={16} /> {t('addEmployee')}
           </Button>
+          )}
+          {permissions.can_edit && (
           <Button variant="outline" className="gap-2" onClick={() => importRef.current?.click()}>
             <Upload size={15} /> {t('importExcel')}
           </Button>
+          )}
           <input ref={importRef} type="file" accept=".xlsx,.xls" className="hidden" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
