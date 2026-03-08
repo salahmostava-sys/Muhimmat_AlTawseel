@@ -817,6 +817,7 @@ const Salaries = () => {
         is_approved: true,
         approved_by: user?.id ?? null,
         approved_at: nowStr,
+        payment_method: row.paymentMethod,
       }, { onConflict: 'employee_id,month_year' });
 
       if (srError) throw srError;
