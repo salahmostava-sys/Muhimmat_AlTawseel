@@ -558,13 +558,24 @@ const Employees = () => {
                         <button onClick={() => setSelectedEmployee(emp.id)} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" title={t('view')}>
                           <Eye size={15} />
                         </button>
-                        <button
-                          onClick={() => { setEditEmployee(emp); setShowAddModal(true); }}
-                          className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                          title={t('edit')}
-                        >
-                          <Edit size={15} />
-                        </button>
+                        {permissions.can_edit && (
+                          <button
+                            onClick={() => { setEditEmployee(emp); setShowAddModal(true); }}
+                            className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                            title={t('edit')}
+                          >
+                            <Edit size={15} />
+                          </button>
+                        )}
+                        {permissions.can_delete && (
+                          <button
+                            onClick={() => setDeleteEmployee(emp)}
+                            className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
+                            title={t('delete') || 'حذف'}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        )}
                       </div>
                     </td>
                     <td className="px-3 py-2.5 text-sm" dir="ltr">
