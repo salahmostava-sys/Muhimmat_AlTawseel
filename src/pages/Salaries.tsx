@@ -761,7 +761,15 @@ const Salaries = () => {
   });
 
   const updateRow = useCallback((id: string, patch: Partial<SalaryRow>) => {
-    setRows(prev => prev.map(r => r.id === id ? { ...r, ...patch } : r));
+    setRows(prev => prev.map(r => {
+      if (r.id !== id) return r;
+      const updated = { ...r, ...patch };
+      // Mark as dirty if editing after approved/paid
+      if (r.status !== 'pending' && !('status' in patch) && !('isDirty' in patch)) {
+        updated.isDirty = true;
+      }
+      return updated;
+    }));
     if (payslipRow?.id === id) setPayslipRow(prev => prev ? { ...prev, ...patch } : prev);
   }, [payslipRow]);
 
