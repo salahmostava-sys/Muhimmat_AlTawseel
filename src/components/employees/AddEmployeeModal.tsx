@@ -151,6 +151,7 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
     base_salary: '',
     selected_apps: [] as string[],
     app_schemes: {} as Record<string, string>,
+    preferred_language: 'ar' as 'ar' | 'en' | 'ur',
   });
 
   // Pre-fill form when editing
