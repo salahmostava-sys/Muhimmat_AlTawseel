@@ -1172,25 +1172,18 @@ const Salaries = () => {
                       ? Object.values(empPlatformScheme).find(m => m[p])?.[p]
                       : null;
                     const schemeName = headerScheme?.name || '';
-                    return [
-                      <th key={`${p}-orders`}
-                        className="px-2 py-2 text-xs font-semibold whitespace-nowrap border-b border-border/50 text-center cursor-pointer select-none hover:opacity-90 transition-opacity"
+                    return (
+                      <th key={`${p}-col`}
+                        className="px-2 py-2 text-xs font-semibold whitespace-nowrap border-b border-l border-border/30 text-center cursor-pointer select-none hover:opacity-90 transition-opacity"
                         style={{ backgroundColor: pc?.header, color: pc?.headerText }}
                         onClick={() => handleSort(p)}>
                         <div className="flex flex-col items-center gap-0">
                           <span>{p}</span>
-                          <span className="text-[9px] opacity-80 font-normal">طلبات <SortIcon field={p} sortField={sortField} sortDir={sortDir} /></span>
+                          <span className="text-[9px] opacity-80 font-normal">طلبات / راتب <SortIcon field={p} sortField={sortField} sortDir={sortDir} /></span>
                           {schemeName && <span className="text-[8px] opacity-60 font-normal">{schemeName}</span>}
                         </div>
-                      </th>,
-                      <th key={`${p}-salary`}
-                        className="px-2 py-2 text-xs font-semibold whitespace-nowrap border-b border-l border-border/30 text-center"
-                        style={{ backgroundColor: pc?.header ? `${pc.header}cc` : undefined, color: pc?.headerText }}>
-                        <div className="flex flex-col items-center gap-0">
-                          <span className="text-[9px] opacity-80 font-normal">راتب ر.س</span>
-                        </div>
-                      </th>,
-                    ];
+                      </th>
+                    );
                   })}
                   <th className={thBase}>الراتب الأساسي</th>
                   <th className={thBase}>حوافز</th>
