@@ -344,7 +344,7 @@ const AdvanceCard = ({ advance: a, onEdit, onTogglePause, onEmployeeClick, onAdd
 
       {/* Progress */}
       <div>
-        <Progress value={progress} className="h-2 bg-muted [&>div]:bg-gradient-to-r [&>div]:from-green-400 [&>div]:to-green-600" />
+        <Progress value={progress} className="h-2 bg-muted [&>div]:bg-success" />
         <p className="text-xs text-muted-foreground mt-1">
           سُدّد {paid.toLocaleString()} ر.س &nbsp;·&nbsp; {remInst} قسط متبقي
         </p>
