@@ -510,6 +510,7 @@ const Employees = () => {
                         renderDisplay={() => <CityBadge city={emp.city} />}
                       />
                     </td>
+                    <td className="px-3 py-2.5 text-sm text-muted-foreground whitespace-nowrap">{(emp as any).nationality || '—'}</td>
                     <td className="px-3 py-2.5 text-sm text-muted-foreground whitespace-nowrap">{emp.join_date ? format(parseISO(emp.join_date), 'yyyy/MM/dd') : '—'}</td>
                     <td className="px-3 py-2.5 text-sm text-muted-foreground whitespace-nowrap">{emp.residency_expiry ? format(parseISO(emp.residency_expiry), 'yyyy/MM/dd') : '—'}</td>
                     <td className={`px-3 py-2.5 text-sm font-medium whitespace-nowrap ${daysColor}`}>{res.days === null ? '—' : `${res.days}`}</td>
