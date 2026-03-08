@@ -491,7 +491,7 @@ const Salaries = () => {
       const startDate = `${selectedMonth}-01`;
       const endDate = `${selectedMonth}-${String(daysInMonth).padStart(2, '0')}`;
 
-      const [empRes, schemesRes, extRes, ordersRes, empSchemeRes] = await Promise.all([
+      const [empRes, schemesRes, extRes, ordersRes, empSchemeRes, empAppsRes] = await Promise.all([
         supabase
           .from('employees')
           .select('id, name, job_title, national_id, salary_type, base_salary, iban, city')
@@ -515,10 +515,15 @@ const Salaries = () => {
           .gte('date', startDate)
           .lte('date', endDate),
 
-        // Fetch employee->scheme assignments with app info via employee_apps
+        // Fetch employee->scheme assignments: employee_scheme links employee to salary_scheme
+        supabase
+          .from('employee_scheme')
+          .select('employee_id, scheme_id, salary_schemes(id, name, name_en, status, target_orders, target_bonus, salary_scheme_tiers(id, from_orders, to_orders, price_per_order, tier_order))'),
+
+        // Fetch employee_apps to know which apps each employee is registered in
         supabase
           .from('employee_apps')
-          .select('employee_id, app_id, apps(name), employee_scheme(scheme_id, salary_schemes(id, name, name_en, status, target_orders, target_bonus, salary_scheme_tiers(id, from_orders, to_orders, price_per_order, tier_order)))')
+          .select('employee_id, app_id, apps(name, id)')
           .eq('status', 'active'),
       ]);
 
