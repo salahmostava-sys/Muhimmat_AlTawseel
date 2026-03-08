@@ -6,6 +6,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { differenceInDays, parseISO, format } from 'date-fns';
 import EmployeeProfile from '@/components/employees/EmployeeProfile';
 import AddEmployeeModal from '@/components/employees/AddEmployeeModal';
@@ -336,12 +337,15 @@ const Employees = () => {
             <Upload size={15} /> استيراد Excel
           </Button>
           <input ref={importRef} type="file" accept=".xlsx,.xls" className="hidden" />
-          <Button variant="outline" className="gap-2" onClick={handleTemplate}>
-            <FileDown size={15} /> تحميل قالب
-          </Button>
-          <Button variant="outline" className="gap-2" onClick={handleExport}>
-            <Download size={15} /> تصدير Excel
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2"><Download size={15} /> 📥 تحميل تقرير ▾</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExport}>📊 تصدير Excel (القائمة المفلترة)</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleTemplate}>📋 تحميل قالب الاستيراد</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

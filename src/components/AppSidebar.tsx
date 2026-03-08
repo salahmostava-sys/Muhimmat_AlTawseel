@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, Users, Clock, Package, Wallet, CreditCard,
-  Bike, FileDown, BarChart3, Bell, Smartphone, TrendingUp,
+  Bike, FileDown, Bell, Smartphone,
   Settings, Map, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -63,7 +63,6 @@ const AppSidebar = () => {
         { label: t('schemes'), icon: Settings, path: '/settings/schemes' },
         { label: t('users'), icon: Users, path: '/settings/users' },
         { label: t('permissions'), icon: Settings, path: '/settings/permissions' },
-        { label: t('reports'), icon: BarChart3, path: '/reports' },
       ],
     },
   ];

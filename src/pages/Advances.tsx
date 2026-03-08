@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { Search, Plus, CreditCard } from 'lucide-react';
+import { Search, Plus, CreditCard, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { advances } from '@/data/mock';
+import * as XLSX from 'xlsx';
+import { format } from 'date-fns';
 
 const statusLabels: Record<string, string> = { active: 'نشطة', completed: 'مكتملة', paused: 'متوقفة' };
 const statusStyles: Record<string, string> = { active: 'badge-info', completed: 'badge-success', paused: 'badge-warning' };
@@ -20,6 +23,23 @@ const Advances = () => {
 
   const totalActive = advances.filter(a => a.status === 'active').reduce((s, a) => s + (a.amount - a.paidAmount), 0);
 
+  const handleExport = () => {
+    const rows = filtered.map(a => ({
+      'المندوب': a.employeeName,
+      'مبلغ السلفة': a.amount,
+      'المسدد': a.paidAmount,
+      'المتبقي': a.amount - a.paidAmount,
+      'القسط الشهري': a.monthlyInstallment,
+      'أقساط متبقية': a.remainingInstallments,
+      'تاريخ الصرف': a.disbursementDate,
+      'الحالة': statusLabels[a.status],
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'السلف');
+    XLSX.writeFile(wb, `السلف_${format(new Date(), 'yyyy-MM')}.xlsx`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -27,7 +47,17 @@ const Advances = () => {
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><CreditCard size={24} /> السلف والأقساط</h1>
           <p className="text-sm text-muted-foreground mt-1">{advances.length} سلفة — رصيد متبقي: {totalActive.toLocaleString()} ر.س</p>
         </div>
-        <Button className="gap-2"><Plus size={16} /> إضافة سلفة</Button>
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2"><Download size={15} /> 📥 تحميل تقرير ▾</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExport}>📊 تصدير Excel</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button className="gap-2"><Plus size={16} /> إضافة سلفة</Button>
+        </div>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">

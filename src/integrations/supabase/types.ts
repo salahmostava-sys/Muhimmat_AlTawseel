@@ -793,6 +793,38 @@ export type Database = {
         }
         Relationships: []
       }
+      scheme_month_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          month_year: string
+          scheme_id: string
+          snapshot: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          month_year: string
+          scheme_id: string
+          snapshot?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          month_year?: string
+          scheme_id?: string
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheme_month_snapshots_scheme_id_fkey"
+            columns: ["scheme_id"]
+            isOneToOne: false
+            referencedRelation: "salary_schemes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trade_registers: {
         Row: {
           cr_number: string | null
