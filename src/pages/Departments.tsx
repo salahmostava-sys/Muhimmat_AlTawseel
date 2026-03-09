@@ -28,7 +28,9 @@ const Departments = () => {
   const { t } = useTranslation();
   const { isRTL } = useLanguage();
   const { toast } = useToast();
-  const { canEdit, canDelete } = usePermissions('employees');
+  const { permissions } = usePermissions('employees');
+  const canEdit = permissions.can_edit;
+  const canDelete = permissions.can_delete;
 
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
