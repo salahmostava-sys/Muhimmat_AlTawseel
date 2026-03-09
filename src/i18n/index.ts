@@ -12,6 +12,8 @@ const resources = {
       // ─── Nav ─────────────────────────────────────────────────
       dashboard: 'لوحة التحكم',
       employees: 'الموظفون',
+      departments: 'الأقسام',
+      positions: 'المسميات الوظيفية',
       attendance: 'الحضور والانصراف',
       apps: 'التطبيقات',
       alerts: 'التنبيهات',
@@ -33,7 +35,7 @@ const resources = {
       violationResolver: 'مُحقق المخالفات',
       activityLog: 'سجل النشاطات',
 
-      // ─── Departments ─────────────────────────────────────────
+      // ─── Sections ─────────────────────────────────────────────
       hr: 'الموارد البشرية',
       finance: 'المالية',
       operations: 'العمليات',
@@ -199,6 +201,8 @@ const resources = {
       // ─── Nav ─────────────────────────────────────────────────
       dashboard: 'Dashboard',
       employees: 'Employees',
+      departments: 'Departments',
+      positions: 'Job Positions',
       attendance: 'Attendance',
       apps: 'Apps',
       alerts: 'Alerts',
@@ -220,7 +224,7 @@ const resources = {
       violationResolver: 'Violation Resolver',
       activityLog: 'Activity Log',
 
-      // ─── Departments ─────────────────────────────────────────
+      // ─── Sections ─────────────────────────────────────────────
       hr: 'Human Resources',
       finance: 'Finance',
       operations: 'Operations',

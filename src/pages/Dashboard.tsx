@@ -265,6 +265,36 @@ const Dashboard = () => {
         <h1 className="page-title">{lang === 'ar' ? 'لوحة التحكم' : 'Dashboard'}</h1>
       </div>
 
+      {/* ── HR KPI Cards Row ─────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
+        {[
+          { label: lang === 'ar' ? 'الموظفون النشطون' : 'Active Employees', value: kpis.activeEmployees, icon: Users, color: 'text-primary', bg: 'bg-primary/10' },
+          { label: lang === 'ar' ? 'حاضرون اليوم' : 'Present Today', value: kpis.presentToday, icon: UserCheck, color: 'text-success', bg: 'bg-success/10' },
+          { label: lang === 'ar' ? 'غائبون اليوم' : 'Absent Today', value: kpis.absentToday, icon: Bell, color: 'text-destructive', bg: 'bg-destructive/10' },
+          { label: lang === 'ar' ? 'سلف نشطة' : 'Active Advances', value: kpis.activeAdvances, icon: CreditCard, color: 'text-warning', bg: 'bg-warning/10' },
+          { label: lang === 'ar' ? 'إجمالي الرواتب' : 'Total Salaries', value: kpis.totalSalaries.toLocaleString(), icon: Wallet, color: 'text-info', bg: 'bg-info/10' },
+          { label: lang === 'ar' ? 'إجمالي الطلبات' : 'Total Orders', value: kpis.totalOrders.toLocaleString(), icon: Package, color: 'text-orange-500', bg: 'bg-orange-100 dark:bg-orange-500/10' },
+        ].map((kpi, i) => (
+          <div key={i} className="stat-card flex flex-col gap-2.5">
+            {loading ? (
+              <>
+                <div className="h-8 w-8 rounded-lg bg-muted/50 animate-pulse" />
+                <div className="h-6 w-16 bg-muted/50 animate-pulse rounded" />
+                <div className="h-3 w-full bg-muted/50 animate-pulse rounded" />
+              </>
+            ) : (
+              <>
+                <div className={`icon-box-sm ${kpi.bg}`}>
+                  <kpi.icon size={15} className={kpi.color} />
+                </div>
+                <p className="text-xl font-black text-foreground leading-none">{kpi.value}</p>
+                <p className="text-[11px] text-muted-foreground leading-tight">{kpi.label}</p>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+
       {/* ── Row 1: Orders per platform + Total ────────────────── */}
       <div className="bg-card border border-border/50 rounded-xl p-4 animate-fade-in">
         <div className="flex items-center justify-between mb-3">
