@@ -936,6 +936,11 @@ const Salaries = () => {
     }, { onConflict: 'employee_id,month_year' });
     updateRow(id, { status: 'approved', isDirty: false });
     toast({ title: '✅ تم اعتماد الراتب' });
+    if (row.phone) {
+      const monthLabel = months.find(m => m.v === selectedMonth)?.l || selectedMonth;
+      sendWhatsAppMessage(row.phone, `مرحباً ${row.employeeName} 👋\n\nتم اعتماد راتبك لشهر ${monthLabel}\nصافي الراتب: ${computeRow(row).netSalary.toLocaleString()} ر.س\n\nللاستفسار تواصل مع الإدارة.`)
+        .then(ok => { if (!ok) toast({ title: 'تعذّر إرسال إشعار واتساب' }); });
+    }
   };
 
   // ── Mark as PAID: save to salary_records + update installments + complete advance ──
