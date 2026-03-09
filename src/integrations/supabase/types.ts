@@ -304,6 +304,36 @@ export type Database = {
           },
         ]
       }
+      departments: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          manager_id: string | null
+          name: string
+          name_en: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          manager_id?: string | null
+          name: string
+          name_en?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          manager_id?: string | null
+          name?: string
+          name_en?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       employee_apps: {
         Row: {
           app_id: string
@@ -393,6 +423,7 @@ export type Database = {
           birth_date: string | null
           city: Database["public"]["Enums"]["city_enum"] | null
           created_at: string
+          department_id: string | null
           dob: string | null
           email: string | null
           employee_code: string | null
@@ -414,6 +445,7 @@ export type Database = {
           nationality: string | null
           personal_photo_url: string | null
           phone: string | null
+          position_id: string | null
           preferred_language: string
           residency_expiry: string | null
           salary_type: Database["public"]["Enums"]["salary_type"]
@@ -431,6 +463,7 @@ export type Database = {
           birth_date?: string | null
           city?: Database["public"]["Enums"]["city_enum"] | null
           created_at?: string
+          department_id?: string | null
           dob?: string | null
           email?: string | null
           employee_code?: string | null
@@ -452,6 +485,7 @@ export type Database = {
           nationality?: string | null
           personal_photo_url?: string | null
           phone?: string | null
+          position_id?: string | null
           preferred_language?: string
           residency_expiry?: string | null
           salary_type?: Database["public"]["Enums"]["salary_type"]
@@ -469,6 +503,7 @@ export type Database = {
           birth_date?: string | null
           city?: Database["public"]["Enums"]["city_enum"] | null
           created_at?: string
+          department_id?: string | null
           dob?: string | null
           email?: string | null
           employee_code?: string | null
@@ -490,6 +525,7 @@ export type Database = {
           nationality?: string | null
           personal_photo_url?: string | null
           phone?: string | null
+          position_id?: string | null
           preferred_language?: string
           residency_expiry?: string | null
           salary_type?: Database["public"]["Enums"]["salary_type"]
@@ -501,6 +537,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "employees_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "employees_trade_register_id_fkey"
             columns: ["trade_register_id"]
@@ -655,6 +705,44 @@ export type Database = {
           revenue_riders?: number
         }
         Relationships: []
+      }
+      positions: {
+        Row: {
+          created_at: string
+          department_id: string | null
+          description: string | null
+          id: string
+          name: string
+          name_en: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department_id?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          name_en?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department_id?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          name_en?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "positions_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
