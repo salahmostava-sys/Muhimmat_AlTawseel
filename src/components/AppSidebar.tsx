@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Clock, Package, Wallet, CreditCard,
   Bike, FileDown, Bell, Smartphone,
   Settings, ChevronDown, Fuel, Settings2, X, TrendingUp, FileWarning, Activity,
-  Building2, Briefcase, FileText,
+  Building2, Briefcase, FileText, Wrench,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
