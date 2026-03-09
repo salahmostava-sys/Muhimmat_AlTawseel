@@ -453,6 +453,14 @@ const AddAdvanceModalInline = ({ open, onClose, onSaved, defaultEmployeeId, allA
     }
     if (installments.length > 0) await supabase.from('advance_installments').insert(installments);
 
+    // WhatsApp — fire and forget
+    const emp = employees.find(e => e.id === form.employee_id);
+    const { data: empPhone } = await supabase.from('employees').select('phone').eq('id', form.employee_id).single();
+    if (empPhone?.phone) {
+      sendWhatsAppMessage(empPhone.phone, `مرحباً ${emp?.name || ''} 👋\n\nتمت الموافقة على سلفتك بمبلغ ${parseFloat(form.amount).toLocaleString()} ر.س\nعلى ${projectedInstallments} أقساط شهرية بقيمة ${parseFloat(form.monthly_amount).toLocaleString()} ر.س/شهر.`)
+        .then(ok => { if (!ok) toast({ title: 'تعذّر إرسال إشعار واتساب' }); });
+    }
+
     setSaving(false);
     toast({ title: 'تم إضافة السلفة بنجاح ✅' });
     onSaved();
