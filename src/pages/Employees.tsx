@@ -201,6 +201,8 @@ const Employees = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [salaryTypeFilter, setSalaryTypeFilter] = useState('all');
   const [residencyFilter, setResidencyFilter] = useState('all');
+  const [departmentFilter, setDepartmentFilter] = useState('all');
+  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
   const [sortField, setSortField] = useState<SortField | null>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
@@ -209,6 +211,13 @@ const Employees = () => {
   const [deleteEmployee, setDeleteEmployee] = useState<Employee | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+
+  // ── Fetch departments for filter ──
+  useEffect(() => {
+    supabase.from('departments').select('id, name').order('name').then(({ data: depts }) => {
+      if (depts) setDepartments(depts);
+    });
+  }, []);
 
   // ── Fetch from Supabase ──
   const fetchEmployees = useCallback(async () => {
@@ -272,6 +281,7 @@ const Employees = () => {
     const matchSearch = !q || e.name.toLowerCase().includes(q) || (e.phone || '').includes(q) || (e.national_id || '').includes(q);
     const matchStatus = statusFilter === 'all' || e.status === statusFilter;
     const matchSalary = salaryTypeFilter === 'all' || e.salary_type === salaryTypeFilter;
+    const matchDept = departmentFilter === 'all' || e.department?.id === departmentFilter;
     let matchRes = true;
     if (residencyFilter !== 'all' && e.residency_expiry) {
       const days = differenceInDays(parseISO(e.residency_expiry), new Date());
@@ -279,7 +289,7 @@ const Employees = () => {
       else if (residencyFilter === 'warning') matchRes = days >= 30 && days < 60;
       else if (residencyFilter === 'safe') matchRes = days >= 60;
     }
-    return matchSearch && matchStatus && matchSalary && matchRes;
+    return matchSearch && matchStatus && matchSalary && matchDept && matchRes;
   }).sort((a, b) => {
     if (!sortField || !sortDir) return 0;
     let va: any, vb: any;
@@ -446,8 +456,19 @@ const Employees = () => {
             <SelectItem value="safe">{t('residencySafe')}</SelectItem>
           </SelectContent>
         </Select>
-        {(statusFilter !== 'all' || salaryTypeFilter !== 'all' || residencyFilter !== 'all') && (
-          <Button variant="ghost" size="sm" onClick={() => { setStatusFilter('all'); setSalaryTypeFilter('all'); setResidencyFilter('all'); }}>
+        {departments.length > 0 && (
+          <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+            <SelectTrigger className="w-40 h-9"><SelectValue placeholder="كل الأقسام" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">كل الأقسام</SelectItem>
+              {departments.map(d => (
+                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        {(statusFilter !== 'all' || salaryTypeFilter !== 'all' || residencyFilter !== 'all' || departmentFilter !== 'all') && (
+          <Button variant="ghost" size="sm" onClick={() => { setStatusFilter('all'); setSalaryTypeFilter('all'); setResidencyFilter('all'); setDepartmentFilter('all'); }}>
             {t('clearAll')}
           </Button>
         )}
