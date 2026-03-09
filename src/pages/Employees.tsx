@@ -212,6 +212,13 @@ const Employees = () => {
   const [deleting, setDeleting] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
 
+  // ── Fetch departments for filter ──
+  useEffect(() => {
+    supabase.from('departments').select('id, name').order('name').then(({ data: depts }) => {
+      if (depts) setDepartments(depts);
+    });
+  }, []);
+
   // ── Fetch from Supabase ──
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
