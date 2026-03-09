@@ -4,6 +4,7 @@ import {
   LayoutDashboard, Users, Clock, Package, Wallet, CreditCard,
   Bike, FileDown, Bell, Smartphone,
   Settings, ChevronDown, Fuel, Settings2, X, TrendingUp, FileWarning, Activity,
+  Building2, Briefcase, FileText,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -21,7 +22,7 @@ const AppSidebar = () => {
   const { projectName, projectSubtitle, settings } = useSystemSettings();
   const { isOpen, close } = useMobileSidebar();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    hr: true, finance: false, operations: false, settings: false,
+    hr: true, finance: false, operations: false, reports: false, settings: false,
   });
   const [showProfile, setShowProfile] = useState(false);
 
@@ -36,11 +37,11 @@ const AppSidebar = () => {
       sectionLabel: t('hr'),
       items: [
         { label: t('employees'), icon: Users, path: '/employees' },
+        { label: t('departments'), icon: Building2, path: '/departments' },
+        { label: t('positions'), icon: Briefcase, path: '/positions' },
         { label: t('attendance'), icon: Clock, path: '/attendance' },
-        { label: t('apps'), icon: Smartphone, path: '/apps' },
         { label: t('alerts'), icon: Bell, path: '/alerts' },
-        { label: t('analytics'), icon: TrendingUp, path: '/analytics' },
-        { label: t('activityLog'), icon: Activity, path: '/activity-log' },
+        { label: t('apps'), icon: Smartphone, path: '/apps' },
       ],
     },
     {
@@ -63,6 +64,15 @@ const AppSidebar = () => {
       ],
     },
     {
+      key: 'reports',
+      sectionLabel: t('reports'),
+      items: [
+        { label: t('reports'), icon: FileText, path: '/reports' },
+        { label: t('analytics'), icon: TrendingUp, path: '/analytics' },
+        { label: t('activityLog'), icon: Activity, path: '/activity-log' },
+      ],
+    },
+    {
       key: 'settings',
       sectionLabel: t('settings'),
       items: [
@@ -73,7 +83,7 @@ const AppSidebar = () => {
     },
   ];
 
-  // auto-open group containing active route — use effect to avoid setState during render
+  // auto-open group containing active route
   useEffect(() => {
     const activeGroup = navGroups.find(g => g.items.some(i => isActive(i.path)));
     if (activeGroup && !openGroups[activeGroup.key]) {
