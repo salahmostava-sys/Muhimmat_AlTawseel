@@ -321,6 +321,8 @@ const Employees = () => {
         'المدينة': e.city === 'makkah' ? 'مكة' : e.city === 'jeddah' ? 'جدة' : '',
         'الجنسية': e.nationality || '',
         'المسمى الوظيفي': e.job_title || '',
+        'القسم': e.department?.name || '',
+        'المسمى التفصيلي': e.position?.name || '',
         'تاريخ الانضمام': e.join_date || '',
         'تاريخ الميلاد': e.birth_date || '',
         'تاريخ انتهاء الإقامة': e.residency_expiry || '',
