@@ -816,6 +816,7 @@ const Salaries = () => {
           externalDeduction: extDeduction,
           status,
           preferredLanguage: ((emp as any).preferred_language as SlipLanguage) || 'ar',
+          phone: (emp as any).phone || null,
         };
       });
 
