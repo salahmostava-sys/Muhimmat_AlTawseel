@@ -491,7 +491,7 @@ const SpreadsheetGrid = () => {
                         </tr>
                       );
                     })}
-                  </>
+                  </React.Fragment>
                 );
               })}
 
