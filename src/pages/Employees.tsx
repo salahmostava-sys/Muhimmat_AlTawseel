@@ -46,6 +46,9 @@ type Employee = {
   salary_type: string;
   base_salary: number;
   nationality?: string | null;
+  preferred_language?: string | null;
+  department?: { id: string; name: string } | null;
+  position?: { id: string; name: string } | null;
 };
 
 type SortField =
@@ -178,7 +181,7 @@ const SortIcon = ({ field, sortField, sortDir }: { field: SortField; sortField: 
 // ─── Skeleton Row ─────────────────────────────────────────────────────────────
 const SkeletonRow = () => (
   <tr className="border-b border-border/30">
-    {Array.from({ length: 18 }).map((_, i) => (
+    {Array.from({ length: 21 }).map((_, i) => (
       <td key={i} className="px-3 py-3">
         <Skeleton className="h-4 w-full" />
       </td>
@@ -212,9 +215,13 @@ const Employees = () => {
     setLoading(true);
     const { data: rows, error } = await supabase
       .from('employees')
-      .select('*')
+      .select('*, departments(id, name), positions(id, name)')
       .order('name', { ascending: true });
-    if (!error && rows) setData(rows as Employee[]);
+    if (!error && rows) setData(rows.map(r => ({
+      ...r,
+      department: (r as any).departments ?? null,
+      position: (r as any).positions ?? null,
+    })) as Employee[]);
     else if (error) toast({ title: t('errorLoading'), description: error.message, variant: 'destructive' });
     setLoading(false);
   }, [toast, t]);
@@ -314,6 +321,8 @@ const Employees = () => {
         'المدينة': e.city === 'makkah' ? 'مكة' : e.city === 'jeddah' ? 'جدة' : '',
         'الجنسية': e.nationality || '',
         'المسمى الوظيفي': e.job_title || '',
+        'القسم': e.department?.name || '',
+        'المسمى التفصيلي': e.position?.name || '',
         'تاريخ الانضمام': e.join_date || '',
         'تاريخ الميلاد': e.birth_date || '',
         'تاريخ انتهاء الإقامة': e.residency_expiry || '',
@@ -448,7 +457,7 @@ const Employees = () => {
       {/* Table */}
       <div className="ta-table-wrap">
         <div className="overflow-x-scroll">
-          <table className="w-full min-w-[1400px]">
+          <table className="w-full min-w-[1700px]">
             <thead className="ta-thead">
               <tr>
                 <Th label={t('photo')} sortable={false} />
@@ -456,6 +465,8 @@ const Employees = () => {
                 <Th field="national_id" label={t('nationalId')} />
                 <Th field="phone" label={t('phone')} />
                 <Th field="job_title" label={t('jobTitle')} />
+                <Th label="القسم" sortable={false} />
+                <Th label="المسمى التفصيلي" sortable={false} />
                 <Th field="city" label={t('city')} />
                 <Th label="الجنسية" sortable={false} />
                 <Th field="join_date" label={t('joinDate')} />
@@ -466,6 +477,7 @@ const Employees = () => {
                 <Th field="sponsorship_status" label={t('sponsorshipStatus')} />
                 <Th field="bank_account_number" label={t('bankAccount')} />
                 <Th label={t('documents')} sortable={false} />
+                <Th label="لغة الكشف" sortable={false} />
                 <Th field="status" label={t('status')} />
                 <Th field="email" label={t('email')} />
                 <Th label={t('actions')} sortable={false} />
@@ -476,7 +488,7 @@ const Employees = () => {
                 Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={18} className="text-center py-16">
+                  <td colSpan={21} className="text-center py-16">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <span className="text-4xl">👥</span>
                       <p className="font-medium">{t('noEmployees')}</p>
@@ -506,6 +518,12 @@ const Employees = () => {
                     <td className="px-3 py-2.5 text-sm text-muted-foreground font-mono whitespace-nowrap" dir="ltr">{emp.national_id || '—'}</td>
                     <td className="px-3 py-2.5 text-sm text-muted-foreground whitespace-nowrap" dir="ltr">{emp.phone || '—'}</td>
                     <td className="px-3 py-2.5 text-sm text-muted-foreground whitespace-nowrap">{emp.job_title || '—'}</td>
+                    <td className="px-3 py-2.5 whitespace-nowrap">
+                      <span className="text-xs text-muted-foreground">{emp.department?.name || '—'}</span>
+                    </td>
+                    <td className="px-3 py-2.5 whitespace-nowrap">
+                      <span className="text-xs text-muted-foreground">{emp.position?.name || '—'}</span>
+                    </td>
                     <td className="px-3 py-2.5 whitespace-nowrap">
                       <InlineSelect
                         value={emp.city || ''}
@@ -554,6 +572,26 @@ const Employees = () => {
                     <td className="px-3 py-2.5 text-sm text-muted-foreground font-mono whitespace-nowrap" dir="ltr">{emp.bank_account_number || '—'}</td>
                     <td className="px-3 py-2.5 whitespace-nowrap">
                       <DocIcons idUrl={emp.id_photo_url} licUrl={emp.license_photo_url} photoUrl={emp.personal_photo_url} />
+                    </td>
+                    {/* Preferred Language */}
+                    <td className="px-3 py-2.5 whitespace-nowrap">
+                      <InlineSelect
+                        value={emp.preferred_language || 'ar'}
+                        options={[
+                          { value: 'ar', label: '🇸🇦 عربي' },
+                          { value: 'en', label: '🇬🇧 English' },
+                          { value: 'ur', label: '🇵🇰 اردو' },
+                        ]}
+                        onSave={v => saveField(emp.id, 'preferred_language', v)}
+                        renderDisplay={() => {
+                          const langMap: Record<string, string> = { ar: '🇸🇦 عربي', en: '🇬🇧 English', ur: '🇵🇰 اردو' };
+                          return (
+                            <span className="inline-flex items-center text-xs font-medium text-muted-foreground px-2 py-0.5 rounded-full bg-muted">
+                              {langMap[emp.preferred_language || 'ar'] || '🇸🇦 عربي'}
+                            </span>
+                          );
+                        }}
+                      />
                     </td>
                     <td className="px-3 py-2.5 whitespace-nowrap">
                       <InlineSelect

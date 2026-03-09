@@ -34,8 +34,8 @@ const Analytics = () => {
         supabase.from('apps').select('id, name, brand_color, text_color').eq('is_active', true),
         supabase.from('employees').select('id', { count: 'exact', head: true }).eq('status', 'active'),
         supabase.from('salary_records').select('net_salary').eq('month_year', currentMonth).eq('is_approved', true),
-        supabase.from('daily_orders').select('orders_count').gte('date', `${prevMonth}-01`).lte('date', `${prevMonth}-31`),
-        supabase.from('daily_orders').select('employee_id, orders_count, app_id').gte('date', `${currentMonth}-01`).lte('date', `${currentMonth}-31`),
+        supabase.from('daily_orders').select('orders_count').gte('date', `${prevMonth}-01`).lte('date', format(endOfMonth(new Date(`${prevMonth}-01`)), 'yyyy-MM-dd')),
+        supabase.from('daily_orders').select('employee_id, orders_count, app_id').gte('date', `${currentMonth}-01`).lte('date', format(endOfMonth(new Date(`${currentMonth}-01`)), 'yyyy-MM-dd')),
         supabase.from('employees').select('id, name').eq('status', 'active'),
       ]);
 

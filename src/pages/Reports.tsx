@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
-import { format, subMonths } from 'date-fns';
+import { format, subMonths, endOfMonth } from 'date-fns';
 import * as XLSX from '@e965/xlsx';
 
 type ReportType = 'employees' | 'attendance' | 'financial';
@@ -61,7 +61,7 @@ const Reports = () => {
       })));
     } else if (reportType === 'attendance') {
       const start = `${selectedMonth}-01`;
-      const end = `${selectedMonth}-31`;
+      const end = format(endOfMonth(new Date(`${selectedMonth}-01`)), 'yyyy-MM-dd');
       const { data: attData } = await supabase
         .from('attendance')
         .select('date, status, note, employees(name)')

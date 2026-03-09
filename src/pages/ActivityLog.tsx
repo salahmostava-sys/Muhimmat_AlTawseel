@@ -85,6 +85,9 @@ export default function ActivityLog() {
 
       if (filterAction !== 'all') query = query.eq('action', filterAction);
       if (filterTable !== 'all') query = query.eq('table_name', filterTable);
+      if (debouncedSearch.trim()) {
+        query = query.or(`table_name.ilike.%${debouncedSearch}%,action.ilike.%${debouncedSearch}%,record_id.ilike.%${debouncedSearch}%`);
+      }
 
       const { data, count, error } = await query;
       if (error) throw error;
@@ -113,7 +116,7 @@ export default function ActivityLog() {
       setLogs([]);
     }
     setLoading(false);
-  }, [page, filterAction, filterTable]);
+  }, [page, filterAction, filterTable, debouncedSearch]);
 
   useEffect(() => { fetchLogs(); }, [fetchLogs]);
   useEffect(() => { setPage(0); }, [filterAction, filterTable, debouncedSearch]);
