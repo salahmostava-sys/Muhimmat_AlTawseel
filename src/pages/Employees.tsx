@@ -748,7 +748,7 @@ const Employees = () => {
                           );
 
                         default:
-                          return <td key={col.key} className="px-3 py-2.5">—</td>;
+                          return <td key={(col as any).key} className="px-3 py-2.5">—</td>;
                       }
                     })}
                   </tr>
