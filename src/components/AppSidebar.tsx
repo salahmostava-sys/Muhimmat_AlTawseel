@@ -37,8 +37,6 @@ const AppSidebar = () => {
       sectionLabel: t('hr'),
       items: [
         { label: t('employees'), icon: Users, path: '/employees' },
-        { label: t('departments'), icon: Building2, path: '/departments' },
-        { label: t('positions'), icon: Briefcase, path: '/positions' },
         { label: t('attendance'), icon: Clock, path: '/attendance' },
         { label: t('alerts'), icon: Bell, path: '/alerts' },
         { label: t('apps'), icon: Smartphone, path: '/apps' },

@@ -20,8 +20,6 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Employees = lazy(() => import("./pages/Employees"));
-const Departments = lazy(() => import("./pages/Departments"));
-const Positions = lazy(() => import("./pages/Positions"));
 const Attendance = lazy(() => import("./pages/Attendance"));
 const Orders = lazy(() => import("./pages/Orders"));
 const Salaries = lazy(() => import("./pages/Salaries"));
@@ -76,8 +74,6 @@ const App = () => (
                                   <Routes>
                                     <Route path="/" element={<Dashboard />} />
                                      <Route path="/employees" element={<Employees />} />
-                                     <Route path="/departments" element={<Departments />} />
-                                     <Route path="/positions" element={<Positions />} />
                                      <Route path="/attendance" element={<Attendance />} />
                                      <Route path="/orders" element={<Orders />} />
                                      <Route path="/salaries" element={<Salaries />} />
