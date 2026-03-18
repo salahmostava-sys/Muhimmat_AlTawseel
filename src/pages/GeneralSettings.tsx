@@ -1,24 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/context/LanguageContext';
 import { useSystemSettings } from '@/context/SystemSettingsContext';
 import { useAuth } from '@/context/AuthContext';
 import ProjectSettings from '@/components/settings/ProjectSettings';
-import { Settings2, Database, Download, Loader2, MessageCircle, Eye, EyeOff } from 'lucide-react';
+import { Settings2, Database, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from '@e965/xlsx';
 import { format } from 'date-fns';
-import { sendWhatsAppMessage } from '@/lib/whatsapp';
-
-// ─── WhatsApp Config stored in localStorage ───────────────────────────────────
-interface WAConfig { token: string; phone_number_id: string; enabled: boolean; }
-
-const loadWAConfig = (): WAConfig => {
-  try { return JSON.parse(localStorage.getItem('whatsapp_config') || '{}'); } catch { return { token: '', phone_number_id: '', enabled: false }; }
-};
 
 export default function GeneralSettings() {
   const { t } = useTranslation();
@@ -29,13 +20,6 @@ export default function GeneralSettings() {
   const isRTL = lang === 'ar';
   const [loadingExcel, setLoadingExcel] = useState(false);
   const [loadingJson, setLoadingJson] = useState(false);
-
-  // WhatsApp state
-  const [waConfig, setWAConfig] = useState<WAConfig>(loadWAConfig);
-  const [showToken, setShowToken] = useState(false);
-  const [testPhone, setTestPhone] = useState('');
-  const [showTestForm, setShowTestForm] = useState(false);
-  const [testingSend, setTestingSend] = useState(false);
 
   document.title = `${projectName} | ${isRTL ? 'الإعدادات العامة' : 'General Settings'}`;
 
