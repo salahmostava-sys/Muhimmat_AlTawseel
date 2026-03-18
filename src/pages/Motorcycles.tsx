@@ -516,8 +516,8 @@ const Motorcycles = () => {
                        )}
                      </td>
                      <td className="px-3 py-2.5">
-                      <span className={statusStyles[v.status] || 'badge-info'}>{statusLabels[v.status] || v.status}</span>
-                    </td>
+                       <SmartStatusBadge status={v.status} rider={v.current_rider} />
+                     </td>
                     <td className={`px-3 py-2.5 text-xs whitespace-nowrap ${daysStyle(insDays)}`}>
                       {v.insurance_expiry ? (
                         <div>
