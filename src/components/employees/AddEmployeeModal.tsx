@@ -191,6 +191,7 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee, tradeRegisters: in
     join_date: '',
     birth_date: '',
     residency_expiry: '',
+    health_insurance_expiry: '',
     probation_end_date: '',
     probation_months: '' as string,
     license_status: 'no_license' as 'has_license' | 'no_license' | 'applied',
