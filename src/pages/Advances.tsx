@@ -840,7 +840,7 @@ const Advances = () => {
       {/* Written-off summary */}
       {writtenOffTotals.count > 0 && (
         <button
-          onClick={() => setShowWrittenOff(v => !v)}
+          onClick={() => { setShowWrittenOff(v => !v); setNewEmpEntry(null); setInlineRowEmpId(null); }}
           className={`w-full flex items-center gap-3 rounded-xl border p-3 text-sm transition-colors ${showWrittenOff ? 'bg-destructive/10 border-destructive/30' : 'bg-muted/30 border-border/40 hover:bg-muted/50'}`}>
           <AlertTriangle size={16} className="text-destructive flex-shrink-0" />
           <span className="font-medium text-foreground">الديون المعدومة: {writtenOffTotals.count} مندوب</span>
