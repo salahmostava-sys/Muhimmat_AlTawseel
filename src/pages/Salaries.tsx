@@ -1998,13 +1998,14 @@ const Salaries = () => {
                   <th colSpan={3} className="px-3 py-2 text-xs font-semibold text-muted-foreground whitespace-nowrap border-b border-border/50 bg-muted/40 text-center">الإجراءات</th>
                 </tr>
                 <tr className="bg-muted/50">
-                  <th className={`${thFrozenBase} w-44 cursor-pointer hover:text-foreground select-none`} style={stickyLeft(0)} onClick={() => handleSort('employeeName')}>
+                  <th className={`${thFrozenBase} w-10 text-center`} style={stickyLeft(0)}>#</th>
+                  <th className={`${thFrozenBase} w-44 cursor-pointer hover:text-foreground select-none`} style={stickyLeft(40)} onClick={() => handleSort('employeeName')}>
                     الاسم <SortIcon field="employeeName" sortField={sortField} sortDir={sortDir} />
                   </th>
-                  <th className={`${thFrozenBase} w-28 cursor-pointer hover:text-foreground select-none`} style={stickyLeft(176)} onClick={() => handleSort('jobTitle')}>
+                  <th className={`${thFrozenBase} w-28 cursor-pointer hover:text-foreground select-none`} style={stickyLeft(216)} onClick={() => handleSort('jobTitle')}>
                     المسمى الوظيفي <SortIcon field="jobTitle" sortField={sortField} sortDir={sortDir} />
                   </th>
-                  <th className={`${thFrozenBase} w-28 border-l border-border/50 cursor-pointer hover:text-foreground select-none`} style={stickyLeft(288)} onClick={() => handleSort('nationalId')}>
+                  <th className={`${thFrozenBase} w-28 border-l border-border/50 cursor-pointer hover:text-foreground select-none`} style={stickyLeft(328)} onClick={() => handleSort('nationalId')}>
                     رقم الهوية <SortIcon field="nationalId" sortField={sortField} sortDir={sortDir} />
                   </th>
                   {platforms.map(p => {
