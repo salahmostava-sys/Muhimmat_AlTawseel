@@ -677,7 +677,7 @@ const Salaries = () => {
       const startDate = `${selectedMonth}-01`;
       const endDate = `${selectedMonth}-${String(daysInMonth).padStart(2, '0')}`;
 
-      const [empRes, extRes, ordersRes, appsWithSchemeRes, attendanceRes] = await Promise.all([
+      const [empRes, extRes, ordersRes, appsWithSchemeRes, attendanceRes, fuelRes] = await Promise.all([
         supabase
           .from('employees')
           .select('id, name, job_title, national_id, salary_type, base_salary, iban, city, preferred_language, phone')
@@ -709,6 +709,12 @@ const Salaries = () => {
           .gte('date', startDate)
           .lte('date', endDate)
           .in('status', ['present', 'late']),
+
+        // Fetch fuel/mileage cost for this month
+        supabase
+          .from('vehicle_mileage')
+          .select('employee_id, fuel_cost')
+          .eq('month_year', selectedMonth),
       ]);
 
       // ── Fetch saved salary records for this month (to restore status) ──
