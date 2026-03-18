@@ -41,12 +41,6 @@ type Advance = {
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const statusLabels: Record<string, string> = { active: 'نشطة', completed: 'مكتملة', paused: 'موقوفة' };
-const statusStyles: Record<string, string> = {
-  active: 'badge-info',
-  completed: 'badge-success',
-  paused: 'badge-warning',
-};
 const instStatusLabel: Record<InstallmentStatus, string> = { pending: 'معلّق', deducted: 'مخصوم', deferred: 'مؤجل' };
 const instStatusStyle: Record<InstallmentStatus, string> = {
   deducted: 'badge-success',
@@ -56,17 +50,6 @@ const instStatusStyle: Record<InstallmentStatus, string> = {
 
 const calcPaid = (installments: Installment[]) =>
   installments.filter(i => i.status === 'deducted').reduce((s, i) => s + i.amount, 0);
-
-const calcRemaining = (advance: Advance) => {
-  const paid = calcPaid(advance.advance_installments || []);
-  return advance.amount - paid;
-};
-
-const calcRemainingInstallments = (advance: Advance) => {
-  const rem = calcRemaining(advance);
-  if (advance.monthly_amount <= 0) return 0;
-  return Math.ceil(rem / advance.monthly_amount);
-};
 
 const currentMonth = format(new Date(), 'yyyy-MM');
 
@@ -104,13 +87,9 @@ const EditAdvanceModal = ({ advance, onClose, onSaved }: EditAdvanceModalProps) 
       note: form.note || null,
     }).eq('id', advance.id);
 
-    if (error) {
-      setSaving(false);
-      return toast({ title: 'حدث خطأ', description: error.message, variant: 'destructive' });
-    }
+    if (error) { setSaving(false); return toast({ title: 'حدث خطأ', description: error.message, variant: 'destructive' }); }
 
-    await supabase.from('advance_installments').delete()
-      .eq('advance_id', advance.id).eq('status', 'pending');
+    await supabase.from('advance_installments').delete().eq('advance_id', advance.id).eq('status', 'pending');
 
     const installments = [];
     let [year, month] = form.first_deduction_month.split('-').map(Number);
@@ -119,17 +98,13 @@ const EditAdvanceModal = ({ advance, onClose, onSaved }: EditAdvanceModalProps) 
     for (let i = 0; i < remaining_count; i++) {
       const my = `${year}-${String(month).padStart(2, '0')}`;
       installments.push({ advance_id: advance.id, month_year: my, amount: parseFloat(form.monthly_amount), status: 'pending' as const });
-      month++;
-      if (month > 12) { month = 1; year++; }
+      month++; if (month > 12) { month = 1; year++; }
     }
-    if (installments.length > 0) {
-      await supabase.from('advance_installments').insert(installments);
-    }
+    if (installments.length > 0) await supabase.from('advance_installments').insert(installments);
 
     setSaving(false);
     toast({ title: 'تم تحديث السلفة ✅' });
-    onSaved();
-    onClose();
+    onSaved(); onClose();
   };
 
   return (
@@ -148,9 +123,7 @@ const EditAdvanceModal = ({ advance, onClose, onSaved }: EditAdvanceModalProps) 
           <div>
             <label className="text-sm font-medium mb-1 block">القسط الشهري (ر.س)</label>
             <Input type="number" value={form.monthly_amount} onChange={e => setForm(p => ({ ...p, monthly_amount: e.target.value }))} />
-            {form.amount && form.monthly_amount && (
-              <p className="text-xs text-muted-foreground mt-1">عدد الأقساط المتبقية = {projectedInstallments}</p>
-            )}
+            {form.amount && form.monthly_amount && <p className="text-xs text-muted-foreground mt-1">عدد الأقساط = {projectedInstallments}</p>}
           </div>
           <div>
             <label className="text-sm font-medium mb-1 block">أول شهر خصم</label>
@@ -169,13 +142,8 @@ const EditAdvanceModal = ({ advance, onClose, onSaved }: EditAdvanceModalProps) 
           </div>
           <div className="col-span-2">
             <label className="text-sm font-medium mb-1 block">ملاحظات</label>
-            <textarea
-              value={form.note}
-              onChange={e => setForm(p => ({ ...p, note: e.target.value }))}
-              rows={2}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
-              placeholder="سبب السلفة أو ملاحظات..."
-            />
+            <textarea value={form.note} onChange={e => setForm(p => ({ ...p, note: e.target.value }))} rows={2}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring" />
           </div>
         </div>
         <DialogFooter className="mt-4 gap-2">
@@ -199,11 +167,7 @@ const TransactionsModal = ({ employeeId, employeeName, advances, onClose, onRefr
   const { toast } = useToast();
   const empAdvances = advances.filter(a => a.employee_id === employeeId);
   const allInstallments: (Installment & { advanceDate: string; advanceTotal: number })[] = empAdvances.flatMap(adv =>
-    (adv.advance_installments || []).map(i => ({
-      ...i,
-      advanceDate: adv.disbursement_date,
-      advanceTotal: adv.amount,
-    }))
+    (adv.advance_installments || []).map(i => ({ ...i, advanceDate: adv.disbursement_date, advanceTotal: adv.amount }))
   ).sort((a, b) => a.month_year.localeCompare(b.month_year));
 
   const totalDebt = empAdvances.reduce((s, a) => s + a.amount, 0);
@@ -214,17 +178,11 @@ const TransactionsModal = ({ employeeId, employeeName, advances, onClose, onRefr
   const [noteValue, setNoteValue] = useState('');
   const [savingNote, setSavingNote] = useState(false);
 
-  const startEditNote = (inst: Installment) => {
-    setEditingNoteId(inst.id);
-    setNoteValue(inst.notes || '');
-  };
+  const startEditNote = (inst: Installment) => { setEditingNoteId(inst.id); setNoteValue(inst.notes || ''); };
 
   const saveNote = async (instId: string) => {
     setSavingNote(true);
-    const { error } = await supabase
-      .from('advance_installments')
-      .update({ notes: noteValue || null } as any)
-      .eq('id', instId);
+    const { error } = await supabase.from('advance_installments').update({ notes: noteValue || null } as any).eq('id', instId);
     setSavingNote(false);
     if (error) return toast({ title: 'خطأ في الحفظ', variant: 'destructive' });
     setEditingNoteId(null);
@@ -241,8 +199,6 @@ const TransactionsModal = ({ employeeId, employeeName, advances, onClose, onRefr
             <span>سجل العمليات — {employeeName}</span>
           </DialogTitle>
         </DialogHeader>
-
-        {/* Summary */}
         <div className="grid grid-cols-3 gap-3 mb-2">
           <div className="bg-info/10 rounded-xl p-3 text-center">
             <p className="text-xs text-muted-foreground">إجمالي المديونية</p>
@@ -257,7 +213,6 @@ const TransactionsModal = ({ employeeId, employeeName, advances, onClose, onRefr
             <p className="text-lg font-bold text-destructive">{totalRemaining.toLocaleString()} ر.س</p>
           </div>
         </div>
-
         {allInstallments.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">لا توجد عمليات لهذا المندوب</p>
         ) : (
@@ -290,11 +245,9 @@ const TransactionsModal = ({ employeeId, employeeName, advances, onClose, onRefr
                       <span className="font-semibold text-info text-xs">{inst.advanceTotal.toLocaleString()} ر.س</span>
                     </td>
                     <td className="px-3 py-2.5 text-center">
-                      {inst.status === 'deducted' ? (
-                        <span className="font-semibold text-success text-xs">{inst.amount.toLocaleString()} ر.س</span>
-                      ) : (
-                        <span className="text-muted-foreground/40 text-xs">—</span>
-                      )}
+                      {inst.status === 'deducted'
+                        ? <span className="font-semibold text-success text-xs">{inst.amount.toLocaleString()} ر.س</span>
+                        : <span className="text-muted-foreground/40 text-xs">—</span>}
                     </td>
                     <td className="px-3 py-2.5 text-center">
                       <span className={instStatusStyle[inst.status]}>{instStatusLabel[inst.status]}</span>
@@ -302,43 +255,26 @@ const TransactionsModal = ({ employeeId, employeeName, advances, onClose, onRefr
                     <td className="px-3 py-2.5 text-right max-w-xs">
                       {editingNoteId === inst.id ? (
                         <div className="flex items-center gap-2">
-                          <Input
-                            autoFocus
-                            value={noteValue}
-                            onChange={e => setNoteValue(e.target.value)}
-                            className="h-7 text-xs"
+                          <Input autoFocus value={noteValue} onChange={e => setNoteValue(e.target.value)} className="h-7 text-xs"
                             placeholder="اكتب ملاحظة..."
-                            onKeyDown={e => { if (e.key === 'Enter') saveNote(inst.id); if (e.key === 'Escape') setEditingNoteId(null); }}
-                          />
-                          <Button size="sm" className="h-7 text-xs px-2" onClick={() => saveNote(inst.id)} disabled={savingNote}>
-                            {savingNote ? '...' : 'حفظ'}
-                          </Button>
+                            onKeyDown={e => { if (e.key === 'Enter') saveNote(inst.id); if (e.key === 'Escape') setEditingNoteId(null); }} />
+                          <Button size="sm" className="h-7 text-xs px-2" onClick={() => saveNote(inst.id)} disabled={savingNote}>{savingNote ? '...' : 'حفظ'}</Button>
                           <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => setEditingNoteId(null)}>إلغاء</Button>
                         </div>
                       ) : (
-                        <span
-                          className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
-                          onClick={() => startEditNote(inst)}
-                          title="اضغط للتعديل"
-                        >
+                        <span className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors" onClick={() => startEditNote(inst)} title="اضغط للتعديل">
                           {inst.notes || <span className="text-muted-foreground/30 italic">لا توجد ملاحظة — اضغط للإضافة</span>}
                         </span>
                       )}
                     </td>
                     <td className="px-3 py-2.5 text-center">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
-                        onClick={() => startEditNote(inst)}
-                      >
+                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground" onClick={() => startEditNote(inst)}>
                         <Edit2 size={12} />
                       </Button>
                     </td>
                   </tr>
                 ))}
               </tbody>
-              {/* Totals row */}
               <tfoot>
                 <tr className="bg-muted/60 border-t-2 border-border/60">
                   <td colSpan={3} className="px-3 py-2.5 text-right text-xs font-bold text-muted-foreground">الإجمالي</td>
@@ -350,7 +286,6 @@ const TransactionsModal = ({ employeeId, employeeName, advances, onClose, onRefr
             </table>
           </div>
         )}
-
         <DialogFooter className="mt-2">
           <Button variant="outline" onClick={onClose}>إغلاق</Button>
         </DialogFooter>
@@ -359,7 +294,7 @@ const TransactionsModal = ({ employeeId, employeeName, advances, onClose, onRefr
   );
 };
 
-// ─── Add / Payment Modal ─────────────────────────────────────────────────────
+// ─── Add / Payment Modal ──────────────────────────────────────────────────────
 interface AddAdvanceModalProps {
   open: boolean;
   onClose: () => void;
@@ -397,8 +332,7 @@ const AddAdvanceModalInline = ({ open, onClose, onSaved, defaultEmployeeId, defa
   }, [open, defaultEmployeeId, defaultType]);
 
   const projectedInstallments = form.amount && form.monthly_amount
-    ? Math.ceil(parseFloat(form.amount) / parseFloat(form.monthly_amount))
-    : 0;
+    ? Math.ceil(parseFloat(form.amount) / parseFloat(form.monthly_amount)) : 0;
 
   const hasActiveAdvance = form.employee_id &&
     allAdvances.some(a => a.employee_id === form.employee_id && a.status === 'active');
@@ -408,14 +342,10 @@ const AddAdvanceModalInline = ({ open, onClose, onSaved, defaultEmployeeId, defa
       return toast({ title: 'يرجى ملء جميع الحقول المطلوبة', variant: 'destructive' });
     setSaving(true);
     const { data: adv, error } = await supabase.from('advances').insert({
-      employee_id: form.employee_id,
-      amount: parseFloat(form.amount),
-      monthly_amount: parseFloat(form.monthly_amount),
-      total_installments: projectedInstallments,
-      disbursement_date: form.disbursement_date,
-      first_deduction_month: form.first_deduction_month,
-      note: form.note || null,
-      status: 'active',
+      employee_id: form.employee_id, amount: parseFloat(form.amount),
+      monthly_amount: parseFloat(form.monthly_amount), total_installments: projectedInstallments,
+      disbursement_date: form.disbursement_date, first_deduction_month: form.first_deduction_month,
+      note: form.note || null, status: 'active',
     }).select().single();
     if (error || !adv) { setSaving(false); return toast({ title: 'حدث خطأ', description: error?.message, variant: 'destructive' }); }
     const installments = [];
@@ -444,9 +374,7 @@ const AddAdvanceModalInline = ({ open, onClose, onSaved, defaultEmployeeId, defa
     const inst = pendingInst[0];
     const noteText = payForm.note || `سداد يدوي بتاريخ ${payForm.payment_date} — ${payForm.amount} ر.س`;
     const { error } = await supabase.from('advance_installments').update({
-      status: 'deducted' as const,
-      deducted_at: new Date().toISOString(),
-      notes: noteText,
+      status: 'deducted' as const, deducted_at: new Date().toISOString(), notes: noteText,
     } as any).eq('id', inst.id);
     if (error) { setSaving(false); return toast({ title: 'حدث خطأ', description: error.message, variant: 'destructive' }); }
     setSaving(false);
@@ -546,101 +474,6 @@ const AddAdvanceModalInline = ({ open, onClose, onSaved, defaultEmployeeId, defa
   );
 };
 
-
-
-    if (!form.employee_id || !form.amount || !form.monthly_amount || !form.disbursement_date || !form.first_deduction_month)
-      return toast({ title: 'يرجى ملء جميع الحقول المطلوبة', variant: 'destructive' });
-
-    setSaving(true);
-    const { data: adv, error } = await supabase.from('advances').insert({
-      employee_id: form.employee_id,
-      amount: parseFloat(form.amount),
-      monthly_amount: parseFloat(form.monthly_amount),
-      total_installments: projectedInstallments,
-      disbursement_date: form.disbursement_date,
-      first_deduction_month: form.first_deduction_month,
-      note: form.note || null,
-      status: 'active',
-    }).select().single();
-
-    if (error || !adv) {
-      setSaving(false);
-      return toast({ title: 'حدث خطأ', description: error?.message, variant: 'destructive' });
-    }
-
-    const installments = [];
-    let [year, month] = form.first_deduction_month.split('-').map(Number);
-    for (let i = 0; i < projectedInstallments; i++) {
-      const my = `${year}-${String(month).padStart(2, '0')}`;
-      installments.push({ advance_id: adv.id, month_year: my, amount: parseFloat(form.monthly_amount), status: 'pending' as const });
-      month++;
-      if (month > 12) { month = 1; year++; }
-    }
-    if (installments.length > 0) await supabase.from('advance_installments').insert(installments);
-
-    setSaving(false);
-    toast({ title: 'تم إضافة السلفة بنجاح ✅' });
-    onSaved();
-    onClose();
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-lg" dir="rtl">
-        <DialogHeader><DialogTitle>إضافة سلفة جديدة</DialogTitle></DialogHeader>
-        <div className="grid grid-cols-2 gap-3">
-          {hasActiveAdvance && (
-            <div className="col-span-2 bg-warning/10 border border-warning/30 rounded-lg p-3 text-sm text-warning">
-              ⚠️ هذا المندوب لديه سلفة نشطة — هل تريد المتابعة؟
-            </div>
-          )}
-          <div className="col-span-2">
-            <label className="text-sm font-medium mb-1 block">المندوب *</label>
-            <Select value={form.employee_id} onValueChange={v => setForm(p => ({ ...p, employee_id: v }))}>
-              <SelectTrigger><SelectValue placeholder="اختر المندوب" /></SelectTrigger>
-              <SelectContent>
-                {employees.map(e => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="text-sm font-medium mb-1 block">المبلغ الإجمالي (ر.س) *</label>
-            <Input type="number" value={form.amount} onChange={e => setForm(p => ({ ...p, amount: e.target.value }))} placeholder="0" />
-          </div>
-          <div>
-            <label className="text-sm font-medium mb-1 block">القسط الشهري (ر.س) *</label>
-            <Input type="number" value={form.monthly_amount} onChange={e => setForm(p => ({ ...p, monthly_amount: e.target.value }))} placeholder="0" />
-            {projectedInstallments > 0 && (
-              <p className="text-xs text-muted-foreground mt-1">عدد الأقساط = {projectedInstallments}</p>
-            )}
-          </div>
-          <div>
-            <label className="text-sm font-medium mb-1 block">تاريخ الصرف *</label>
-            <Input type="date" value={form.disbursement_date} onChange={e => setForm(p => ({ ...p, disbursement_date: e.target.value }))} />
-          </div>
-          <div>
-            <label className="text-sm font-medium mb-1 block">أول شهر خصم *</label>
-            <Input type="month" value={form.first_deduction_month} onChange={e => setForm(p => ({ ...p, first_deduction_month: e.target.value }))} dir="ltr" />
-          </div>
-          <div className="col-span-2">
-            <label className="text-sm font-medium mb-1 block">ملاحظات</label>
-            <textarea
-              value={form.note}
-              onChange={e => setForm(p => ({ ...p, note: e.target.value }))}
-              rows={2}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-        </div>
-        <DialogFooter className="mt-4 gap-2">
-          <Button variant="outline" onClick={onClose}>إلغاء</Button>
-          <Button onClick={handleSave} disabled={saving}>{saving ? 'جاري الحفظ...' : 'إضافة السلفة'}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const Advances = () => {
   const { toast } = useToast();
@@ -679,10 +512,7 @@ const Advances = () => {
         const monthly = parseFloat(row['القسط']) || amount;
         const installments = monthly > 0 ? Math.ceil(amount / monthly) : 1;
         await supabase.from('advances').insert({
-          employee_id: emp.id,
-          amount,
-          monthly_amount: monthly,
-          total_installments: installments,
+          employee_id: emp.id, amount, monthly_amount: monthly, total_installments: installments,
           disbursement_date: row['تاريخ الصرف'] || format(new Date(), 'yyyy-MM-dd'),
           first_deduction_month: row['أول شهر خصم'] || format(new Date(), 'yyyy-MM'),
           status: 'active',
@@ -717,7 +547,6 @@ const Advances = () => {
 
   useEffect(() => { fetchAll(); }, []);
 
-  // Group advances by employee
   type EmployeeSummary = {
     employeeId: string;
     employeeName: string;
@@ -737,18 +566,8 @@ const Advances = () => {
       const nationalId = adv.employees?.national_id || '—';
       const paid = calcPaid(adv.advance_installments || []);
       const remaining = adv.amount - paid;
-
       if (!map.has(empId)) {
-        map.set(empId, {
-          employeeId: empId,
-          employeeName: empName,
-          nationalId,
-          totalDebt: 0,
-          totalPaid: 0,
-          remaining: 0,
-          activeAdvances: [],
-          allAdvances: [],
-        });
+        map.set(empId, { employeeId: empId, employeeName: empName, nationalId, totalDebt: 0, totalPaid: 0, remaining: 0, activeAdvances: [], allAdvances: [] });
       }
       const entry = map.get(empId)!;
       entry.totalDebt += adv.amount;
@@ -760,7 +579,6 @@ const Advances = () => {
     return Array.from(map.values());
   }, [advances]);
 
-  // Filter
   const filtered = useMemo(() => {
     let result = employeeSummaries.filter(s => {
       const matchSearch = s.employeeName.includes(search) || s.nationalId.includes(search);
@@ -770,7 +588,6 @@ const Advances = () => {
         (statusFilter === 'has_debt' && s.remaining > 0);
       return matchSearch && matchStatus;
     });
-
     if (sortField) {
       result = [...result].sort((a, b) => {
         let aVal: any = (a as any)[sortField];
@@ -780,11 +597,9 @@ const Advances = () => {
         return sortDir === 'asc' ? aVal : -aVal;
       });
     }
-
     return result;
   }, [employeeSummaries, search, statusFilter, sortField, sortDir]);
 
-  // Grand totals
   const grandTotals = useMemo(() => ({
     count: filtered.length,
     totalDebt: filtered.reduce((s, e) => s + e.totalDebt, 0),
@@ -807,12 +622,8 @@ const Advances = () => {
 
   const handleExport = () => {
     const rows = filtered.map((s, idx) => ({
-      '#': idx + 1,
-      'اسم المندوب': s.employeeName,
-      'رقم الإقامة': s.nationalId,
-      'إجمالي المديونية': s.totalDebt,
-      'المسدّد': s.totalPaid,
-      'المتبقي': s.remaining,
+      '#': idx + 1, 'اسم المندوب': s.employeeName, 'رقم الإقامة': s.nationalId,
+      'إجمالي المديونية': s.totalDebt, 'المسدّد': s.totalPaid, 'المتبقي': s.remaining,
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
@@ -839,23 +650,10 @@ const Advances = () => {
         </div>
         <div className="flex gap-2">
           <input ref={importRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportAdvances} />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2 h-8"><Download size={14} /> 📥 تحميل ▾</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleExport}>📊 تصدير Excel</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {permissions.can_edit && (
-                <DropdownMenuItem onClick={() => importRef.current?.click()}>
-                  <Upload size={14} className="ml-2" /> استيراد Excel
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem onClick={handleAdvancesTemplate}>📋 تحميل القالب</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button variant="outline" size="sm" className="gap-2 h-8" onClick={handleExport}><Download size={14} /> تصدير</Button>
+          <Button variant="outline" size="sm" className="gap-2 h-8" onClick={() => importRef.current?.click()}><Upload size={14} /> استيراد</Button>
           {permissions.can_edit && (
-            <Button size="sm" className="gap-2 h-8" onClick={() => { setAddDefaultEmployee(undefined); setAddOpen(true); }}>
+            <Button size="sm" className="gap-2 h-8" onClick={() => { setAddDefaultEmployee(undefined); setAddDefaultType('advance'); setAddOpen(true); }}>
               <Plus size={15} /> إضافة سلفة
             </Button>
           )}
@@ -895,13 +693,9 @@ const Advances = () => {
 
       {/* Table */}
       {loading ? (
-        <div className="bg-card rounded-xl border border-border/50 p-8 text-center text-muted-foreground animate-pulse">
-          جارٍ التحميل...
-        </div>
+        <div className="bg-card rounded-xl border border-border/50 p-8 text-center text-muted-foreground animate-pulse">جارٍ التحميل...</div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-muted-foreground bg-card rounded-xl border border-border/50">
-          لا توجد سلف مطابقة
-        </div>
+        <div className="text-center py-16 text-muted-foreground bg-card rounded-xl border border-border/50">لا توجد سلف مطابقة</div>
       ) : (
         <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
@@ -924,7 +718,7 @@ const Advances = () => {
                   <th className="px-3 py-3 text-center text-xs font-semibold text-destructive cursor-pointer hover:text-foreground select-none" onClick={() => handleSort('remaining')}>
                     المتبقي <SortIcon field="remaining" />
                   </th>
-                  <th className="px-3 py-3 text-center text-xs font-semibold text-muted-foreground">إجراءات</th>
+                  <th className="px-3 py-3 text-center text-xs font-semibold text-muted-foreground w-28">إجراء</th>
                 </tr>
               </thead>
               <tbody>
@@ -935,7 +729,6 @@ const Advances = () => {
                       <button
                         className="font-semibold text-primary hover:underline text-sm text-right"
                         onClick={() => setTransactionsEmployee({ id: s.employeeId, name: s.employeeName })}
-                        title="اضغط لعرض سجل العمليات"
                       >
                         {s.employeeName}
                       </button>
@@ -950,9 +743,7 @@ const Advances = () => {
                       <span className="text-[10px] text-muted-foreground mr-0.5">ر.س</span>
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <span className={`font-bold text-sm ${s.remaining > 0 ? 'text-destructive' : 'text-success'}`}>
-                        {s.remaining.toLocaleString()}
-                      </span>
+                      <span className={`font-bold text-sm ${s.remaining > 0 ? 'text-destructive' : 'text-success'}`}>{s.remaining.toLocaleString()}</span>
                       <span className="text-[10px] text-muted-foreground mr-0.5">ر.س</span>
                     </td>
                     <td className="px-3 py-3 text-center">
@@ -963,38 +754,29 @@ const Advances = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="min-w-[180px]">
-                          {/* عرض العمليات */}
                           <DropdownMenuItem onClick={() => setTransactionsEmployee({ id: s.employeeId, name: s.employeeName })}>
-                            <FileText size={13} className="ml-2 text-muted-foreground" />
-                            عرض سجل العمليات
+                            <FileText size={13} className="ml-2 text-muted-foreground" /> عرض سجل العمليات
                           </DropdownMenuItem>
                           {permissions.can_edit && <DropdownMenuSeparator />}
-                          {/* إضافة سلفة */}
                           {permissions.can_edit && (
                             <DropdownMenuItem onClick={() => { setAddDefaultEmployee(s.employeeId); setAddDefaultType('advance'); setAddOpen(true); }}>
-                              <ArrowDownCircle size={13} className="ml-2 text-info" />
-                              تسجيل سلفة
+                              <ArrowDownCircle size={13} className="ml-2 text-info" /> تسجيل سلفة
                             </DropdownMenuItem>
                           )}
-                          {/* تسجيل سداد */}
                           {permissions.can_edit && s.remaining > 0 && (
                             <DropdownMenuItem onClick={() => { setAddDefaultEmployee(s.employeeId); setAddDefaultType('payment'); setAddOpen(true); }}>
-                              <ArrowUpCircle size={13} className="ml-2 text-success" />
-                              تسجيل سداد
+                              <ArrowUpCircle size={13} className="ml-2 text-success" /> تسجيل سداد
                             </DropdownMenuItem>
                           )}
-                          {/* تأجيل / تفعيل */}
                           {permissions.can_edit && s.activeAdvances.length > 0 && (
                             <DropdownMenuItem onClick={() => handleTogglePauseById(s.activeAdvances[0].id, s.activeAdvances[0].status)}>
                               <Pause size={13} className="ml-2 text-warning" />
                               {s.activeAdvances[0].status === 'paused' ? 'تفعيل السلفة' : 'تأجيل السلفة'}
                             </DropdownMenuItem>
                           )}
-                          {/* تعديل */}
                           {permissions.can_edit && s.allAdvances.length > 0 && (
                             <DropdownMenuItem onClick={() => setEditAdvance(s.allAdvances[0])}>
-                              <Edit2 size={13} className="ml-2 text-muted-foreground" />
-                              تعديل السلفة
+                              <Edit2 size={13} className="ml-2 text-muted-foreground" /> تعديل السلفة
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
@@ -1003,7 +785,6 @@ const Advances = () => {
                   </tr>
                 ))}
               </tbody>
-              {/* Totals footer row */}
               <tfoot>
                 <tr className="bg-muted/70 border-t-2 border-border/60">
                   <td colSpan={2} className="px-3 py-3 text-right text-xs font-bold text-muted-foreground">
@@ -1022,7 +803,7 @@ const Advances = () => {
                     <span className="font-bold text-destructive text-sm">{grandTotals.remaining.toLocaleString()}</span>
                     <span className="text-[10px] text-muted-foreground mr-0.5">ر.س</span>
                   </td>
-                  <td colSpan={2} />
+                  <td />
                 </tr>
               </tfoot>
             </table>
@@ -1036,16 +817,13 @@ const Advances = () => {
         onClose={() => setAddOpen(false)}
         onSaved={fetchAll}
         defaultEmployeeId={addDefaultEmployee}
+        defaultType={addDefaultType}
         allAdvances={advances}
         employees={employees}
       />
 
       {editAdvance && (
-        <EditAdvanceModal
-          advance={editAdvance}
-          onClose={() => setEditAdvance(null)}
-          onSaved={fetchAll}
-        />
+        <EditAdvanceModal advance={editAdvance} onClose={() => setEditAdvance(null)} onSaved={fetchAll} />
       )}
 
       {transactionsEmployee && (
