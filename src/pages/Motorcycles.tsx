@@ -30,6 +30,7 @@ type Vehicle = {
   chassis_number?: string | null;
   serial_number?: string | null;
   notes: string | null;
+  current_rider?: string | null; // name from active vehicle_assignment
 };
 
 const statusLabels: Record<string, string> = {
