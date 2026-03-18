@@ -1260,6 +1260,7 @@ export type Database = {
           brand: string | null
           chassis_number: string | null
           created_at: string
+          has_fuel_chip: boolean
           id: string
           insurance_expiry: string | null
           model: string | null
@@ -1278,6 +1279,7 @@ export type Database = {
           brand?: string | null
           chassis_number?: string | null
           created_at?: string
+          has_fuel_chip?: boolean
           id?: string
           insurance_expiry?: string | null
           model?: string | null
@@ -1296,6 +1298,7 @@ export type Database = {
           brand?: string | null
           chassis_number?: string | null
           created_at?: string
+          has_fuel_chip?: boolean
           id?: string
           insurance_expiry?: string | null
           model?: string | null
