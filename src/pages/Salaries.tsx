@@ -2115,6 +2115,9 @@ const Salaries = () => {
                       </th>
                     );
                   })}
+                  <th className="px-2 py-2 text-xs font-semibold text-foreground whitespace-nowrap border border-border/30 bg-muted/30 text-center cursor-pointer select-none hover:brightness-95" onClick={() => handleSort('totalPlatformOrders')}>
+                    إجمالي الطلبات <SortIcon field="totalPlatformOrders" sortField={sortField} sortDir={sortDir} />
+                  </th>
                   <th className={thBase}>الراتب الأساسي</th>
                   <th className={`${thBase} bg-success/5`}>حوافز</th>
                   <th className={`${thBase} bg-success/5`}>إجازة مرضية</th>
