@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Search, Plus, CreditCard, Download, Upload, Edit2, FileText, ArrowDownCircle, ArrowUpCircle, Printer, AlertTriangle, Check, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Plus, CreditCard, Download, Upload, Edit2, FileText, ArrowDownCircle, ArrowUpCircle, Printer, AlertTriangle, Check, X, ChevronDown, ChevronUp, RotateCcw, UserPlus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -220,7 +220,7 @@ const WriteOffDialog = ({ employeeName, remaining, advanceIds, onClose, onDone }
           <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-sm">
             <p className="font-semibold text-foreground">{employeeName}</p>
             <p className="text-muted-foreground mt-1">المبلغ الذي سيتم إعدامه: <span className="font-bold text-destructive">{remaining.toLocaleString()} ر.س</span></p>
-            <p className="text-xs text-muted-foreground mt-2">⚠️ هذا الإجراء لا يمكن التراجع عنه. الديون ستُحسب ضمن إجمالي الديون المعدومة.</p>
+            <p className="text-xs text-muted-foreground mt-2">⚠️ يمكن التراجع عن هذا الإجراء لاحقاً من خلال زر الاسترداد.</p>
           </div>
           <div>
             <label className="text-sm font-medium mb-1 block">سبب الإعدام</label>
@@ -230,6 +230,55 @@ const WriteOffDialog = ({ employeeName, remaining, advanceIds, onClose, onDone }
         <DialogFooter className="mt-2 gap-2">
           <Button variant="outline" onClick={onClose}>إلغاء</Button>
           <Button variant="destructive" onClick={handleWriteOff} disabled={saving}>{saving ? '...' : 'إعدام الديون'}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// ─── Restore Write-off Dialog ─────────────────────────────────────────────────
+interface RestoreWriteOffDialogProps {
+  employeeName: string;
+  advanceIds: string[];
+  onClose: () => void;
+  onDone: () => void;
+}
+const RestoreWriteOffDialog = ({ employeeName, advanceIds, onClose, onDone }: RestoreWriteOffDialogProps) => {
+  const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
+
+  const handleRestore = async () => {
+    setSaving(true);
+    const { error } = await supabase.from('advances').update({
+      is_written_off: false,
+      written_off_at: null,
+      written_off_reason: null,
+    } as any).in('id', advanceIds);
+    setSaving(false);
+    if (error) return toast({ title: 'حدث خطأ', description: error.message, variant: 'destructive' });
+    toast({ title: `✅ تم استرداد ديون ${employeeName}` });
+    onDone(); onClose();
+  };
+
+  return (
+    <Dialog open onOpenChange={v => !v && onClose()}>
+      <DialogContent className="max-w-md" dir="rtl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-warning">
+            <RotateCcw size={18} /> استرداد الديون المعدومة
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 text-sm">
+            <p className="font-semibold text-foreground">{employeeName}</p>
+            <p className="text-muted-foreground mt-1">سيتم إعادة تفعيل السلف المعدومة وإعادتها للحالة النشطة.</p>
+          </div>
+        </div>
+        <DialogFooter className="mt-2 gap-2">
+          <Button variant="outline" onClick={onClose}>إلغاء</Button>
+          <Button onClick={handleRestore} disabled={saving} className="bg-warning hover:bg-warning/90 text-warning-foreground">
+            {saving ? '...' : 'استرداد الديون'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -588,9 +637,11 @@ const Advances = () => {
   const [editAdvance, setEditAdvance] = useState<Advance | null>(null);
   const [transactionsEmployee, setTransactionsEmployee] = useState<{ id: string; name: string; nationalId: string; totalDebt: number; totalPaid: number; remaining: number } | null>(null);
   const [writeOffEmployee, setWriteOffEmployee] = useState<{ name: string; remaining: number; advanceIds: string[] } | null>(null);
+  const [restoreWriteOffEmployee, setRestoreWriteOffEmployee] = useState<{ name: string; advanceIds: string[] } | null>(null);
+  const [showAddEmployee, setShowAddEmployee] = useState(false);
+  const [newEmpEntry, setNewEmpEntry] = useState<{ id: string; name: string } | null>(null);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
-  // inline row state: which employee has the + row open
   const [inlineRowEmpId, setInlineRowEmpId] = useState<string | null>(null);
 
   const importRef = useRef<HTMLInputElement>(null);
@@ -763,6 +814,11 @@ const Advances = () => {
           <input ref={importRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportAdvances} />
           <Button variant="outline" size="sm" className="gap-2 h-8" onClick={handleExport}><Download size={14} /> تصدير</Button>
           <Button variant="outline" size="sm" className="gap-2 h-8" onClick={() => importRef.current?.click()}><Upload size={14} /> استيراد</Button>
+          {permissions.can_edit && (
+            <Button size="sm" className="gap-2 h-8" onClick={() => setShowAddEmployee(true)}>
+              <UserPlus size={14} /> مندوب جديد
+            </Button>
+          )}
         </div>
       </div>
 
@@ -918,6 +974,15 @@ const Advances = () => {
                             )}
                           </div>
                         )}
+                        {s.isWrittenOff && permissions.can_edit && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <button
+                              onClick={() => setRestoreWriteOffEmployee({ name: s.employeeName, advanceIds: s.allAdvances.map(a => a.id) })}
+                              className="flex items-center gap-0.5 text-[11px] text-warning hover:text-warning/80 transition-colors">
+                              <RotateCcw size={11} /> استرداد الديون
+                            </button>
+                          </div>
+                        )}
                       </td>
                       <td className="px-3 py-3 text-center text-sm font-mono text-foreground" dir="ltr">{s.nationalId}</td>
                       <td className="px-3 py-3 text-center">
@@ -945,6 +1010,28 @@ const Advances = () => {
                     )}
                   </React.Fragment>
                 ))}
+                {/* Temporary row for new employee */}
+                {newEmpEntry && !filtered.some(s => s.employeeId === newEmpEntry.id) && (
+                  <React.Fragment key={`new-${newEmpEntry.id}`}>
+                    <tr className="border-b border-border/30 bg-primary/5">
+                      <td className="px-3 py-3 text-center text-xs text-muted-foreground font-mono">—</td>
+                      <td className="px-3 py-3 text-right">
+                        <span className="font-semibold text-foreground text-sm">{newEmpEntry.name}</span>
+                        <span className="mr-2 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">جديد</span>
+                      </td>
+                      <td className="px-3 py-3 text-center text-xs text-muted-foreground">—</td>
+                      <td colSpan={3} className="px-3 py-3 text-center text-xs text-muted-foreground">لا توجد سلف بعد</td>
+                    </tr>
+                    {inlineRowEmpId === newEmpEntry.id && (
+                      <InlineRowEntry
+                        employeeId={newEmpEntry.id}
+                        allAdvances={advances}
+                        onSaved={() => { setInlineRowEmpId(null); setNewEmpEntry(null); fetchAll(); }}
+                        onCancel={() => { setInlineRowEmpId(null); setNewEmpEntry(null); }}
+                      />
+                    )}
+                  </React.Fragment>
+                )}
               </tbody>
               <tfoot>
                 <tr className="bg-muted/70 border-t-2 border-border/60">
@@ -998,6 +1085,49 @@ const Advances = () => {
           onClose={() => setWriteOffEmployee(null)}
           onDone={fetchAll}
         />
+      )}
+
+      {restoreWriteOffEmployee && (
+        <RestoreWriteOffDialog
+          employeeName={restoreWriteOffEmployee.name}
+          advanceIds={restoreWriteOffEmployee.advanceIds}
+          onClose={() => setRestoreWriteOffEmployee(null)}
+          onDone={fetchAll}
+        />
+      )}
+
+      {/* Add new employee quick dialog */}
+      {showAddEmployee && (
+        <Dialog open onOpenChange={v => !v && setShowAddEmployee(false)}>
+          <DialogContent className="max-w-sm" dir="rtl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2"><UserPlus size={16} /> إضافة مندوب جديد للسلف</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">اختر مندوباً من القائمة لإضافة سلفة له مباشرة.</p>
+              <Select onValueChange={(empId) => {
+                const emp = employees.find(e => e.id === empId);
+                if (emp) {
+                  setNewEmpEntry({ id: emp.id, name: emp.name });
+                  setInlineRowEmpId(emp.id);
+                }
+                setShowAddEmployee(false);
+              }}>
+                <SelectTrigger><SelectValue placeholder="اختر المندوب..." /></SelectTrigger>
+                <SelectContent>
+                  {employees
+                    .filter(e => !employeeSummaries.some(s => s.employeeId === e.id))
+                    .map(e => (
+                      <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAddEmployee(false)}>إلغاء</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
