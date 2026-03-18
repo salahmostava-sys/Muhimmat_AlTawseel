@@ -72,6 +72,10 @@ interface SalaryRow {
   isDirty?: boolean;
   preferredLanguage: SlipLanguage;
   phone?: string | null;
+  // New columns: work days from attendance, fuel from vehicle_mileage
+  workDays: number;
+  fuelCost: number;
+  platformIncome: number;
 }
 
 interface SchemeData {
@@ -673,7 +677,7 @@ const Salaries = () => {
       const startDate = `${selectedMonth}-01`;
       const endDate = `${selectedMonth}-${String(daysInMonth).padStart(2, '0')}`;
 
-      const [empRes, extRes, ordersRes, appsWithSchemeRes, attendanceRes] = await Promise.all([
+      const [empRes, extRes, ordersRes, appsWithSchemeRes, attendanceRes, fuelRes] = await Promise.all([
         supabase
           .from('employees')
           .select('id, name, job_title, national_id, salary_type, base_salary, iban, city, preferred_language, phone')
@@ -705,6 +709,12 @@ const Salaries = () => {
           .gte('date', startDate)
           .lte('date', endDate)
           .in('status', ['present', 'late']),
+
+        // Fetch fuel/mileage cost for this month
+        supabase
+          .from('vehicle_mileage')
+          .select('employee_id, fuel_cost')
+          .eq('month_year', selectedMonth),
       ]);
 
       // ── Fetch saved salary records for this month (to restore status) ──
@@ -777,6 +787,12 @@ const Salaries = () => {
       const attendanceDaysMap: Record<string, number> = {};
       attendanceRes.data?.forEach(r => {
         attendanceDaysMap[r.employee_id] = (attendanceDaysMap[r.employee_id] || 0) + 1;
+      });
+
+      // Build fuel cost map: employeeId → fuel_cost
+      const fuelCostMap: Record<string, number> = {};
+      fuelRes.data?.forEach(r => {
+        fuelCostMap[r.employee_id] = (fuelCostMap[r.employee_id] || 0) + Number(r.fuel_cost);
       });
 
       const extMap: Record<string, number> = {};
@@ -868,6 +884,7 @@ const Salaries = () => {
         const cityLabel = emp.city === 'makkah' ? 'مكة' : emp.city === 'jeddah' ? 'جدة' : '—';
         const bankAccount = emp.iban ? emp.iban.slice(-6) : '';
         const hasIban = !!emp.iban;
+        const empPlatformIncome = Object.values(platformSalaries).reduce((s, v) => s + v, 0);
 
         return {
           id: `${emp.id}-${selectedMonth}`,
@@ -898,6 +915,9 @@ const Salaries = () => {
           status,
           preferredLanguage: ((emp as any).preferred_language as SlipLanguage) || 'ar',
           phone: (emp as any).phone || null,
+          workDays: attendanceDays,
+          fuelCost: fuelCostMap[emp.id] || 0,
+          platformIncome: empPlatformIncome,
         };
       });
 
@@ -2045,6 +2065,7 @@ const Salaries = () => {
                 <tr className="bg-muted/70 border-b border-border/50">
                   <th className={`${thFrozenBase} w-10 text-center`} style={stickyLeft(0)}>#</th>
                   <th colSpan={3} className={`${thFrozenBase} border-l border-border/50`} style={stickyLeft(40)}>بيانات المندوب</th>
+                  <th colSpan={3} className="px-3 py-2 text-xs font-semibold text-info whitespace-nowrap border-b border-border/50 bg-info/10 text-center border-l-2 border-info/40">📊 بيانات المندوب الشهرية</th>
                   <th colSpan={platforms.length} className="px-3 py-2 text-xs font-semibold text-primary whitespace-nowrap border-b border-border/50 bg-muted/40 text-center border-l border-border/50">
                     المنصات (نقر مزدوج لتعديل الطلبات)
                   </th>
@@ -2063,8 +2084,18 @@ const Salaries = () => {
                   <th className={`${thFrozenBase} w-28 cursor-pointer hover:text-foreground select-none`} style={stickyLeft(216)} onClick={() => handleSort('jobTitle')}>
                     المسمى الوظيفي <SortIcon field="jobTitle" sortField={sortField} sortDir={sortDir} />
                   </th>
-                  <th className={`${thFrozenBase} w-28 border-l border-border/50 cursor-pointer hover:text-foreground select-none`} style={stickyLeft(328)} onClick={() => handleSort('nationalId')}>
+                  <th className={`${thFrozenBase} w-28 cursor-pointer hover:text-foreground select-none`} style={stickyLeft(328)} onClick={() => handleSort('nationalId')}>
                     رقم الهوية <SortIcon field="nationalId" sortField={sortField} sortDir={sortDir} />
+                  </th>
+                  {/* ── New info columns ── */}
+                  <th className="px-2 py-2 text-xs font-semibold text-info whitespace-nowrap border border-info/30 bg-info/10 text-center cursor-pointer select-none hover:brightness-95" onClick={() => handleSort('platformIncome')}>
+                    دخل <SortIcon field="platformIncome" sortField={sortField} sortDir={sortDir} />
+                  </th>
+                  <th className="px-2 py-2 text-xs font-semibold text-info whitespace-nowrap border border-info/30 bg-info/10 text-center cursor-pointer select-none hover:brightness-95" onClick={() => handleSort('workDays')}>
+                    أيام العمل <SortIcon field="workDays" sortField={sortField} sortDir={sortDir} />
+                  </th>
+                  <th className="px-2 py-2 text-xs font-semibold text-info whitespace-nowrap border-l-2 border-info/40 bg-info/10 text-center cursor-pointer select-none hover:brightness-95" onClick={() => handleSort('fuelCost')}>
+                    البنزين <SortIcon field="fuelCost" sortField={sortField} sortDir={sortDir} />
                   </th>
                   {platforms.map(p => {
                     const pc = platformColors[p];
@@ -2130,6 +2161,22 @@ const Salaries = () => {
                       </td>
                       <td className={`${tdClass} whitespace-nowrap`} style={{ position: 'sticky', left: 216, zIndex: 10, background: 'hsl(var(--card))' }}>{r.jobTitle}</td>
                       <td className={`${tdClass} border-l border-border/30 text-muted-foreground text-xs whitespace-nowrap`} style={{ position: 'sticky', left: 328, zIndex: 10, background: 'hsl(var(--card))' }}>{r.nationalId}</td>
+                      {/* ── New info columns: income, work days, fuel ── */}
+                      <td className="px-2 py-2 text-xs text-center border border-info/20 bg-info/5 whitespace-nowrap">
+                        {r.platformIncome > 0
+                          ? <span className="font-semibold text-foreground">{r.platformIncome.toLocaleString()}</span>
+                          : <span className="text-muted-foreground/30">—</span>}
+                      </td>
+                      <td className="px-2 py-2 text-xs text-center border border-info/20 bg-info/5 whitespace-nowrap">
+                        {r.workDays > 0
+                          ? <span className="font-semibold text-foreground">{r.workDays}</span>
+                          : <span className="text-muted-foreground/30">—</span>}
+                      </td>
+                      <td className="px-2 py-2 text-xs text-center border-l-2 border-info/30 bg-info/5 whitespace-nowrap">
+                        {r.fuelCost > 0
+                          ? <span className="font-semibold text-foreground">{r.fuelCost.toLocaleString()}</span>
+                          : <span className="text-muted-foreground/30">—</span>}
+                      </td>
                       {platforms.map(p => {
                         const pc = platformColors[p];
                         const orders = r.platformOrders[p] || 0;
@@ -2278,6 +2325,16 @@ const Salaries = () => {
                    <td className={`${tfClass} sticky text-right border-l border-border/30`} style={{ left: 40, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}>الإجمالي</td>
                    <td className={tfClass} style={{ position: 'sticky', left: 216, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}></td>
                    <td className={`${tfClass} border-l border-border/30`} style={{ position: 'sticky', left: 328, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}></td>
+                   {/* New info columns totals */}
+                   <td className="px-2 py-2 text-xs font-bold text-center border border-info/20 bg-info/10 text-foreground">
+                     {filtered.reduce((s, r) => s + r.platformIncome, 0).toLocaleString()}
+                   </td>
+                   <td className="px-2 py-2 text-xs font-bold text-center border border-info/20 bg-info/10 text-foreground">
+                     {Math.round(filtered.reduce((s, r) => s + r.workDays, 0) / Math.max(filtered.length, 1))}
+                   </td>
+                   <td className="px-2 py-2 text-xs font-bold text-center border-l-2 border-info/30 bg-info/10 text-foreground">
+                     {filtered.reduce((s, r) => s + r.fuelCost, 0).toLocaleString()}
+                   </td>
                   {platforms.map(p => {
                     const totalOrders = totals.platform[p] || 0;
                     const totalSal = filtered.reduce((s, r) => s + (r.platformSalaries[p] || 0), 0);

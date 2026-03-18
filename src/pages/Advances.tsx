@@ -1061,7 +1061,7 @@ const Advances = () => {
                   <th className="px-3 py-3 text-center text-xs font-semibold text-destructive cursor-pointer hover:text-foreground select-none" onClick={() => handleSort('remaining')}>
                     المتبقي <SortIcon field="remaining" />
                   </th>
-                  {permissions.can_edit && <th className="w-12 px-2 py-3 text-center text-xs font-semibold text-muted-foreground">حذف</th>}
+                  {permissions.can_edit && <th className="w-20 px-2 py-3 text-center text-xs font-semibold text-muted-foreground">إجراء</th>}
                 </tr>
               </thead>
               <tbody>
@@ -1091,13 +1091,22 @@ const Advances = () => {
                       </td>
                       {permissions.can_edit && (
                         <td className="px-2 py-3 text-center" onClick={e => e.stopPropagation()}>
-                          <button
-                            onClick={() => setDeleteEmployeeAdvancesId(s.employeeId)}
-                            className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                            title="حذف جميع سلف هذا المندوب"
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => { setEditAdvance(s.allAdvances[0]); }}
+                              className="p-1.5 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                              title="تعديل السلفة"
+                            >
+                              <Edit2 size={13} />
+                            </button>
+                            <button
+                              onClick={() => setDeleteEmployeeAdvancesId(s.employeeId)}
+                              className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                              title="حذف جميع سلف هذا المندوب"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </td>
                       )}
                     </tr>
