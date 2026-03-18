@@ -79,9 +79,19 @@ interface SchemeData {
   name: string;
   name_en: string | null;
   status: string;
+  scheme_type?: 'order_based' | 'fixed_monthly';
+  monthly_amount?: number | null;
   target_orders: number | null;
   target_bonus: number | null;
-  salary_scheme_tiers?: { from_orders: number; to_orders: number | null; price_per_order: number; tier_order: number }[];
+  salary_scheme_tiers?: {
+    from_orders: number;
+    to_orders: number | null;
+    price_per_order: number;
+    tier_order: number;
+    tier_type?: 'total_multiplier' | 'fixed_amount' | 'base_plus_incremental';
+    incremental_threshold?: number | null;
+    incremental_price?: number | null;
+  }[];
   snapshot?: any;
   scheme_id?: string;
 }
