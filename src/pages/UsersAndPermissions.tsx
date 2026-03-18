@@ -74,6 +74,59 @@ const BlueSwitch = ({ checked, onCheckedChange, disabled }: { checked: boolean; 
   </button>
 );
 
+// ─── 3-dot Actions Menu ───────────────────────────────────────────────────────
+const DropdownMenuRoot = ({ u, openEdit, setDeleteTarget, handleReactivate, isReactivating }: {
+  u: Profile;
+  openEdit: (u: Profile) => void;
+  setDeleteTarget: (u: Profile) => void;
+  handleReactivate: (u: Profile) => void;
+  isReactivating: boolean;
+}) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+      >
+        <MoreVertical size={15} />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-50 bg-card border border-border rounded-xl shadow-lg py-1 min-w-[140px]" dir="rtl">
+          <button
+            onClick={() => { openEdit(u); setOpen(false); }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted/60 transition-colors text-foreground"
+          >
+            <Pencil size={13} className="text-primary" /> تعديل
+          </button>
+          {u.is_active ? (
+            <button
+              onClick={() => { setDeleteTarget(u); setOpen(false); }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted/60 transition-colors text-warning"
+            >
+              <UserX size={13} /> تعطيل
+            </button>
+          ) : (
+            <button
+              disabled={isReactivating}
+              onClick={() => { handleReactivate(u); setOpen(false); }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted/60 transition-colors text-success disabled:opacity-50"
+            >
+              <UserCheck size={13} /> تفعيل
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── Users Tab ────────────────────────────────────────────────────────────────
 const UsersTab = () => {
   const { toast } = useToast();
