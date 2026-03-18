@@ -985,6 +985,46 @@ const Employees = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Status-Date Dialog (absconded / terminated) */}
+      <Dialog open={!!statusDateDialog} onOpenChange={open => !open && setStatusDateDialog(null)}>
+        <DialogContent dir="rtl" className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarDays size={16} className="text-destructive" />
+              تحديد تاريخ — {statusDateDialog?.label}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              أدخل تاريخ <strong>{statusDateDialog?.label}</strong> للمندوب{' '}
+              <strong className="text-foreground">{statusDateDialog?.emp.name}</strong>
+            </p>
+            <div>
+              <Label className="mb-1.5 block">
+                {statusDateDialog?.newStatus === 'absconded' ? 'تاريخ الهروب' : 'تاريخ انتهاء الخدمة'}
+              </Label>
+              <Input
+                type="date"
+                value={statusDate}
+                onChange={e => setStatusDate(e.target.value)}
+                max={format(new Date(), 'yyyy-MM-dd')}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setStatusDateDialog(null)}>إلغاء</Button>
+            <Button
+              variant="destructive"
+              onClick={handleSaveStatusWithDate}
+              disabled={!statusDate || statusDateSaving}
+            >
+              {statusDateSaving && <Loader2 size={14} className="animate-spin ml-1" />}
+              حفظ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Trade Register Assignment Dialog */}
       <Dialog open={!!tradeAssignEmp} onOpenChange={open => !open && setTradeAssignEmp(null)}>
         <DialogContent dir="rtl" className="max-w-sm">
