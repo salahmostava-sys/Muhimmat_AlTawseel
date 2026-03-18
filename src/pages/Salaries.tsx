@@ -2330,6 +2330,13 @@ const Salaries = () => {
       {detailRow && (() => {
         const c = computeRow(detailRow);
         const monthLabel = months.find(m => m.v === selectedMonth)?.l || selectedMonth;
+        // All custom deduction columns across apps
+        const allCustomCols: { appName: string; key: string; label: string; fullKey: string }[] = [];
+        platforms.forEach(p => {
+          (appCustomColumns[p] || []).forEach(col => {
+            allCustomCols.push({ appName: p, key: col.key, label: col.label, fullKey: `${p}___${col.key}` });
+          });
+        });
         return (
           <Dialog open onOpenChange={() => setDetailRow(null)}>
             <DialogContent dir="rtl" className="max-w-xl max-h-[85vh] overflow-y-auto">
@@ -2359,16 +2366,18 @@ const Salaries = () => {
                     <p className="font-bold text-xs text-success uppercase tracking-wide">✅ الطلبات والاستحقاقات</p>
                   </div>
                   <div className="divide-y divide-border/30">
-                    {detailOrders.length === 0 ? (
-                      <div className="px-3 py-4 text-center text-xs text-muted-foreground">لا توجد طلبات مسجّلة لهذا الشهر</div>
-                    ) : detailOrders.map(({ appName, orders, salary }) => {
-                      const pc = platformColors[appName];
+                    {/* All platforms — show orders + salary for each */}
+                    {platforms.map(p => {
+                      const orders = detailRow.platformOrders[p] || 0;
+                      const salary = detailRow.platformSalaries[p] || 0;
+                      if (orders === 0 && salary === 0) return null;
+                      const pc = platformColors[p];
                       return (
-                        <div key={appName} className="flex justify-between items-center px-3 py-2.5">
+                        <div key={p} className="flex justify-between items-center px-3 py-2.5">
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: pc?.header || 'hsl(var(--primary))' }} />
                             <div>
-                              <span className="font-medium text-xs text-foreground">{appName}</span>
+                              <span className="font-medium text-xs text-foreground">{p}</span>
                               <span className="text-[10px] text-muted-foreground mr-1.5">{orders.toLocaleString()} طلب</span>
                             </div>
                           </div>
@@ -2376,6 +2385,9 @@ const Salaries = () => {
                         </div>
                       );
                     })}
+                    {detailOrders.length === 0 && platforms.every(p => !detailRow.platformOrders[p]) && (
+                      <div className="px-3 py-4 text-center text-xs text-muted-foreground">لا توجد طلبات مسجّلة لهذا الشهر</div>
+                    )}
                     {detailRow.incentives > 0 && (
                       <div className="flex justify-between items-center px-3 py-2.5">
                         <span className="text-xs text-foreground">حوافز</span>
@@ -2395,50 +2407,58 @@ const Salaries = () => {
                   </div>
                 </div>
 
-                {/* Deductions */}
-                {c.totalDeductions > 0 && (
-                  <div className="rounded-xl border border-destructive/20 bg-destructive/5 overflow-hidden">
-                    <div className="px-3 py-2 bg-destructive/10 border-b border-destructive/20">
-                      <p className="font-bold text-xs text-destructive uppercase tracking-wide">🔻 الاستقطاعات</p>
-                    </div>
-                    <div className="divide-y divide-border/30">
-                      {detailRow.advanceDeduction > 0 && (
-                        <div className="flex justify-between items-center px-3 py-2.5">
-                          <span className="text-xs text-foreground">قسط سلفة</span>
-                          <span className="text-xs font-semibold text-destructive">-{detailRow.advanceDeduction.toLocaleString()} ر.س</span>
-                        </div>
-                      )}
-                      {detailRow.advanceRemaining > 0 && (
-                        <div className="flex justify-between items-center px-3 py-2.5">
-                          <span className="text-xs text-muted-foreground">رصيد السلفة المتبقي</span>
-                          <span className="text-xs font-semibold text-warning">{detailRow.advanceRemaining.toLocaleString()} ر.س</span>
-                        </div>
-                      )}
-                      {detailRow.externalDeduction > 0 && (
-                        <div className="flex justify-between items-center px-3 py-2.5">
-                          <span className="text-xs text-foreground">خصومات خارجية</span>
-                          <span className="text-xs font-semibold text-destructive">-{detailRow.externalDeduction.toLocaleString()} ر.س</span>
-                        </div>
-                      )}
-                      {detailRow.violations > 0 && (
-                        <div className="flex justify-between items-center px-3 py-2.5">
-                          <span className="text-xs text-foreground">مخالفات مرورية</span>
-                          <span className="text-xs font-semibold text-destructive">-{detailRow.violations.toLocaleString()} ر.س</span>
-                        </div>
-                      )}
-                      {Object.entries(detailRow.customDeductions || {}).filter(([, v]) => v > 0).map(([k, v]) => (
-                        <div key={k} className="flex justify-between items-center px-3 py-2.5">
-                          <span className="text-xs text-foreground">{k.split('___').slice(1).join('___') || k}</span>
-                          <span className="text-xs font-semibold text-destructive">-{v.toLocaleString()} ر.س</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex justify-between items-center px-3 py-2.5 bg-destructive/15 font-bold">
-                      <span className="text-xs text-destructive">إجمالي الاستقطاعات</span>
-                      <span className="text-sm text-destructive">-{c.totalDeductions.toLocaleString()} ر.س</span>
-                    </div>
+                {/* Deductions — always show all including custom columns */}
+                <div className="rounded-xl border border-destructive/20 bg-destructive/5 overflow-hidden">
+                  <div className="px-3 py-2 bg-destructive/10 border-b border-destructive/20">
+                    <p className="font-bold text-xs text-destructive uppercase tracking-wide">🔻 الاستقطاعات</p>
                   </div>
-                )}
+                  <div className="divide-y divide-border/30">
+                    <div className="flex justify-between items-center px-3 py-2.5">
+                      <span className="text-xs text-foreground">قسط سلفة</span>
+                      <span className={`text-xs font-semibold ${detailRow.advanceDeduction > 0 ? 'text-destructive' : 'text-muted-foreground/40'}`}>
+                        {detailRow.advanceDeduction > 0 ? `-${detailRow.advanceDeduction.toLocaleString()} ر.س` : '—'}
+                      </span>
+                    </div>
+                    {detailRow.advanceRemaining > 0 && (
+                      <div className="flex justify-between items-center px-3 py-2.5">
+                        <span className="text-xs text-muted-foreground">رصيد السلفة المتبقي</span>
+                        <span className="text-xs font-semibold text-warning">{detailRow.advanceRemaining.toLocaleString()} ر.س</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center px-3 py-2.5">
+                      <span className="text-xs text-foreground">خصومات خارجية</span>
+                      <span className={`text-xs font-semibold ${detailRow.externalDeduction > 0 ? 'text-destructive' : 'text-muted-foreground/40'}`}>
+                        {detailRow.externalDeduction > 0 ? `-${detailRow.externalDeduction.toLocaleString()} ر.س` : '—'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center px-3 py-2.5">
+                      <span className="text-xs text-foreground">مخالفات</span>
+                      <span className={`text-xs font-semibold ${detailRow.violations > 0 ? 'text-destructive' : 'text-muted-foreground/40'}`}>
+                        {detailRow.violations > 0 ? `-${detailRow.violations.toLocaleString()} ر.س` : '—'}
+                      </span>
+                    </div>
+                    {/* All custom columns from apps — always visible */}
+                    {allCustomCols.map(col => {
+                      const v = detailRow.customDeductions?.[col.fullKey] || 0;
+                      return (
+                        <div key={col.fullKey} className="flex justify-between items-center px-3 py-2.5">
+                          <span className="text-xs text-foreground flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: platformColors[col.appName]?.header || 'hsl(var(--muted-foreground))' }} />
+                            {col.label}
+                            <span className="text-[9px] text-muted-foreground">({col.appName})</span>
+                          </span>
+                          <span className={`text-xs font-semibold ${v > 0 ? 'text-destructive' : 'text-muted-foreground/40'}`}>
+                            {v > 0 ? `-${v.toLocaleString()} ر.س` : '—'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-between items-center px-3 py-2.5 bg-destructive/15 font-bold">
+                    <span className="text-xs text-destructive">إجمالي الاستقطاعات</span>
+                    <span className="text-sm text-destructive">-{c.totalDeductions.toLocaleString()} ر.س</span>
+                  </div>
+                </div>
 
                 {/* Net salary */}
                 <div className="flex justify-between items-center py-3.5 bg-primary text-primary-foreground rounded-xl px-5">
