@@ -1,0 +1,155 @@
+You are working on an EXISTING production-ready codebase.
+
+Explain your plan before making ANY changes.
+
+---
+
+## 🔒 SAFE MODE (STRICT)
+
+🚫 DO NOT:
+
+* Create new layout components
+* Replace AppLayout.tsx or AppSidebar.tsx
+* Modify routing system
+* Rewrite full files
+* Duplicate components
+
+✅ ONLY:
+
+* Extend existing components
+* Add styles incrementally
+* Modify minimal required code
+
+If any change risks breaking layout or routing → STOP and ask.
+
+---
+
+## 📌 PROJECT CONTEXT
+
+This project already includes:
+
+* AppLayout.tsx (main layout)
+* AppSidebar.tsx (sidebar)
+* Working routing system
+
+👉 Your job is to ENHANCE — NOT rebuild
+
+---
+
+## 🎨 STEP 1 — Design Tokens (index.css)
+
+Add the following CSS variables inside `:root` WITHOUT removing or overriding unrelated variables:
+
+```css
+--brand:         #1a56db;
+--brand-light:   #e8f1fd;
+--brand-dark:    #1240a8;
+--success:       #057a55;
+--warning:       #d97706;
+--danger:        #dc2626;
+--text-primary:  #111827;
+--text-secondary:#6b7280;
+--text-muted:    #9ca3af;
+--bg-page:       #f3f4f6;
+--bg-card:       #ffffff;
+--border:        #e5e7eb;
+--radius-md:     10px;
+--radius-lg:     14px;
+--shadow-sm:     0 1px 3px rgba(0,0,0,0.08);
+```
+
+---
+
+## 🎨 STEP 2 — Align Primary Color
+
+Locate existing `--primary` (HSL) in index.css.
+
+Update its value ONLY to match:
+#1a56db (convert properly to HSL)
+
+🚫 Do NOT create a new variable
+🚫 Do NOT remove existing theme structure
+
+---
+
+## 🧱 STEP 3 — Sidebar Collapse (AppSidebar.tsx)
+
+Enhance existing sidebar ONLY:
+
+* Add collapse toggle button (bottom of sidebar)
+* Collapsed width: 64px (icons only)
+* Expanded width: 260px (icons + labels)
+
+### Behavior:
+
+* Store state in localStorage:
+  key = "sidebar_collapsed"
+* Load state on mount
+
+### Constraints:
+
+* Do NOT change navigation structure
+* Do NOT modify routing logic
+* Do NOT rename components
+
+---
+
+## 🎨 STEP 4 — Design System Utilities
+
+In index.css under @layer components, ADD (do not replace):
+
+```css
+.ds-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  padding: 20px;
+}
+
+.ds-btn-primary {
+  background: var(--brand);
+  color: white;
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+}
+
+.ds-btn-primary:hover {
+  background: var(--brand-dark);
+}
+```
+
+---
+
+## 🧠 STEP 5 — Safe Adoption
+
+Apply `.ds-card` ONLY to existing card containers in dashboard pages.
+
+🚫 Do NOT refactor components
+🚫 Do NOT replace UI libraries
+✅ Only enhance visually
+
+---
+
+## ⚠️ HARD LIMITS
+
+* Maximum 4 files changed
+* Show ONLY modified parts of each file
+* Explain changes BEFORE code
+* If unsure → ASK
+
+---
+
+## 🎯 FINAL GOAL
+
+Enhance visual consistency and UX while preserving:
+
+* Existing layout
+* Routing
+* Business logic
+
+Result should feel like a professional SaaS dashboard WITHOUT structural changes.

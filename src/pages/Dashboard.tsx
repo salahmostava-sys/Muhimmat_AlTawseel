@@ -521,7 +521,7 @@ const Dashboard = () => {
           </div>
 
           {/* ── Row 1: Orders per platform ────────────────── */}
-          <div className="bg-card border border-border/50 rounded-xl p-4 animate-fade-in">
+          <div className="ds-card animate-fade-in">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="icon-box-sm bg-orange-100 dark:bg-orange-500/15"><Package size={14} className="text-orange-500" /></div>
@@ -551,7 +551,7 @@ const Dashboard = () => {
 
           {/* ── Row 2: Riders overview ─────────────────────────────── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="bg-card border border-border/50 rounded-xl p-4 animate-fade-in">
+            <div className="ds-card animate-fade-in">
               <div className="flex items-center gap-2 mb-3">
                 <div className="icon-box-sm bg-brand-50 dark:bg-brand-500/15"><Users size={14} className="text-brand-500" /></div>
                 <h3 className="text-sm font-semibold text-foreground">المناديب حسب المنصة</h3>
@@ -576,7 +576,7 @@ const Dashboard = () => {
               )}
             </div>
 
-            <div className="bg-card border border-border/50 rounded-xl p-4 animate-fade-in space-y-3">
+            <div className="ds-card animate-fade-in space-y-3">
               <div className="flex items-center gap-2 mb-1">
                 <div className="icon-box-sm bg-success/10"><UserCheck size={14} className="text-success" /></div>
                 <h3 className="text-sm font-semibold text-foreground">إحصائيات المناديب</h3>
