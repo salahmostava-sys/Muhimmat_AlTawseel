@@ -884,7 +884,7 @@ const Salaries = () => {
         const cityLabel = emp.city === 'makkah' ? 'مكة' : emp.city === 'jeddah' ? 'جدة' : '—';
         const bankAccount = emp.iban ? emp.iban.slice(-6) : '';
         const hasIban = !!emp.iban;
-        const empPlatformIncome = Object.values(platformSalaries).reduce((s, v) => s + v, 0);
+        // platformIncome is manual — not computed from anywhere
 
         return {
           id: `${emp.id}-${selectedMonth}`,
