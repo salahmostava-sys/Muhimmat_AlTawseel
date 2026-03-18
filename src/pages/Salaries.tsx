@@ -943,7 +943,7 @@ const Salaries = () => {
       attendance_deduction: row.violations,
       advance_deduction: row.advanceDeduction,
       external_deduction: row.externalDeduction,
-      manual_deduction: row.walletHunger + row.walletTuyo + row.walletJahiz + row.foodDamage,
+      manual_deduction: row.walletHunger + row.walletTuyo + row.walletJahiz + row.foodDamage + Object.values(row.customDeductions || {}).reduce((s, v) => s + v, 0),
       net_salary: c.netSalary,
       is_approved: true,
       approved_by: user?.id ?? null,
