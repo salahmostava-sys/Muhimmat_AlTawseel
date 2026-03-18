@@ -110,13 +110,14 @@ const EmployeeTiers = () => {
   const handleSave = async () => {
     if (!empId) { toast({ title: 'خطأ', description: 'يرجى اختيار موظف', variant: 'destructive' }); return; }
     setSaving(true);
+    const db = supabase as any;
     const payload = { employee_id: empId, package_type: packageType, start_date: startDate, renewal_date: renewalDate, delivery_status: deliveryStatus, notes: notes || null };
     if (editing) {
-      const { error } = await supabase.from('employee_tiers').update(payload).eq('id', editing.id);
+      const { error } = await db.from('employee_tiers').update(payload).eq('id', editing.id);
       if (error) { toast({ title: 'خطأ', description: error.message, variant: 'destructive' }); setSaving(false); return; }
       toast({ title: '✅ تم التعديل' });
     } else {
-      const { error } = await supabase.from('employee_tiers').insert(payload);
+      const { error } = await db.from('employee_tiers').insert(payload);
       if (error) { toast({ title: 'خطأ', description: error.message, variant: 'destructive' }); setSaving(false); return; }
       toast({ title: '✅ تمت الإضافة' });
     }
@@ -127,7 +128,7 @@ const EmployeeTiers = () => {
 
   const handleDelete = async () => {
     if (!deleteId) return;
-    await supabase.from('employee_tiers').delete().eq('id', deleteId);
+    await (supabase as any).from('employee_tiers').delete().eq('id', deleteId);
     toast({ title: 'تم الحذف' });
     setDeleteId(null);
     fetchAll();
