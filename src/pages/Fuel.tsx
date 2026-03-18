@@ -620,7 +620,6 @@ const FuelPage = () => {
                     const orders = row.orders_count || 0;
                     const fuelPerOrder = orders > 0 ? row.fuel_cost / orders : null;
                     const kmPerOrder = orders > 0 ? row.km_total / orders : null;
-                    const initial = (row.employee?.name || '?').charAt(0);
                     return (
                       <tr key={row.id} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
                         <td className="px-4 py-3">

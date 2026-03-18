@@ -522,12 +522,9 @@ const Motorcycles = () => {
                      <td className="px-3 py-2.5 text-xs font-mono text-muted-foreground whitespace-nowrap" dir="ltr">{v.chassis_number || '—'}</td>
                      {/* Current assigned rider */}
                      <td className="px-3 py-2.5 whitespace-nowrap">
-                       {v.current_rider ? (
-                         <div className="flex items-center gap-1.5">
-                           <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0">
-                             {v.current_rider.charAt(0)}
-                           </div>
-                           <span className="text-sm font-medium text-foreground">{v.current_rider}</span>
+                        {v.current_rider ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-medium text-foreground">{v.current_rider}</span>
                          </div>
                        ) : (
                          <span className="text-muted-foreground/40 text-xs">—</span>

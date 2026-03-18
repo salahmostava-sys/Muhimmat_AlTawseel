@@ -721,7 +721,6 @@ const MonthSummary = () => {
                     <td className="p-3 text-center text-xs text-muted-foreground font-medium">{idx + 1}</td>
                     <td className="p-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold flex-shrink-0">{emp.name.charAt(0)}</div>
                         <span className="font-medium text-foreground whitespace-nowrap">{emp.name}</span>
                       </div>
                     </td>
