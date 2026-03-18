@@ -1038,8 +1038,22 @@ const Advances = () => {
           totalPaid={transactionsEmployee.totalPaid}
           remaining={transactionsEmployee.remaining}
           advances={advances}
+          allAdvances={advances}
+          isWrittenOff={transactionsEmployee.isWrittenOff}
+          canEdit={permissions.can_edit}
           onClose={() => setTransactionsEmployee(null)}
           onRefresh={fetchAll}
+          onEditAdvance={(adv) => { setTransactionsEmployee(null); setEditAdvance(adv); }}
+          onWriteOff={() => {
+            const s = filtered.find(x => x.employeeId === transactionsEmployee.id);
+            if (s) setWriteOffEmployee({ name: s.employeeName, remaining: s.remaining, advanceIds: s.allAdvances.map(a => a.id) });
+            setTransactionsEmployee(null);
+          }}
+          onRestore={() => {
+            const s = filtered.find(x => x.employeeId === transactionsEmployee.id);
+            if (s) setRestoreWriteOffEmployee({ name: s.employeeName, advanceIds: s.allAdvances.map(a => a.id) });
+            setTransactionsEmployee(null);
+          }}
         />
       )}
 
@@ -1062,7 +1076,7 @@ const Advances = () => {
         />
       )}
 
-      {/* Add new employee quick dialog */}
+      {/* Add new employee quick dialog — opens AddAdvanceModal directly */}
       {showAddEmployee && (
         <Dialog open onOpenChange={v => !v && setShowAddEmployee(false)}>
           <DialogContent className="max-w-sm" dir="rtl">
@@ -1074,8 +1088,7 @@ const Advances = () => {
               <Select onValueChange={(empId) => {
                 const emp = employees.find(e => e.id === empId);
                 if (emp) {
-                  setNewEmpEntry({ id: emp.id, name: emp.name });
-                  setInlineRowEmpId(emp.id);
+                  setTransactionsEmployee({ id: emp.id, name: emp.name, nationalId: '', totalDebt: 0, totalPaid: 0, remaining: 0, isWrittenOff: false, allAdvances: [] });
                 }
                 setShowAddEmployee(false);
               }}>
