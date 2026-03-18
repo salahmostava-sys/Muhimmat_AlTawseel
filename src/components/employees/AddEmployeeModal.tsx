@@ -32,6 +32,7 @@ interface EmployeeData {
   base_salary: number;
   preferred_language?: string | null;
   nationality?: string | null;
+  trade_register_id?: string | null;
 }
 
 interface Props {
