@@ -813,6 +813,29 @@ const Employees = () => {
                             </td>
                           );
 
+                        case 'trade_register':
+                          return (
+                            <td key="trade_register" className="px-3 py-2.5 whitespace-nowrap">
+                              <div className="group flex items-center gap-1">
+                                {emp.trade_register
+                                  ? <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                                      <Building2 size={10} />{emp.trade_register.name}
+                                    </span>
+                                  : <span className="text-muted-foreground/40 text-xs">—</span>
+                                }
+                                {permissions.can_edit && (
+                                  <button
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-muted"
+                                    title="تعديل السجل التجاري"
+                                    onClick={() => { setTradeAssignEmp(emp); setTradeAssignVal(emp.trade_register?.id || '__none__'); }}
+                                  >
+                                    <Pencil size={10} className="text-muted-foreground" />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          );
+
                         case 'bank_account_number':
                           return <td key="bank_account_number" className="px-3 py-2.5 text-sm text-muted-foreground font-mono whitespace-nowrap" dir="ltr">{emp.bank_account_number || '—'}</td>;
 
@@ -842,6 +865,11 @@ const Employees = () => {
                                   {permissions.can_edit && (
                                     <DropdownMenuItem onClick={() => { setEditEmployee(emp); setShowAddModal(true); }}>
                                       <Edit size={14} className="me-2" /> تعديل البيانات
+                                    </DropdownMenuItem>
+                                  )}
+                                  {permissions.can_edit && (
+                                    <DropdownMenuItem onClick={() => { setTradeAssignEmp(emp); setTradeAssignVal(emp.trade_register?.id || '__none__'); }}>
+                                      <Building2 size={14} className="me-2" /> السجل التجاري
                                     </DropdownMenuItem>
                                   )}
                                   {permissions.can_delete && (
