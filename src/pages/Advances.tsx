@@ -548,10 +548,6 @@ const AddAdvanceModalInline = ({ open, onClose, onSaved, defaultEmployeeId, defa
 
 
 
-  const hasActiveAdvance = form.employee_id &&
-    allAdvances.some(a => a.employee_id === form.employee_id && a.status === 'active');
-
-  const handleSave = async () => {
     if (!form.employee_id || !form.amount || !form.monthly_amount || !form.disbursement_date || !form.first_deduction_month)
       return toast({ title: 'يرجى ملء جميع الحقول المطلوبة', variant: 'destructive' });
 
