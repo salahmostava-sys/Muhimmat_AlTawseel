@@ -650,9 +650,9 @@ const TransactionsModal = ({ employeeId, employeeName, nationalId, totalDebt, to
                       <td className="px-2 py-2.5 text-center">
                         {canEdit && (
                           <button
-                            onClick={() => setDeleteAdvanceId(inst.advance_id)}
+                            onClick={(e) => { e.stopPropagation(); setDeleteInstallmentId(inst.id); }}
                             className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                            title="حذف السلفة نهائياً"
+                            title="حذف هذا الصف"
                           >
                             <Trash2 size={13} />
                           </button>
