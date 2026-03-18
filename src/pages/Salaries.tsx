@@ -846,7 +846,7 @@ const Salaries = () => {
     const totalPlatformSalary = Object.values(r.platformSalaries).reduce((s, v) => s + v, 0);
     const totalAdditions = r.incentives + r.sickAllowance;
     const totalWithSalary = totalPlatformSalary + totalAdditions;
-    const totalDeductions = r.advanceDeduction + r.violations + r.externalDeduction + Object.values(r.customDeductions || {}).reduce((s, v) => s + v, 0);
+    const totalDeductions = r.advanceDeduction + r.violations + Object.values(r.customDeductions || {}).reduce((s, v) => s + v, 0);
     const netSalary = Math.max(0, totalWithSalary - totalDeductions);
     const remaining = netSalary - r.transfer;
     return { totalPlatformSalary, totalAdditions, totalWithSalary, totalDeductions, netSalary, remaining };
@@ -1791,18 +1791,10 @@ const Salaries = () => {
           <Input placeholder="بحث بالاسم..." className="pr-9 h-9 w-48" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <div className="flex gap-1">
-          {[{ v: 'all', l: 'الكل' }, { v: 'pending', l: 'معلّق' }, { v: 'approved', l: 'معتمد' }, { v: 'paid', l: 'مصروف' }].map(s => (
+          {[{ v: 'all', l: 'الكل' }, { v: 'approved', l: 'معتمد' }, { v: 'paid', l: 'مصروف' }].map(s => (
             <button key={s.v} onClick={() => setStatusFilter(s.v)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${statusFilter === s.v ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'}`}>
               {s.l}
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-1">
-          {[{ v: 'all', l: '🌍 كل المدن' }, { v: 'makkah', l: '🕌 مكة' }, { v: 'jeddah', l: '🌊 جدة' }].map(c => (
-            <button key={c.v} onClick={() => setCityFilter(c.v)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${cityFilter === c.v ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'}`}>
-              {c.l}
             </button>
           ))}
         </div>
@@ -1968,8 +1960,8 @@ const Salaries = () => {
             allCustomCols.push({ appName: p, key: col.key, label: col.label, fullKey: `${p}___${col.key}` });
           });
         });
-        // Fixed deduction columns count: advance, remaining, external, violations + dynamic custom cols + total = 4 + allCustomCols.length + 1
-        const dedColCount = 4 + allCustomCols.length + 1;
+        // Fixed deduction columns count: سلف (manual), violations + dynamic custom cols + total = 2 + allCustomCols.length + 1
+        const dedColCount = 2 + allCustomCols.length + 1;
         return (
       <div className="rounded-xl border border-border/50 shadow-sm bg-card overflow-hidden">
         {loadingData ? (
@@ -2031,9 +2023,7 @@ const Salaries = () => {
                   <th className={`${thBase} bg-success/5`}>إجازة مرضية</th>
                   <th className={`${thBase} bg-success/5`}>إجمالي الإضافات</th>
                   <th className={`${thBase} bg-success/10 border-l-2 border-success/50`}>الإجمالي مع الراتب</th>
-                  <th className={`${thBase} bg-destructive/5`}>قسط سلفة</th>
-                  <th className={`${thBase} bg-destructive/5`}>رصيد السلف المتبقي</th>
-                  <th className={`${thBase} bg-destructive/5`}>استقطاعات خارجية</th>
+                  <th className={`${thBase} bg-destructive/5`}>سلف</th>
                   <th className={`${thBase} bg-destructive/5`}>مخالفات</th>
                   {allCustomCols.map(col => (
                     <th key={col.fullKey} className={`${thBase} bg-destructive/5`}>{col.label}</th>
@@ -2128,22 +2118,8 @@ const Salaries = () => {
                       <td className={`${tdClass} text-foreground font-semibold`}>{c.totalAdditions.toLocaleString()}</td>
                       <td className={`${tdClass} font-bold text-foreground border-l border-border/20`}>{c.totalWithSalary.toLocaleString()}</td>
                       <td className={`${tdClass}`}>
-                        {r.advanceDeduction > 0 ? (
-                          <div className="flex flex-col items-center">
-                            <span className="text-foreground font-semibold">{r.advanceDeduction.toLocaleString()}</span>
-                            <span className="text-[9px] text-muted-foreground">قسط سلفة</span>
-                          </div>
-                        ) : <span className="text-muted-foreground/30">—</span>}
+                        <EditableCell value={r.advanceDeduction} onChange={v => updateRow(r.id, { advanceDeduction: v })} className="text-foreground" />
                       </td>
-                      <td className={tdClass}>
-                        {r.advanceRemaining > 0 ? (
-                          <div className="flex flex-col items-center">
-                            <span className="text-foreground font-semibold">{r.advanceRemaining.toLocaleString()}</span>
-                            <span className="text-[9px] text-muted-foreground">متبقي</span>
-                          </div>
-                        ) : <span className="text-muted-foreground/30">—</span>}
-                      </td>
-                      <td className={`${tdClass} text-foreground`}>{r.externalDeduction > 0 ? r.externalDeduction.toLocaleString() : <span className="text-muted-foreground/30">—</span>}</td>
                       <td className={tdClass}><EditableCell value={r.violations} onChange={v => updateRow(r.id, { violations: v })} className="text-foreground" /></td>
                       {allCustomCols.map(col => (
                         <td key={col.fullKey} className={tdClass}>
@@ -2223,9 +2199,23 @@ const Salaries = () => {
                         )}
                       </td>
                       <td className={tdClass}>
-                        <button onClick={() => setPayslipRow(r)} className="text-muted-foreground hover:text-primary transition-colors" title="كشف راتب PDF">
-                          <Printer size={14} />
-                        </button>
+                        <div className="flex items-center gap-1 justify-center">
+                          <button onClick={() => setPayslipRow(r)} className="text-muted-foreground hover:text-primary transition-colors" title="فتح كشف الراتب">
+                            <Printer size={14} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              const mLabel = months.find(m => m.v === selectedMonth)?.l || selectedMonth;
+                              const html = generateEmployeePDF(r, mLabel);
+                              const win = window.open('', '_blank');
+                              if (win) { win.document.write(html); win.document.close(); setTimeout(() => win.print(), 400); }
+                            }}
+                            className="text-muted-foreground hover:text-destructive transition-colors"
+                            title="تصدير PDF مباشر"
+                          >
+                            <FileText size={12} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -2248,14 +2238,12 @@ const Salaries = () => {
                       </td>
                     );
                   })}
-                  <td className={`${tfClass} text-foreground border-l border-border/30`}>{totals.platformSalaries.toLocaleString()}</td>
+                   <td className={`${tfClass} text-foreground border-l border-border/30`}>{totals.platformSalaries.toLocaleString()}</td>
                   <td className={`${tfClass} text-foreground`}>{totals.incentives.toLocaleString()}</td>
                   <td className={`${tfClass} text-foreground`}>{totals.sickAllowance.toLocaleString()}</td>
                   <td className={`${tfClass} text-foreground`}>{totals.totalAdditions.toLocaleString()}</td>
                   <td className={`${tfClass} text-foreground border-l border-border/30`}>{totals.totalWithSalary.toLocaleString()}</td>
                   <td className={`${tfClass} text-foreground`}>{totals.advance.toLocaleString()}</td>
-                  <td className={tfClass}>—</td>
-                  <td className={`${tfClass} text-foreground`}>{totals.externalDed.toLocaleString()}</td>
                   <td className={`${tfClass} text-foreground`}>{totals.violations.toLocaleString()}</td>
                   {allCustomCols.map(col => {
                     const colTotal = filtered.reduce((s, r) => s + (r.customDeductions?.[col.fullKey] || 0), 0);
