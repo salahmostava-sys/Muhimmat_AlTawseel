@@ -38,7 +38,8 @@ const AlertsList = () => {
   useEffect(() => {
     const fetchAlerts = async () => {
       const today = new Date();
-      const in60Days = format(addDays(today, 60), 'yyyy-MM-dd');
+      // Alert threshold = end of current month
+      const threshold = format(new Date(today.getFullYear(), today.getMonth() + 1, 0), 'yyyy-MM-dd');
 
       const [empRes, vehicleRes] = await Promise.all([
         supabase
@@ -46,13 +47,13 @@ const AlertsList = () => {
           .select('id, name, residency_expiry')
           .eq('status', 'active')
           .not('residency_expiry', 'is', null)
-          .lte('residency_expiry', in60Days)
+          .lte('residency_expiry', threshold)
           .limit(5),
         supabase
           .from('vehicles')
           .select('id, plate_number, insurance_expiry, registration_expiry')
           .in('status', ['active', 'maintenance'])
-          .or(`insurance_expiry.lte.${in60Days},registration_expiry.lte.${in60Days}`)
+          .or(`insurance_expiry.lte.${threshold},registration_expiry.lte.${threshold}`)
           .limit(5),
       ]);
 
