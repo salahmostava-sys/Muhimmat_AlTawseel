@@ -503,6 +503,8 @@ const TransactionsModal = ({ employeeId, employeeName, nationalId, totalDebt, to
   const [showInlineAdd, setShowInlineAdd] = useState(false);
   const [deleteAdvanceId, setDeleteAdvanceId] = useState<string | null>(null);
   const [deletingAdvance, setDeletingAdvance] = useState(false);
+  const [deleteInstallmentId, setDeleteInstallmentId] = useState<string | null>(null);
+  const [deletingInstallment, setDeletingInstallment] = useState(false);
 
   const handleDeleteAdvance = async () => {
     if (!deleteAdvanceId) return;
@@ -513,6 +515,17 @@ const TransactionsModal = ({ employeeId, employeeName, nationalId, totalDebt, to
     if (error) return toast({ title: 'خطأ في الحذف', description: error.message, variant: 'destructive' });
     toast({ title: '✅ تم حذف السلفة نهائياً' });
     setDeleteAdvanceId(null);
+    onRefresh();
+  };
+
+  const handleDeleteInstallment = async () => {
+    if (!deleteInstallmentId) return;
+    setDeletingInstallment(true);
+    const { error } = await supabase.from('advance_installments').delete().eq('id', deleteInstallmentId);
+    setDeletingInstallment(false);
+    if (error) return toast({ title: 'خطأ في الحذف', description: error.message, variant: 'destructive' });
+    toast({ title: '✅ تم حذف الصف' });
+    setDeleteInstallmentId(null);
     onRefresh();
   };
 
