@@ -72,6 +72,10 @@ interface SalaryRow {
   isDirty?: boolean;
   preferredLanguage: SlipLanguage;
   phone?: string | null;
+  // New columns: work days from attendance, fuel from vehicle_mileage
+  workDays: number;
+  fuelCost: number;
+  platformIncome: number;
 }
 
 interface SchemeData {
