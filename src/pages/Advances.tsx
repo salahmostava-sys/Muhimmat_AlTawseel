@@ -496,6 +496,7 @@ const Advances = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [addOpen, setAddOpen] = useState(false);
   const [addDefaultEmployee, setAddDefaultEmployee] = useState<string | undefined>(undefined);
+  const [addDefaultType, setAddDefaultType] = useState<'advance' | 'payment'>('advance');
   const [editAdvance, setEditAdvance] = useState<Advance | null>(null);
   const [transactionsEmployee, setTransactionsEmployee] = useState<{ id: string; name: string } | null>(null);
   const [sortField, setSortField] = useState<string | null>(null);
