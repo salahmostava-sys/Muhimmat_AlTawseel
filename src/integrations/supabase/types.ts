@@ -139,6 +139,7 @@ export type Database = {
         Row: {
           brand_color: string
           created_at: string
+          custom_columns: Json | null
           id: string
           is_active: boolean
           logo_url: string | null
@@ -150,6 +151,7 @@ export type Database = {
         Insert: {
           brand_color?: string
           created_at?: string
+          custom_columns?: Json | null
           id?: string
           is_active?: boolean
           logo_url?: string | null
@@ -161,6 +163,7 @@ export type Database = {
         Update: {
           brand_color?: string
           created_at?: string
+          custom_columns?: Json | null
           id?: string
           is_active?: boolean
           logo_url?: string | null

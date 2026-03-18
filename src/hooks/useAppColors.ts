@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface CustomColumn {
+  key: string;
+  label: string;
+}
+
 export interface AppColorData {
   id: string;
   name: string;
@@ -8,6 +13,7 @@ export interface AppColorData {
   brand_color: string;
   text_color: string;
   is_active: boolean;
+  custom_columns: CustomColumn[];
 }
 
 let cachedApps: AppColorData[] | null = null;
@@ -20,7 +26,7 @@ export const fetchAppColors = async (): Promise<AppColorData[]> => {
   fetchPromise = new Promise<AppColorData[]>((resolve) => {
     supabase
       .from('apps')
-      .select('id, name, name_en, brand_color, text_color, is_active')
+      .select('id, name, name_en, brand_color, text_color, is_active, custom_columns')
       .order('name')
       .then(({ data }) => {
         cachedApps = (data || []).map((a: any) => ({
@@ -30,6 +36,7 @@ export const fetchAppColors = async (): Promise<AppColorData[]> => {
           brand_color: a.brand_color || '#6366f1',
           text_color: a.text_color || '#ffffff',
           is_active: a.is_active,
+          custom_columns: (a.custom_columns as CustomColumn[]) || [],
         }));
         fetchPromise = null;
         resolve(cachedApps!);

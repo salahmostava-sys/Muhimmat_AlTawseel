@@ -4,12 +4,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Search, Wallet, Download, CheckCircle, Printer, Upload, FileUp, ChevronUp, ChevronDown, ChevronsUpDown, LayoutGrid, Table2, AlertTriangle, FileText, Settings2, Globe, Archive } from 'lucide-react';
+import { Search, Wallet, Download, CheckCircle, Printer, Upload, FileUp, ChevronUp, ChevronDown, ChevronsUpDown, LayoutGrid, Table2, AlertTriangle, FileText, Settings2, Globe, Archive, TrendingUp, Users, Building2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import * as XLSX from '@e965/xlsx';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { useAppColors, AppColorData } from '@/hooks/useAppColors';
+import { useAppColors, AppColorData, CustomColumn } from '@/hooks/useAppColors';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getSlipTranslations, getStatusLabel, LANGUAGE_META, type SlipLanguage } from '@/lib/salarySlipTranslations';
@@ -56,6 +56,9 @@ interface SalaryRow {
   incentives: number;
   sickAllowance: number;
   violations: number;
+  // Dynamic deduction columns keyed by "appName___colKey"
+  customDeductions: Record<string, number>;
+  // Legacy fields kept for backward compatibility
   walletHunger: number;
   walletTuyo: number;
   walletJahiz: number;
@@ -114,10 +117,7 @@ const PayslipModal = ({ row, onClose, onApprove, selectedMonth, companyName }: P
     { key: 'advance',   label: t.advanceInstallment,  val: row.advanceDeduction },
     { key: 'external',  label: t.externalDeductions,  val: row.externalDeduction },
     { key: 'violation', label: t.violations,           val: row.violations },
-    { key: 'hunger',    label: t.walletHunger,         val: row.walletHunger },
-    { key: 'tuyo',      label: t.walletTuyo,           val: row.walletTuyo },
-    { key: 'jahiz',     label: t.walletJahiz,          val: row.walletJahiz },
-    { key: 'food',      label: t.foodDamage,           val: row.foodDamage },
+    ...Object.entries(row.customDeductions || {}).map(([k, v]) => ({ key: k, label: k.split('___')[1] || k, val: v })),
   ];
 
   const hasAnyDeduction = allDeductions.some(d => d.val > 0);
@@ -259,34 +259,43 @@ const PayslipModal = ({ row, onClose, onApprove, selectedMonth, companyName }: P
                   {row.violations > 0 ? `-${fmt(row.violations)}` : '—'}
                 </span>
               </div>
-              {/* Wallet hunger */}
-              <div className="flex justify-between items-center px-3 py-2">
-                <span className="text-foreground">{t.walletHunger}</span>
-                <span className={`font-semibold ${row.walletHunger > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                  {row.walletHunger > 0 ? `-${fmt(row.walletHunger)}` : '—'}
-                </span>
-              </div>
-              {/* Wallet tuyo */}
-              <div className="flex justify-between items-center px-3 py-2">
-                <span className="text-foreground">{t.walletTuyo}</span>
-                <span className={`font-semibold ${row.walletTuyo > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                  {row.walletTuyo > 0 ? `-${fmt(row.walletTuyo)}` : '—'}
-                </span>
-              </div>
-              {/* Wallet jahiz */}
-              <div className="flex justify-between items-center px-3 py-2">
-                <span className="text-foreground">{t.walletJahiz}</span>
-                <span className={`font-semibold ${row.walletJahiz > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                  {row.walletJahiz > 0 ? `-${fmt(row.walletJahiz)}` : '—'}
-                </span>
-              </div>
-              {/* Food damage */}
-              <div className="flex justify-between items-center px-3 py-2">
-                <span className="text-foreground">{t.foodDamage}</span>
-                <span className={`font-semibold ${row.foodDamage > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                  {row.foodDamage > 0 ? `-${fmt(row.foodDamage)}` : '—'}
-                </span>
-              </div>
+              {/* Dynamic custom deductions */}
+              {Object.entries(row.customDeductions || {}).map(([k, v]) => {
+                const label = k.split('___').slice(1).join('___') || k;
+                return (
+                  <div key={k} className="flex justify-between items-center px-3 py-2">
+                    <span className="text-foreground">{label}</span>
+                    <span className={`font-semibold ${v > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                      {v > 0 ? `-${fmt(v)}` : '—'}
+                    </span>
+                  </div>
+                );
+              })}
+              {/* Legacy wallet fields */}
+              {row.walletHunger > 0 && (
+                <div className="flex justify-between items-center px-3 py-2">
+                  <span className="text-foreground">{t.walletHunger}</span>
+                  <span className="font-semibold text-destructive">-{fmt(row.walletHunger)}</span>
+                </div>
+              )}
+              {row.walletTuyo > 0 && (
+                <div className="flex justify-between items-center px-3 py-2">
+                  <span className="text-foreground">{t.walletTuyo}</span>
+                  <span className="font-semibold text-destructive">-{fmt(row.walletTuyo)}</span>
+                </div>
+              )}
+              {row.walletJahiz > 0 && (
+                <div className="flex justify-between items-center px-3 py-2">
+                  <span className="text-foreground">{t.walletJahiz}</span>
+                  <span className="font-semibold text-destructive">-{fmt(row.walletJahiz)}</span>
+                </div>
+              )}
+              {row.foodDamage > 0 && (
+                <div className="flex justify-between items-center px-3 py-2">
+                  <span className="text-foreground">{t.foodDamage}</span>
+                  <span className="font-semibold text-destructive">-{fmt(row.foodDamage)}</span>
+                </div>
+              )}
             </div>
             <div className="flex justify-between items-center px-3 py-2.5 bg-destructive/15 font-bold">
               <span className="text-destructive">{t.totalDeductions}</span>
@@ -580,6 +589,8 @@ const Salaries = () => {
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [platformColors, setPlatformColors] = useState<Record<string, { header: string; headerText: string; cellBg: string; valueColor: string; focusBorder: string }>>({});
   const [appsWithoutScheme, setAppsWithoutScheme] = useState<string[]>([]);
+  // appCustomColumns: appName → CustomColumn[]
+  const [appCustomColumns, setAppCustomColumns] = useState<Record<string, CustomColumn[]>>({});
 
   // ── Batch ZIP export state ────────────────────────────────────
   const [batchQueue, setBatchQueue] = useState<SalaryRow[]>([]);
@@ -588,11 +599,12 @@ const Salaries = () => {
   const [batchMonth, setBatchMonth] = useState('');
   const batchSlipRef = useRef<HTMLDivElement>(null);
 
-  // Sync platforms & colors from DB apps
+  // Sync platforms, colors, and custom columns from DB apps
   useEffect(() => {
     if (appColorsList.length === 0) return;
     const newColors: Record<string, { header: string; headerText: string; cellBg: string; valueColor: string; focusBorder: string }> = {};
     const newPlatforms: string[] = [];
+    const newCustomCols: Record<string, CustomColumn[]> = {};
     appColorsList.filter(a => a.is_active).forEach(app => {
       newPlatforms.push(app.name);
       newColors[app.name] = {
@@ -602,11 +614,13 @@ const Salaries = () => {
         valueColor: app.brand_color,
         focusBorder: app.brand_color,
       };
+      newCustomCols[app.name] = app.custom_columns || [];
       // keep global in sync for legacy code paths
       PLATFORM_COLORS[app.name] = newColors[app.name];
     });
     setPlatforms(newPlatforms);
     setPlatformColors(newColors);
+    setAppCustomColumns(newCustomCols);
   }, [appColorsList]);
 
   // ─── Data fetching ─────────────────────────────────────────────
@@ -809,6 +823,7 @@ const Salaries = () => {
           walletTuyo: 0,
           walletJahiz: 0,
           foodDamage: 0,
+          customDeductions: {},
           transfer: 0,
           advanceDeduction: advDeduction,
           advanceInstallmentIds: advInstIds[emp.id] || [],
@@ -831,7 +846,7 @@ const Salaries = () => {
     const totalPlatformSalary = Object.values(r.platformSalaries).reduce((s, v) => s + v, 0);
     const totalAdditions = r.incentives + r.sickAllowance;
     const totalWithSalary = totalPlatformSalary + totalAdditions;
-    const totalDeductions = r.advanceDeduction + r.violations + r.walletHunger + r.walletTuyo + r.walletJahiz + r.foodDamage + r.externalDeduction;
+    const totalDeductions = r.advanceDeduction + r.violations + r.walletHunger + r.walletTuyo + r.walletJahiz + r.foodDamage + r.externalDeduction + Object.values(r.customDeductions || {}).reduce((s, v) => s + v, 0);
     const netSalary = Math.max(0, totalWithSalary - totalDeductions);
     const remaining = netSalary - r.transfer;
     return { totalPlatformSalary, totalAdditions, totalWithSalary, totalDeductions, netSalary, remaining };
@@ -928,7 +943,7 @@ const Salaries = () => {
       attendance_deduction: row.violations,
       advance_deduction: row.advanceDeduction,
       external_deduction: row.externalDeduction,
-      manual_deduction: row.walletHunger + row.walletTuyo + row.walletJahiz + row.foodDamage,
+      manual_deduction: row.walletHunger + row.walletTuyo + row.walletJahiz + row.foodDamage + Object.values(row.customDeductions || {}).reduce((s, v) => s + v, 0),
       net_salary: c.netSalary,
       is_approved: true,
       approved_by: user?.id ?? null,

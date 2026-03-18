@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Smartphone, Search, Plus, Edit2, Power, PowerOff, X, Check, Trash2 } from 'lucide-react';
+import { Smartphone, Search, Plus, Edit2, Power, PowerOff, X, Check, Trash2, PlusCircle, Columns } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +19,11 @@ import { useToast } from '@/hooks/use-toast';
 import { invalidateAppColorsCache } from '@/hooks/useAppColors';
 import { usePermissions } from '@/hooks/usePermissions';
 
+interface CustomColumn {
+  key: string;
+  label: string;
+}
+
 interface AppData {
   id: string;
   name: string;
@@ -27,6 +32,7 @@ interface AppData {
   text_color: string;
   is_active: boolean;
   employeeCount?: number;
+  custom_columns?: CustomColumn[];
 }
 
 interface EmployeeInApp {
@@ -55,6 +61,23 @@ const AppModal = ({ app, onClose, onSaved }: AppModalProps) => {
     is_active: app?.is_active ?? true,
   });
 
+  const [customColumns, setCustomColumns] = useState<CustomColumn[]>(
+    app?.custom_columns || []
+  );
+  const [newColLabel, setNewColLabel] = useState('');
+
+  const addColumn = () => {
+    const label = newColLabel.trim();
+    if (!label) return;
+    const key = `col_${Date.now()}`;
+    setCustomColumns(prev => [...prev, { key, label }]);
+    setNewColLabel('');
+  };
+
+  const removeColumn = (key: string) => {
+    setCustomColumns(prev => prev.filter(c => c.key !== key));
+  };
+
   const handleSave = async () => {
     if (!form.name.trim()) {
       toast({ title: 'الاسم مطلوب', variant: 'destructive' });
@@ -67,13 +90,14 @@ const AppModal = ({ app, onClose, onSaved }: AppModalProps) => {
       brand_color: form.brand_color,
       text_color: form.text_color,
       is_active: form.is_active,
+      custom_columns: customColumns as unknown as import('@/integrations/supabase/types').Json,
     };
 
     let error;
     if (isEdit && app) {
       ({ error } = await supabase.from('apps').update(payload).eq('id', app.id));
     } else {
-      ({ error } = await supabase.from('apps').insert(payload));
+      ({ error } = await supabase.from('apps').insert({ ...payload }));
     }
 
     if (error) {
@@ -90,8 +114,8 @@ const AppModal = ({ app, onClose, onSaved }: AppModalProps) => {
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-card rounded-2xl shadow-2xl w-full max-w-md border border-border/50">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+      <div className="bg-card rounded-2xl shadow-2xl w-full max-w-lg border border-border/50 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-card z-10">
           <h2 className="text-lg font-bold text-foreground">
             {isEdit ? 'تعديل التطبيق' : 'إضافة تطبيق جديد'}
           </h2>
@@ -143,9 +167,46 @@ const AppModal = ({ app, onClose, onSaved }: AppModalProps) => {
               <Switch checked={form.is_active} onCheckedChange={v => setForm(p => ({ ...p, is_active: v }))} />
             </div>
           </div>
+
+          {/* ── Custom deduction columns ── */}
+          <div className="border border-border rounded-xl overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-muted/40 border-b border-border">
+              <Columns size={14} className="text-muted-foreground" />
+              <span className="text-sm font-semibold text-foreground">أعمدة الاستقطاع المخصصة</span>
+              <span className="text-xs text-muted-foreground mr-auto">ستظهر كأعمدة قابلة للتحرير في جدول الرواتب</span>
+            </div>
+            <div className="px-4 py-3 space-y-2">
+              {customColumns.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-2">لا توجد أعمدة مضافة بعد</p>
+              )}
+              {customColumns.map(col => (
+                <div key={col.key} className="flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
+                  <span className="flex-1 text-sm text-foreground">{col.label}</span>
+                  <button
+                    onClick={() => removeColumn(col.key)}
+                    className="text-destructive hover:text-destructive/70 transition-colors p-1"
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+              ))}
+              <div className="flex gap-2 pt-1">
+                <Input
+                  value={newColLabel}
+                  onChange={e => setNewColLabel(e.target.value)}
+                  placeholder="مثال: محفظة التطبيق، تلف طعام..."
+                  className="flex-1 h-8 text-sm"
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addColumn(); } }}
+                />
+                <Button size="sm" variant="outline" onClick={addColumn} className="gap-1 h-8 text-xs">
+                  <PlusCircle size={13} /> إضافة
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-border sticky bottom-0 bg-card">
           <Button variant="outline" onClick={onClose} disabled={saving}>إلغاء</Button>
           <Button onClick={handleSave} disabled={saving} className="gap-2">
             {saving ? 'جاري الحفظ...' : <><Check size={15} /> {isEdit ? 'حفظ التعديلات' : 'إضافة التطبيق'}</>}
@@ -174,7 +235,7 @@ const Apps = () => {
     setLoadingApps(true);
     const { data } = await supabase
       .from('apps')
-      .select('id, name, name_en, brand_color, text_color, is_active')
+      .select('id, name, name_en, brand_color, text_color, is_active, custom_columns')
       .order('name');
     if (!data) { setLoadingApps(false); return; }
 
@@ -193,6 +254,7 @@ const Apps = () => {
           text_color: app.text_color || '#ffffff',
           is_active: app.is_active,
           employeeCount: count || 0,
+          custom_columns: (app.custom_columns as CustomColumn[]) || [],
         };
       })
     );
@@ -363,6 +425,18 @@ const Apps = () => {
                     {app.employeeCount}
                   </p>
                   <p className="text-xs" style={{ color: app.text_color, opacity: 0.75 }}>مندوب</p>
+
+                  {/* Show custom columns count */}
+                  {app.custom_columns && app.custom_columns.length > 0 && (
+                    <div className="mt-1.5">
+                      <span
+                        className="text-[10px] px-2 py-0.5 rounded-full inline-flex items-center gap-1"
+                        style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: app.text_color }}
+                      >
+                        <Columns size={9} /> {app.custom_columns.length} أعمدة
+                      </span>
+                    </div>
+                  )}
 
                   {!app.is_active && (
                     <div className="mt-2">
