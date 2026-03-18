@@ -263,6 +263,15 @@ const Employees = () => {
   const [deleting, setDeleting]             = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
 
+  // Status-date dialog (absconded / terminated)
+  const [statusDateDialog, setStatusDateDialog] = useState<{
+    emp: Employee;
+    newStatus: string;
+    label: string;
+  } | null>(null);
+  const [statusDate, setStatusDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const [statusDateSaving, setStatusDateSaving] = useState(false);
+
   // ── Fetch trade registers ──
   useEffect(() => {
     supabase.from('trade_registers').select('id, name, cr_number').order('name').then(({ data: tr }) => {
