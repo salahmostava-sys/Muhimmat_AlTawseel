@@ -2118,22 +2118,8 @@ const Salaries = () => {
                       <td className={`${tdClass} text-foreground font-semibold`}>{c.totalAdditions.toLocaleString()}</td>
                       <td className={`${tdClass} font-bold text-foreground border-l border-border/20`}>{c.totalWithSalary.toLocaleString()}</td>
                       <td className={`${tdClass}`}>
-                        {r.advanceDeduction > 0 ? (
-                          <div className="flex flex-col items-center">
-                            <span className="text-foreground font-semibold">{r.advanceDeduction.toLocaleString()}</span>
-                            <span className="text-[9px] text-muted-foreground">قسط سلفة</span>
-                          </div>
-                        ) : <span className="text-muted-foreground/30">—</span>}
+                        <EditableCell value={r.advanceDeduction} onChange={v => updateRow(r.id, { advanceDeduction: v })} className="text-foreground" />
                       </td>
-                      <td className={tdClass}>
-                        {r.advanceRemaining > 0 ? (
-                          <div className="flex flex-col items-center">
-                            <span className="text-foreground font-semibold">{r.advanceRemaining.toLocaleString()}</span>
-                            <span className="text-[9px] text-muted-foreground">متبقي</span>
-                          </div>
-                        ) : <span className="text-muted-foreground/30">—</span>}
-                      </td>
-                      <td className={`${tdClass} text-foreground`}>{r.externalDeduction > 0 ? r.externalDeduction.toLocaleString() : <span className="text-muted-foreground/30">—</span>}</td>
                       <td className={tdClass}><EditableCell value={r.violations} onChange={v => updateRow(r.id, { violations: v })} className="text-foreground" /></td>
                       {allCustomCols.map(col => (
                         <td key={col.fullKey} className={tdClass}>
