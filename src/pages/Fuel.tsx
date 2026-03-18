@@ -626,7 +626,7 @@ const FuelPage = () => {
                           <div className="flex items-center gap-2">
                             {row.employee?.personal_photo_url
                               ? <img src={row.employee.personal_photo_url} className="w-8 h-8 rounded-full object-cover" alt="" />
-                              : <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">{initial}</div>
+                              : null
                             }
                             <span className="font-medium text-foreground">{row.employee?.name}</span>
                           </div>
