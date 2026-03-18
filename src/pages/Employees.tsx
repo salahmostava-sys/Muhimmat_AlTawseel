@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Plus, Download, Eye, Edit, Trash2,
   ChevronUp, ChevronDown, ChevronsUpDown, Pencil, Check, Loader2,
-  Columns, Filter, X, ChevronDown as FilterIcon
+  Columns, Filter, X, ChevronDown as FilterIcon, Building2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,8 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuCheckboxItem, DropdownMenuLabel
 } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/context/LanguageContext';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -69,6 +71,7 @@ const ALL_COLUMNS = [
   { key: 'phone',                label: 'رقم الهاتف',           sortable: true  },
   { key: 'nationality',          label: 'الجنسية',              sortable: true  },
   { key: 'sponsorship_status',   label: 'حالة الكفالة',         sortable: true  },
+  { key: 'trade_register',       label: 'السجل التجاري',        sortable: true  },
   { key: 'join_date',            label: 'تاريخ الانضمام',       sortable: true  },
   { key: 'birth_date',           label: 'تاريخ الميلاد',        sortable: true  },
   { key: 'probation_end_date',   label: 'انتهاء فترة التجربة',  sortable: true  },
@@ -245,6 +248,13 @@ const Employees = () => {
   // per-column filters
   const [colFilters, setColFilters] = useState<Record<string, string>>({});
 
+  // trade registers
+  const [tradeRegisters, setTradeRegisters] = useState<{ id: string; name: string; cr_number?: string | null }[]>([]);
+  // inline trade register assignment dialog
+  const [tradeAssignEmp, setTradeAssignEmp] = useState<Employee | null>(null);
+  const [tradeAssignVal, setTradeAssignVal] = useState<string>('');
+  const [tradeSaving, setTradeSaving] = useState(false);
+
   // modals
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
   const [showAddModal, setShowAddModal]     = useState(false);
@@ -253,7 +263,14 @@ const Employees = () => {
   const [deleting, setDeleting]             = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
 
-  // ── Fetch ──
+  // ── Fetch trade registers ──
+  useEffect(() => {
+    supabase.from('trade_registers').select('id, name, cr_number').order('name').then(({ data: tr }) => {
+      if (tr) setTradeRegisters(tr);
+    });
+  }, []);
+
+  // ── Fetch employees ──
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
     const { data: rows, error } = await supabase
@@ -272,6 +289,23 @@ const Employees = () => {
   }, [toast]);
 
   useEffect(() => { fetchEmployees(); }, [fetchEmployees]);
+
+  // ── Assign / unassign trade register ──
+  const handleTradeAssign = async () => {
+    if (!tradeAssignEmp) return;
+    setTradeSaving(true);
+    const newVal = tradeAssignVal === '__none__' ? null : tradeAssignVal;
+    const { error } = await supabase.from('employees').update({ trade_register_id: newVal }).eq('id', tradeAssignEmp.id);
+    if (error) {
+      toast({ title: 'خطأ', description: error.message, variant: 'destructive' });
+    } else {
+      const reg = tradeRegisters.find(r => r.id === newVal) ?? null;
+      setData(d => d.map(e => e.id === tradeAssignEmp.id ? { ...e, trade_register: reg ? { id: reg.id, name: reg.name } : null } : e));
+      toast({ title: '✅ تم تحديث السجل التجاري' });
+      setTradeAssignEmp(null);
+    }
+    setTradeSaving(false);
+  };
 
   // ── Sort handler ──
   const handleSort = (field: string) => {
@@ -779,6 +813,29 @@ const Employees = () => {
                             </td>
                           );
 
+                        case 'trade_register':
+                          return (
+                            <td key="trade_register" className="px-3 py-2.5 whitespace-nowrap">
+                              <div className="group flex items-center gap-1">
+                                {emp.trade_register
+                                  ? <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                                      <Building2 size={10} />{emp.trade_register.name}
+                                    </span>
+                                  : <span className="text-muted-foreground/40 text-xs">—</span>
+                                }
+                                {permissions.can_edit && (
+                                  <button
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-muted"
+                                    title="تعديل السجل التجاري"
+                                    onClick={() => { setTradeAssignEmp(emp); setTradeAssignVal(emp.trade_register?.id || '__none__'); }}
+                                  >
+                                    <Pencil size={10} className="text-muted-foreground" />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          );
+
                         case 'bank_account_number':
                           return <td key="bank_account_number" className="px-3 py-2.5 text-sm text-muted-foreground font-mono whitespace-nowrap" dir="ltr">{emp.bank_account_number || '—'}</td>;
 
@@ -808,6 +865,11 @@ const Employees = () => {
                                   {permissions.can_edit && (
                                     <DropdownMenuItem onClick={() => { setEditEmployee(emp); setShowAddModal(true); }}>
                                       <Edit size={14} className="me-2" /> تعديل البيانات
+                                    </DropdownMenuItem>
+                                  )}
+                                  {permissions.can_edit && (
+                                    <DropdownMenuItem onClick={() => { setTradeAssignEmp(emp); setTradeAssignVal(emp.trade_register?.id || '__none__'); }}>
+                                      <Building2 size={14} className="me-2" /> السجل التجاري
                                     </DropdownMenuItem>
                                   )}
                                   {permissions.can_delete && (
@@ -877,6 +939,40 @@ const Employees = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Trade Register Assignment Dialog */}
+      <Dialog open={!!tradeAssignEmp} onOpenChange={open => !open && setTradeAssignEmp(null)}>
+        <DialogContent dir="rtl" className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 size={16} /> السجل التجاري — {tradeAssignEmp?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <Label>اختر السجل التجاري</Label>
+            <Select value={tradeAssignVal} onValueChange={setTradeAssignVal}>
+              <SelectTrigger>
+                <SelectValue placeholder="اختر سجلاً..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— بدون سجل —</SelectItem>
+                {tradeRegisters.map(r => (
+                  <SelectItem key={r.id} value={r.id}>
+                    {r.name}{r.cr_number ? ` (${r.cr_number})` : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setTradeAssignEmp(null)}>إلغاء</Button>
+            <Button onClick={handleTradeAssign} disabled={tradeSaving}>
+              {tradeSaving && <Loader2 size={14} className="animate-spin ml-1" />}
+              حفظ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
