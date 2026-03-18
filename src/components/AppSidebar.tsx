@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Clock, Package, Wallet, CreditCard,
   Bike, FileDown, Bell, Smartphone,
   Settings, ChevronDown, Fuel, Settings2, X, TrendingUp, FileWarning, Activity,
-  Building2, Briefcase, FileText, Wrench,
+  Building2, Briefcase, FileText, Layers,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -59,7 +59,7 @@ const AppSidebar = () => {
         { label: t('vehicleAssignment'), icon: FileDown, path: '/vehicle-assignment' },
         { label: t('fuel'), icon: Fuel, path: '/fuel' },
         { label: t('violationResolver'), icon: FileWarning, path: '/violation-resolver' },
-        { label: 'سجل الصيانة', icon: Wrench, path: '/maintenance' },
+        { label: 'شرائح الشركة', icon: Layers, path: '/employee-tiers' },
       ],
     },
     {
@@ -78,7 +78,6 @@ const AppSidebar = () => {
         { label: t('schemes'), icon: Settings, path: '/settings/schemes' },
         { label: t('users'), icon: Users, path: '/settings/users' },
         { label: t('generalSettings'), icon: Settings2, path: '/settings/general' },
-        { label: 'السجلات التجارية', icon: FileText, path: '/settings/trade-registers' },
       ],
     },
   ];
