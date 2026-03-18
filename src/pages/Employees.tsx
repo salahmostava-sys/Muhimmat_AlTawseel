@@ -984,6 +984,7 @@ const Employees = () => {
           editEmployee={editEmployee}
           onSuccess={() => { fetchEmployees(); setShowAddModal(false); setEditEmployee(null); }}
           tradeRegisters={tradeRegisters}
+          onTradeRegisterAdded={tr => setTradeRegisters(prev => [...prev, tr])}
         />
       )}
 
