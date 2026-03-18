@@ -220,6 +220,20 @@ const VehicleFormModal = ({
             <label className="text-sm font-medium mb-1 block">انتهاء التفويض</label>
             <Input type="date" value={form.authorization_expiry} onChange={e => setForm(p => ({ ...p, authorization_expiry: e.target.value }))} />
           </div>
+          <div className="col-span-2 flex items-center gap-3 bg-muted/40 rounded-lg px-3 py-2.5">
+            <span className="text-lg">⛽</span>
+            <label className="text-sm font-medium flex-1">شريحة البنزين</label>
+            <button
+              type="button"
+              onClick={() => setForm(p => ({ ...p, has_fuel_chip: !p.has_fuel_chip }))}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.has_fuel_chip ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${form.has_fuel_chip ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+            <span className={`text-xs font-semibold ${form.has_fuel_chip ? 'text-primary' : 'text-muted-foreground'}`}>
+              {form.has_fuel_chip ? 'يوجد' : 'لا يوجد'}
+            </span>
+          </div>
           <div className="col-span-2">
             <label className="text-sm font-medium mb-1 block">ملاحظات</label>
             <Input value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="أي ملاحظات إضافية..." />
