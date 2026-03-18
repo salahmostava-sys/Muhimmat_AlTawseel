@@ -22,6 +22,7 @@ interface EmployeeData {
   join_date?: string | null;
   birth_date?: string | null;
   residency_expiry?: string | null;
+  health_insurance_expiry?: string | null;
   probation_end_date?: string | null;
   license_status?: string | null;
   sponsorship_status?: string | null;
@@ -190,6 +191,7 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee, tradeRegisters: in
     join_date: '',
     birth_date: '',
     residency_expiry: '',
+    health_insurance_expiry: '',
     probation_end_date: '',
     probation_months: '' as string,
     license_status: 'no_license' as 'has_license' | 'no_license' | 'applied',
@@ -219,6 +221,7 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee, tradeRegisters: in
         join_date: editEmployee.join_date || '',
         birth_date: (editEmployee as any).birth_date || '',
         residency_expiry: editEmployee.residency_expiry || '',
+        health_insurance_expiry: editEmployee.health_insurance_expiry || '',
         probation_end_date: editEmployee.probation_end_date || '',
         probation_months: '',
         license_status: (editEmployee.license_status as 'has_license' | 'no_license' | 'applied') || 'no_license',

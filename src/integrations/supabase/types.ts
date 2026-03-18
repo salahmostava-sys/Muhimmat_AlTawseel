@@ -527,6 +527,7 @@ export type Database = {
           dob: string | null
           email: string | null
           employee_code: string | null
+          health_insurance_expiry: string | null
           iban: string | null
           id: string
           id_photo_url: string | null
@@ -568,6 +569,7 @@ export type Database = {
           dob?: string | null
           email?: string | null
           employee_code?: string | null
+          health_insurance_expiry?: string | null
           iban?: string | null
           id?: string
           id_photo_url?: string | null
@@ -609,6 +611,7 @@ export type Database = {
           dob?: string | null
           email?: string | null
           employee_code?: string | null
+          health_insurance_expiry?: string | null
           iban?: string | null
           id?: string
           id_photo_url?: string | null
