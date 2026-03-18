@@ -489,7 +489,7 @@ const Motorcycles = () => {
                 Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={13} className="text-center py-16">
+                  <td colSpan={14} className="text-center py-16">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Bike size={40} className="opacity-30" />
                       <p className="font-medium">لا توجد مركبات</p>
