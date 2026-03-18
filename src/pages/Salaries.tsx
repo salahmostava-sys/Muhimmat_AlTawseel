@@ -2231,10 +2231,11 @@ const Salaries = () => {
                   );
                 })}
                 {/* Totals footer */}
-                <tr className="bg-muted/60 border-t-2 border-border">
-                  <td className={`${tfClass} sticky text-right border-l border-border/30`} style={{ left: 0, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}>الإجمالي</td>
-                  <td className={tfClass} style={{ position: 'sticky', left: 176, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}></td>
-                  <td className={`${tfClass} border-l border-border/30`} style={{ position: 'sticky', left: 288, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}></td>
+                 <tr className="bg-muted/60 border-t-2 border-border">
+                   <td className={`${tfClass} sticky text-center`} style={{ left: 0, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}>—</td>
+                   <td className={`${tfClass} sticky text-right border-l border-border/30`} style={{ left: 40, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}>الإجمالي</td>
+                   <td className={tfClass} style={{ position: 'sticky', left: 216, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}></td>
+                   <td className={`${tfClass} border-l border-border/30`} style={{ position: 'sticky', left: 328, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}></td>
                   {platforms.map(p => {
                     const totalOrders = totals.platform[p] || 0;
                     const totalSal = filtered.reduce((s, r) => s + (r.platformSalaries[p] || 0), 0);
