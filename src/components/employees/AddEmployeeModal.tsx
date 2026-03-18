@@ -394,6 +394,21 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee, tradeRegisters = [
               <F label="رقم الحساب البنكي">
                 <Input value={form.bank_account_number} onChange={e => setField('bank_account_number', e.target.value)} dir="ltr" />
               </F>
+              <F label="السجل التجاري">
+                <Select value={form.trade_register_id || '__none__'} onValueChange={v => setField('trade_register_id', v === '__none__' ? '' : v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر السجل التجاري (اختياري)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— بدون سجل —</SelectItem>
+                    {tradeRegisters.map(tr => (
+                      <SelectItem key={tr.id} value={tr.id}>
+                        {tr.name}{tr.cr_number ? ` (${tr.cr_number})` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </F>
               <F label="المدينة">
                 <div className="flex gap-3 mt-1">
                   {[{ v: 'makkah', l: 'مكة' }, { v: 'jeddah', l: 'جدة' }].map(({ v, l }) => (
@@ -410,6 +425,7 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee, tradeRegisters = [
               <F label="تاريخ الميلاد">
                 <Input type="date" value={form.birth_date} onChange={e => setField('birth_date', e.target.value)} />
               </F>
+
               {/* ─── فترة التجربة ─── */}
               <div className="sm:col-span-2">
                 <SectionTitle title="── فترة التجربة (اختياري) ──" />
