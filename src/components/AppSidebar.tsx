@@ -59,7 +59,7 @@ const AppSidebar = () => {
         { label: t('vehicleAssignment'), icon: FileDown, path: '/vehicle-assignment' },
         { label: t('fuel'), icon: Fuel, path: '/fuel' },
         { label: t('violationResolver'), icon: FileWarning, path: '/violation-resolver' },
-        { label: 'سجل الصيانة', icon: Wrench, path: '/maintenance' },
+        { label: 'شرائح الشركة', icon: Layers, path: '/employee-tiers' },
       ],
     },
     {
@@ -78,7 +78,6 @@ const AppSidebar = () => {
         { label: t('schemes'), icon: Settings, path: '/settings/schemes' },
         { label: t('users'), icon: Users, path: '/settings/users' },
         { label: t('generalSettings'), icon: Settings2, path: '/settings/general' },
-        { label: 'السجلات التجارية', icon: FileText, path: '/settings/trade-registers' },
       ],
     },
   ];
