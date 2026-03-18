@@ -504,6 +504,18 @@ const TransactionsModal = ({ employeeId, employeeName, nationalId, totalDebt, to
   const [deleteAdvanceId, setDeleteAdvanceId] = useState<string | null>(null);
   const [deletingAdvance, setDeletingAdvance] = useState(false);
 
+  const handleDeleteAdvance = async () => {
+    if (!deleteAdvanceId) return;
+    setDeletingAdvance(true);
+    await supabase.from('advance_installments').delete().eq('advance_id', deleteAdvanceId);
+    const { error } = await supabase.from('advances').delete().eq('id', deleteAdvanceId);
+    setDeletingAdvance(false);
+    if (error) return toast({ title: 'خطأ في الحذف', description: error.message, variant: 'destructive' });
+    toast({ title: '✅ تم حذف السلفة نهائياً' });
+    setDeleteAdvanceId(null);
+    onRefresh();
+  };
+
   const startEditNote = (inst: any) => { setEditingNoteId(inst.id); setNoteValue(inst.notes || ''); };
   const saveNote = async (instId: string) => {
     setSavingNote(true);
