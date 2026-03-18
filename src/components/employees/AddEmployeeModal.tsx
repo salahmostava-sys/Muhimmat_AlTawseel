@@ -196,7 +196,7 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee, tradeRegisters = [
         sponsorship_status: (editEmployee.sponsorship_status as 'sponsored' | 'not_sponsored' | 'absconded' | 'terminated') || 'not_sponsored',
         salary_type: (editEmployee.salary_type as 'orders' | 'shift') || 'orders',
         base_salary: editEmployee.base_salary ? String(editEmployee.base_salary) : '',
-        trade_register_id: (editEmployee as any).trade_register_id || '',
+        trade_register_id: editEmployee.trade_register_id || '',
         selected_apps: [],
         app_schemes: {},
         preferred_language: (editEmployee.preferred_language as 'ar' | 'en' | 'ur') || 'ar',
