@@ -544,83 +544,100 @@ const Employees = () => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              {/* Column headers */}
+              {/* Column headers — filter icon embedded beside label */}
               <tr className="ta-thead">
-                {activeCols.map(col => (
-                  <th
-                    key={col.key}
-                    className={`ta-th select-none whitespace-nowrap ${col.sortable ? 'cursor-pointer hover:text-foreground' : ''}`}
-                    onClick={col.sortable ? () => handleSort(col.key) : undefined}
-                  >
-                    {col.label}
-                    {col.sortable && <SortIcon field={col.key} sortField={sortField} sortDir={sortDir} />}
-                  </th>
-                ))}
-              </tr>
+                {activeCols.map(col => {
+                  const isFilterable = !['seq', 'actions', 'residency_status', 'days_residency', 'residency_expiry', 'join_date', 'birth_date', 'bank_account_number', 'probation_end_date'].includes(col.key);
+                  const isActive = !!colFilters[col.key];
 
-              {/* Per-column filter row */}
-              <tr className="bg-muted/30 border-b border-border/40">
-                {activeCols.map(col => (
-                  <td key={col.key} className="px-2 py-1.5">
-                    {col.key === 'seq' || col.key === 'actions' || col.key === 'residency_status' || col.key === 'days_residency' || col.key === 'residency_expiry' || col.key === 'join_date' || col.key === 'birth_date' || col.key === 'bank_account_number' || col.key === 'probation_end_date'
-                      ? <div className="h-7" /> // no filter
-                      : col.key === 'city' ? (
-                        <Select value={colFilters.city || 'all'} onValueChange={v => setColFilter('city', v)}>
-                          <SelectTrigger className="h-7 text-xs w-full min-w-[100px]"><SelectValue placeholder="الكل" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">الكل</SelectItem>
-                            <SelectItem value="makkah">مكة</SelectItem>
-                            <SelectItem value="jeddah">جدة</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : col.key === 'sponsorship_status' ? (
-                        <Select value={colFilters.sponsorship_status || 'all'} onValueChange={v => setColFilter('sponsorship_status', v)}>
-                          <SelectTrigger className="h-7 text-xs w-full min-w-[130px]"><SelectValue placeholder="الكل" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">الكل</SelectItem>
-                            <SelectItem value="sponsored">على الكفالة</SelectItem>
-                            <SelectItem value="not_sponsored">ليس على الكفالة</SelectItem>
-                            <SelectItem value="absconded">هروب</SelectItem>
-                            <SelectItem value="terminated">انتهاء الخدمة</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : col.key === 'license_status' ? (
-                        <Select value={colFilters.license_status || 'all'} onValueChange={v => setColFilter('license_status', v)}>
-                          <SelectTrigger className="h-7 text-xs w-full min-w-[120px]"><SelectValue placeholder="الكل" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">الكل</SelectItem>
-                            <SelectItem value="has_license">لديه رخصة</SelectItem>
-                            <SelectItem value="no_license">ليس لديه رخصة</SelectItem>
-                            <SelectItem value="applied">تم التقديم</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : col.key === 'nationality' ? (
-                        <Select value={colFilters.nationality || 'all'} onValueChange={v => setColFilter('nationality', v)}>
-                          <SelectTrigger className="h-7 text-xs w-full min-w-[110px]"><SelectValue placeholder="الكل" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">الكل</SelectItem>
-                            {uniqueVals.nationality.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      ) : col.key === 'job_title' ? (
-                        <Select value={colFilters.job_title || 'all'} onValueChange={v => setColFilter('job_title', v)}>
-                          <SelectTrigger className="h-7 text-xs w-full min-w-[120px]"><SelectValue placeholder="الكل" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">الكل</SelectItem>
-                            {uniqueVals.job_title.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Input
-                          className="h-7 text-xs px-2"
-                          placeholder="بحث..."
-                          value={colFilters[col.key] || ''}
-                          onChange={e => setColFilter(col.key, e.target.value)}
-                        />
-                      )
-                    }
-                  </td>
-                ))}
+                  const filterContent = (() => {
+                    if (!isFilterable) return null;
+                    if (col.key === 'city') return (
+                      <Select value={colFilters.city || 'all'} onValueChange={v => setColFilter('city', v)}>
+                        <SelectTrigger className="h-7 text-xs w-full"><SelectValue placeholder="الكل" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">الكل</SelectItem>
+                          <SelectItem value="makkah">مكة</SelectItem>
+                          <SelectItem value="jeddah">جدة</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    );
+                    if (col.key === 'sponsorship_status') return (
+                      <Select value={colFilters.sponsorship_status || 'all'} onValueChange={v => setColFilter('sponsorship_status', v)}>
+                        <SelectTrigger className="h-7 text-xs w-full"><SelectValue placeholder="الكل" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">الكل</SelectItem>
+                          <SelectItem value="sponsored">على الكفالة</SelectItem>
+                          <SelectItem value="not_sponsored">ليس على الكفالة</SelectItem>
+                          <SelectItem value="absconded">هروب</SelectItem>
+                          <SelectItem value="terminated">انتهاء الخدمة</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    );
+                    if (col.key === 'license_status') return (
+                      <Select value={colFilters.license_status || 'all'} onValueChange={v => setColFilter('license_status', v)}>
+                        <SelectTrigger className="h-7 text-xs w-full"><SelectValue placeholder="الكل" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">الكل</SelectItem>
+                          <SelectItem value="has_license">لديه رخصة</SelectItem>
+                          <SelectItem value="no_license">ليس لديه رخصة</SelectItem>
+                          <SelectItem value="applied">تم التقديم</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    );
+                    if (col.key === 'nationality') return (
+                      <Select value={colFilters.nationality || 'all'} onValueChange={v => setColFilter('nationality', v)}>
+                        <SelectTrigger className="h-7 text-xs w-full"><SelectValue placeholder="الكل" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">الكل</SelectItem>
+                          {uniqueVals.nationality.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    );
+                    if (col.key === 'job_title') return (
+                      <Select value={colFilters.job_title || 'all'} onValueChange={v => setColFilter('job_title', v)}>
+                        <SelectTrigger className="h-7 text-xs w-full"><SelectValue placeholder="الكل" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">الكل</SelectItem>
+                          {uniqueVals.job_title.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    );
+                    return (
+                      <Input
+                        className="h-7 text-xs px-2"
+                        placeholder="ابحث..."
+                        value={colFilters[col.key] || ''}
+                        onChange={e => setColFilter(col.key, e.target.value)}
+                        onClick={e => e.stopPropagation()}
+                        autoFocus
+                      />
+                    );
+                  })();
+
+                  return (
+                    <th
+                      key={col.key}
+                      className={`ta-th select-none whitespace-nowrap ${col.sortable ? 'cursor-pointer hover:text-foreground' : ''}`}
+                      onClick={col.sortable ? () => handleSort(col.key) : undefined}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>{col.label}</span>
+                        {col.sortable && <SortIcon field={col.key} sortField={sortField} sortDir={sortDir} />}
+                        {isFilterable && filterContent && (
+                          <ColFilterPopover
+                            colKey={col.key}
+                            label={col.label}
+                            active={isActive}
+                            onClear={() => setColFilter(col.key, '')}
+                          >
+                            {filterContent}
+                          </ColFilterPopover>
+                        )}
+                      </div>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
 
