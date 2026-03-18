@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AlertTriangle, Clock, Shield, CreditCard } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { differenceInDays, parseISO, addDays, format } from 'date-fns';
+import { differenceInDays, parseISO, endOfMonth, format } from 'date-fns';
 
 const typeLabels: Record<string, string> = {
   residency: 'إقامة',
@@ -38,7 +38,8 @@ const AlertsList = () => {
   useEffect(() => {
     const fetchAlerts = async () => {
       const today = new Date();
-      const in60Days = format(addDays(today, 60), 'yyyy-MM-dd');
+      // Alert threshold = end of current month
+      const threshold = format(new Date(today.getFullYear(), today.getMonth() + 1, 0), 'yyyy-MM-dd');
 
       const [empRes, vehicleRes] = await Promise.all([
         supabase
@@ -46,13 +47,13 @@ const AlertsList = () => {
           .select('id, name, residency_expiry')
           .eq('status', 'active')
           .not('residency_expiry', 'is', null)
-          .lte('residency_expiry', in60Days)
+          .lte('residency_expiry', threshold)
           .limit(5),
         supabase
           .from('vehicles')
           .select('id, plate_number, insurance_expiry, registration_expiry')
           .in('status', ['active', 'maintenance'])
-          .or(`insurance_expiry.lte.${in60Days},registration_expiry.lte.${in60Days}`)
+          .or(`insurance_expiry.lte.${threshold},registration_expiry.lte.${threshold}`)
           .limit(5),
       ]);
 
@@ -71,7 +72,7 @@ const AlertsList = () => {
       });
 
       vehicleRes.data?.forEach(v => {
-        if (v.insurance_expiry && v.insurance_expiry <= in60Days) {
+        if (v.insurance_expiry && v.insurance_expiry <= threshold) {
           const days = differenceInDays(parseISO(v.insurance_expiry), today);
           generated.push({
             id: `ins-${v.id}`,

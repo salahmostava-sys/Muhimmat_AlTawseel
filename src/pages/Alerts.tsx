@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from '@e965/xlsx';
-import { format, differenceInDays, parseISO, addDays } from 'date-fns';
+import { format, differenceInDays, parseISO } from 'date-fns';
 
 // Static label map — not data
 export const alertTypeLabels: Record<string, string> = {
@@ -20,6 +20,7 @@ export const alertTypeLabels: Record<string, string> = {
   installment: 'قسط سلفة',
   deduction: 'خصم شركة',
   authorization: 'تفويض',
+  probation: 'فترة التجربة',
 };
 
 export interface Alert {
@@ -38,6 +39,7 @@ const severityLabels: Record<string, string> = { urgent: '🔴 عاجل', warnin
 const typeIcons: Record<string, string> = {
   residency: '🪪', insurance: '🛡️', registration: '📋',
   license: '🪪', installment: '💳', deduction: '📄', authorization: '📜',
+  probation: '⏱️',
 };
 
 const Alerts = () => {
@@ -57,22 +59,24 @@ const Alerts = () => {
       setLoading(true);
       const today = new Date();
       const todayStr = format(today, 'yyyy-MM-dd');
-      const in60Days = format(addDays(today, 60), 'yyyy-MM-dd');
+      // Show anything expiring by end of current month
+      const endOfCurrentMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      const threshold = format(endOfCurrentMonth, 'yyyy-MM-dd');
 
       const [employeesRes, vehiclesRes, installmentsRes] = await Promise.all([
-        // Employees with expiring residency OR license
+        // Employees with expiring residency OR license within current month
         supabase
           .from('employees')
-          .select('id, name, residency_expiry, license_expiry, license_has')
+          .select('id, name, residency_expiry, license_expiry, license_has, probation_end_date')
           .eq('status', 'active')
-          .or(`residency_expiry.lte.${in60Days},license_expiry.lte.${in60Days}`),
+          .or(`residency_expiry.lte.${threshold},license_expiry.lte.${threshold},probation_end_date.lte.${threshold}`),
 
-        // Vehicles with expiring docs
+        // Vehicles with expiring docs within current month
         supabase
           .from('vehicles')
           .select('id, plate_number, insurance_expiry, registration_expiry, authorization_expiry')
           .in('status', ['active', 'maintenance', 'rental'])
-          .or(`insurance_expiry.lte.${in60Days},registration_expiry.lte.${in60Days},authorization_expiry.lte.${in60Days}`),
+          .or(`insurance_expiry.lte.${threshold},registration_expiry.lte.${threshold},authorization_expiry.lte.${threshold}`),
 
         // Pending advance installments overdue
         supabase
@@ -86,7 +90,7 @@ const Alerts = () => {
 
       // Employee residency AND license alerts
       employeesRes.data?.forEach(emp => {
-        if (emp.residency_expiry && emp.residency_expiry <= in60Days) {
+        if (emp.residency_expiry && emp.residency_expiry <= threshold) {
           const daysLeft = differenceInDays(parseISO(emp.residency_expiry), today);
           generatedAlerts.push({
             id: `res-${emp.id}`,
@@ -94,11 +98,11 @@ const Alerts = () => {
             entityName: emp.name,
             dueDate: emp.residency_expiry,
             daysLeft,
-            severity: daysLeft < 0 ? 'urgent' : daysLeft <= 14 ? 'urgent' : daysLeft <= 30 ? 'warning' : 'info',
+            severity: daysLeft < 0 ? 'urgent' : daysLeft <= 7 ? 'urgent' : daysLeft <= 14 ? 'warning' : 'info',
             resolved: false,
           });
         }
-        if (emp.license_has && emp.license_expiry && emp.license_expiry <= in60Days) {
+        if (emp.license_has && emp.license_expiry && emp.license_expiry <= threshold) {
           const daysLeft = differenceInDays(parseISO(emp.license_expiry), today);
           generatedAlerts.push({
             id: `lic-${emp.id}`,
@@ -106,7 +110,19 @@ const Alerts = () => {
             entityName: emp.name,
             dueDate: emp.license_expiry,
             daysLeft,
-            severity: daysLeft < 0 ? 'urgent' : daysLeft <= 14 ? 'urgent' : daysLeft <= 30 ? 'warning' : 'info',
+            severity: daysLeft < 0 ? 'urgent' : daysLeft <= 7 ? 'urgent' : daysLeft <= 14 ? 'warning' : 'info',
+            resolved: false,
+          });
+        }
+        if ((emp as any).probation_end_date && (emp as any).probation_end_date <= threshold) {
+          const daysLeft = differenceInDays(parseISO((emp as any).probation_end_date), today);
+          generatedAlerts.push({
+            id: `prob-${emp.id}`,
+            type: 'probation',
+            entityName: emp.name,
+            dueDate: (emp as any).probation_end_date,
+            daysLeft,
+            severity: daysLeft < 0 ? 'info' : daysLeft <= 7 ? 'urgent' : 'warning',
             resolved: false,
           });
         }
@@ -114,7 +130,7 @@ const Alerts = () => {
 
       // Vehicle alerts
       vehiclesRes.data?.forEach(v => {
-        if (v.insurance_expiry && v.insurance_expiry <= in60Days) {
+        if (v.insurance_expiry && v.insurance_expiry <= threshold) {
           const days = differenceInDays(parseISO(v.insurance_expiry), today);
           generatedAlerts.push({
             id: `ins-${v.id}`,
@@ -122,11 +138,11 @@ const Alerts = () => {
             entityName: `مركبة ${v.plate_number}`,
             dueDate: v.insurance_expiry,
             daysLeft: days,
-            severity: days < 0 ? 'urgent' : days <= 14 ? 'urgent' : 'warning',
+            severity: days < 0 ? 'urgent' : days <= 7 ? 'urgent' : 'warning',
             resolved: false,
           });
         }
-        if (v.registration_expiry && v.registration_expiry <= in60Days) {
+        if (v.registration_expiry && v.registration_expiry <= threshold) {
           const days = differenceInDays(parseISO(v.registration_expiry), today);
           generatedAlerts.push({
             id: `reg-${v.id}`,
@@ -134,11 +150,11 @@ const Alerts = () => {
             entityName: `مركبة ${v.plate_number}`,
             dueDate: v.registration_expiry,
             daysLeft: days,
-            severity: days < 0 ? 'urgent' : days <= 14 ? 'urgent' : 'warning',
+            severity: days < 0 ? 'urgent' : days <= 7 ? 'urgent' : 'warning',
             resolved: false,
           });
         }
-        if (v.authorization_expiry && v.authorization_expiry <= in60Days) {
+        if (v.authorization_expiry && v.authorization_expiry <= threshold) {
           const days = differenceInDays(parseISO(v.authorization_expiry), today);
           generatedAlerts.push({
             id: `auth-${v.id}`,
@@ -146,7 +162,7 @@ const Alerts = () => {
             entityName: `مركبة ${v.plate_number}`,
             dueDate: v.authorization_expiry,
             daysLeft: days,
-            severity: days < 0 ? 'urgent' : days <= 14 ? 'urgent' : 'warning',
+            severity: days < 0 ? 'urgent' : days <= 7 ? 'urgent' : 'warning',
             resolved: false,
           });
         }
@@ -227,7 +243,7 @@ const Alerts = () => {
     XLSX.writeFile(wb, `التنبيهات_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
   };
 
-  const typeOptions = ['all', 'residency', 'insurance', 'registration', 'license', 'installment', 'deduction', 'authorization'];
+  const typeOptions = ['all', 'residency', 'insurance', 'registration', 'license', 'installment', 'deduction', 'authorization', 'probation'];
   const urgentCount = filtered.filter(a => a.severity === 'urgent').length;
   const warningCount = filtered.filter(a => a.severity === 'warning').length;
   const infoCount = filtered.filter(a => a.severity === 'info').length;

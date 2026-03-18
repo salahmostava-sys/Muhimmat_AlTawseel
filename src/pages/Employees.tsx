@@ -41,6 +41,7 @@ type Employee = {
   join_date?: string | null;
   birth_date?: string | null;
   residency_expiry?: string | null;
+  probation_end_date?: string | null;
   license_status?: string | null;
   sponsorship_status?: string | null;
   id_photo_url?: string | null;
@@ -69,6 +70,7 @@ const ALL_COLUMNS = [
   { key: 'sponsorship_status',   label: 'حالة الكفالة',         sortable: true  },
   { key: 'join_date',            label: 'تاريخ الانضمام',       sortable: true  },
   { key: 'birth_date',           label: 'تاريخ الميلاد',        sortable: true  },
+  { key: 'probation_end_date',   label: 'انتهاء فترة التجربة',  sortable: true  },
   { key: 'residency_expiry',     label: 'انتهاء الإقامة',       sortable: true  },
   { key: 'days_residency',       label: 'المتبقي (يوم)',        sortable: true  },
   { key: 'residency_status',     label: 'حالة الإقامة',         sortable: false },
@@ -518,7 +520,7 @@ const Employees = () => {
               <tr className="bg-muted/30 border-b border-border/40">
                 {activeCols.map(col => (
                   <td key={col.key} className="px-2 py-1.5">
-                    {col.key === 'seq' || col.key === 'actions' || col.key === 'residency_status' || col.key === 'days_residency' || col.key === 'residency_expiry' || col.key === 'join_date' || col.key === 'birth_date' || col.key === 'bank_account_number'
+                    {col.key === 'seq' || col.key === 'actions' || col.key === 'residency_status' || col.key === 'days_residency' || col.key === 'residency_expiry' || col.key === 'join_date' || col.key === 'birth_date' || col.key === 'bank_account_number' || col.key === 'probation_end_date'
                       ? <div className="h-7" /> // no filter
                       : col.key === 'city' ? (
                         <Select value={colFilters.city || 'all'} onValueChange={v => setColFilter('city', v)}>
@@ -665,6 +667,24 @@ const Employees = () => {
 
                         case 'birth_date':
                           return <td key="birth_date" className="px-3 py-2.5 text-sm text-muted-foreground whitespace-nowrap">{emp.birth_date ? format(parseISO(emp.birth_date), 'yyyy/MM/dd') : '—'}</td>;
+
+                        case 'probation_end_date': {
+                          const probDays = emp.probation_end_date ? differenceInDays(parseISO(emp.probation_end_date), new Date()) : null;
+                          return (
+                            <td key="probation_end_date" className="px-3 py-2.5 whitespace-nowrap">
+                              {emp.probation_end_date ? (
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="text-xs text-muted-foreground">{format(parseISO(emp.probation_end_date), 'yyyy/MM/dd')}</span>
+                                  {probDays !== null && (
+                                    <span className={`text-xs font-medium ${probDays < 0 ? 'text-muted-foreground' : probDays <= 7 ? 'text-destructive' : probDays <= 30 ? 'text-warning' : 'text-success'}`}>
+                                      {probDays < 0 ? 'انتهت' : `${probDays}ي متبقي`}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : <span className="text-muted-foreground/40">—</span>}
+                            </td>
+                          );
+                        }
 
                         case 'residency_expiry':
                           return <td key="residency_expiry" className="px-3 py-2.5 text-sm text-muted-foreground whitespace-nowrap">{emp.residency_expiry ? format(parseISO(emp.residency_expiry), 'yyyy/MM/dd') : '—'}</td>;
