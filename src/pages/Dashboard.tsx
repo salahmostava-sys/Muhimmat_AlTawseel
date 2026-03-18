@@ -92,9 +92,6 @@ const Leaderboard = ({ leaders, loading }: { leaders: LeaderEntry[]; loading: bo
                 <span className="text-base w-7 text-center flex-shrink-0">
                   {i < 3 ? RANK_ICONS[i] : <span className="text-xs font-bold text-muted-foreground">{i + 1}</span>}
                 </span>
-                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0">
-                  {l.name.charAt(0)}
-                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
                     <span className="text-xs font-medium text-foreground truncate">{l.name}</span>

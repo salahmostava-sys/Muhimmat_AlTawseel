@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { X, Check, Trash2, ChevronRight, ChevronLeft } from 'lucide-react';
+import { X, Check, Trash2, ChevronRight, ChevronLeft, Plus, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { differenceInDays, parseISO } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useSignedUrl, extractStoragePath } from '@/hooks/useSignedUrl';
+
 
 interface EmployeeData {
   id: string;
@@ -21,6 +22,7 @@ interface EmployeeData {
   join_date?: string | null;
   birth_date?: string | null;
   residency_expiry?: string | null;
+  health_insurance_expiry?: string | null;
   probation_end_date?: string | null;
   license_status?: string | null;
   sponsorship_status?: string | null;
@@ -32,12 +34,15 @@ interface EmployeeData {
   base_salary: number;
   preferred_language?: string | null;
   nationality?: string | null;
+  trade_register_id?: string | null;
 }
 
 interface Props {
   onClose: () => void;
   onSuccess?: () => void;
   editEmployee?: EmployeeData | null;
+  tradeRegisters?: { id: string; name: string; cr_number?: string | null }[];
+  onTradeRegisterAdded?: (tr: { id: string; name: string; cr_number?: string | null }) => void;
 }
 
 const STEPS = ['البيانات الأساسية', 'الإقامة والوثائق', 'نوع الراتب', 'رفع المستندات'];
@@ -118,7 +123,7 @@ const UploadArea = ({ label, icon, file, existingStoragePath, onFile, onRemove }
   );
 };
 
-const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
+const AddEmployeeModal = ({ onClose, onSuccess, editEmployee, tradeRegisters: initialTradeRegisters = [], onTradeRegisterAdded }: Props) => {
   const isEdit = !!editEmployee;
   const [step, setStep] = useState(0);
   const { toast } = useToast();
@@ -126,6 +131,33 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [schemes, setSchemes] = useState<{ id: string; name: string }[]>([]);
   const [availableApps, setAvailableApps] = useState<{ id: string; name: string }[]>([]);
+  const [tradeRegisters, setTradeRegisters] = useState(initialTradeRegisters);
+  const [showAddRegister, setShowAddRegister] = useState(false);
+  const [newRegName, setNewRegName] = useState('');
+  const [newRegCr, setNewRegCr] = useState('');
+  const [savingRegister, setSavingRegister] = useState(false);
+
+  // Sync when parent passes updated tradeRegisters
+  useEffect(() => { setTradeRegisters(initialTradeRegisters); }, [initialTradeRegisters]);
+
+  const handleAddRegister = async () => {
+    if (!newRegName.trim()) return;
+    setSavingRegister(true);
+    const { data, error } = await supabase.from('trade_registers').insert({
+      name: newRegName.trim(),
+      cr_number: newRegCr.trim() || null,
+    }).select().single();
+    setSavingRegister(false);
+    if (error || !data) return toast({ title: 'خطأ في الحفظ', variant: 'destructive' });
+    const newReg = { id: data.id, name: data.name, cr_number: data.cr_number };
+    setTradeRegisters(prev => [...prev, newReg]);
+    setField('trade_register_id', data.id);
+    onTradeRegisterAdded?.(newReg);
+    setNewRegName('');
+    setNewRegCr('');
+    setShowAddRegister(false);
+    toast({ title: '✅ تم إضافة السجل التجاري' });
+  };
 
   useEffect(() => {
     Promise.all([
@@ -159,12 +191,14 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
     join_date: '',
     birth_date: '',
     residency_expiry: '',
+    health_insurance_expiry: '',
     probation_end_date: '',
     probation_months: '' as string,
     license_status: 'no_license' as 'has_license' | 'no_license' | 'applied',
     sponsorship_status: 'not_sponsored' as 'sponsored' | 'not_sponsored' | 'absconded' | 'terminated',
     salary_type: 'orders' as 'orders' | 'shift',
     base_salary: '',
+    trade_register_id: '',
     selected_apps: [] as string[],
     app_schemes: {} as Record<string, string>,
     preferred_language: 'ar' as 'ar' | 'en' | 'ur',
@@ -187,12 +221,14 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
         join_date: editEmployee.join_date || '',
         birth_date: (editEmployee as any).birth_date || '',
         residency_expiry: editEmployee.residency_expiry || '',
+        health_insurance_expiry: editEmployee.health_insurance_expiry || '',
         probation_end_date: editEmployee.probation_end_date || '',
         probation_months: '',
         license_status: (editEmployee.license_status as 'has_license' | 'no_license' | 'applied') || 'no_license',
         sponsorship_status: (editEmployee.sponsorship_status as 'sponsored' | 'not_sponsored' | 'absconded' | 'terminated') || 'not_sponsored',
         salary_type: (editEmployee.salary_type as 'orders' | 'shift') || 'orders',
         base_salary: editEmployee.base_salary ? String(editEmployee.base_salary) : '',
+        trade_register_id: editEmployee.trade_register_id || '',
         selected_apps: [],
         app_schemes: {},
         preferred_language: (editEmployee.preferred_language as 'ar' | 'en' | 'ur') || 'ar',
@@ -258,12 +294,14 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
         join_date: form.join_date || null,
         birth_date: form.birth_date || null,
         residency_expiry: form.residency_expiry || null,
+        health_insurance_expiry: form.health_insurance_expiry || null,
         probation_end_date: form.probation_end_date || null,
         license_status: form.license_status,
         sponsorship_status: form.sponsorship_status,
         salary_type: form.salary_type,
         base_salary: form.salary_type === 'shift' ? parseFloat(form.base_salary) : 0,
         preferred_language: form.preferred_language,
+        trade_register_id: form.trade_register_id || null,
       };
 
       let empId: string;
@@ -390,6 +428,62 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
               <F label="رقم الحساب البنكي">
                 <Input value={form.bank_account_number} onChange={e => setField('bank_account_number', e.target.value)} dir="ltr" />
               </F>
+              <F label="السجل التجاري">
+                <div className="flex gap-2">
+                  <Select value={form.trade_register_id || '__none__'} onValueChange={v => setField('trade_register_id', v === '__none__' ? '' : v)}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="اختر السجل التجاري (اختياري)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">— بدون سجل —</SelectItem>
+                      {tradeRegisters.map(tr => (
+                        <SelectItem key={tr.id} value={tr.id}>
+                          {tr.name}{tr.cr_number ? ` (${tr.cr_number})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddRegister(v => !v)}
+                    className="flex items-center gap-1 px-3 rounded-lg border border-dashed border-primary/50 text-primary hover:bg-primary/5 text-xs font-medium transition-colors whitespace-nowrap"
+                    title="إضافة سجل تجاري جديد"
+                  >
+                    <Plus size={12} /> جديد
+                  </button>
+                </div>
+                {showAddRegister && (
+                  <div className="mt-2 p-3 rounded-xl border border-primary/20 bg-primary/5 space-y-2">
+                    <p className="text-xs font-semibold text-primary">إضافة سجل تجاري جديد</p>
+                    <div className="flex gap-2">
+                      <Input
+                        className="h-8 text-xs flex-1"
+                        placeholder="اسم السجل *"
+                        value={newRegName}
+                        onChange={e => setNewRegName(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleAddRegister()}
+                        autoFocus
+                      />
+                      <Input
+                        className="h-8 text-xs w-32"
+                        placeholder="رقم السجل"
+                        value={newRegCr}
+                        onChange={e => setNewRegCr(e.target.value)}
+                        dir="ltr"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" className="h-7 text-xs gap-1 flex-1" onClick={handleAddRegister} disabled={savingRegister || !newRegName.trim()}>
+                        {savingRegister ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />}
+                        حفظ السجل
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setShowAddRegister(false); setNewRegName(''); setNewRegCr(''); }}>
+                        إلغاء
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </F>
               <F label="المدينة">
                 <div className="flex gap-3 mt-1">
                   {[{ v: 'makkah', l: 'مكة' }, { v: 'jeddah', l: 'جدة' }].map(({ v, l }) => (
@@ -406,6 +500,7 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
               <F label="تاريخ الميلاد">
                 <Input type="date" value={form.birth_date} onChange={e => setField('birth_date', e.target.value)} />
               </F>
+
               {/* ─── فترة التجربة ─── */}
               <div className="sm:col-span-2">
                 <SectionTitle title="── فترة التجربة (اختياري) ──" />
@@ -482,6 +577,9 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
                   </div>
                 )}
               </div>
+              <F label="تاريخ انتهاء التأمين الصحي">
+                <Input type="date" value={form.health_insurance_expiry} onChange={e => setField('health_insurance_expiry', e.target.value)} />
+              </F>
               <F label="حالة الرخصة">
                 <Select value={form.license_status} onValueChange={v => setField('license_status', v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>

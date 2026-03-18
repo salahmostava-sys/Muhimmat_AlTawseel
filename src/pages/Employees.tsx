@@ -44,6 +44,7 @@ type Employee = {
   join_date?: string | null;
   birth_date?: string | null;
   residency_expiry?: string | null;
+  health_insurance_expiry?: string | null;
   probation_end_date?: string | null;
   license_status?: string | null;
   sponsorship_status?: string | null;
@@ -55,6 +56,7 @@ type Employee = {
   base_salary: number;
   nationality?: string | null;
   preferred_language?: string | null;
+  trade_register_id?: string | null;
   trade_register?: { id: string; name: string } | null;
 };
 
@@ -63,25 +65,26 @@ type SortDir = 'asc' | 'desc' | null;
 
 // ─── Column definitions ───────────────────────────────────────────────────────
 const ALL_COLUMNS = [
-  { key: 'seq',                  label: '#',                    sortable: false },
-  { key: 'name',                 label: 'الاسم',                sortable: true  },
-  { key: 'national_id',          label: 'رقم الهوية',           sortable: true  },
-  { key: 'job_title',            label: 'المسمى الوظيفي',       sortable: true  },
-  { key: 'city',                 label: 'المدينة',              sortable: true  },
-  { key: 'phone',                label: 'رقم الهاتف',           sortable: true  },
-  { key: 'nationality',          label: 'الجنسية',              sortable: true  },
-  { key: 'sponsorship_status',   label: 'حالة الكفالة',         sortable: true  },
-  { key: 'trade_register',       label: 'السجل التجاري',        sortable: true  },
-  { key: 'join_date',            label: 'تاريخ الانضمام',       sortable: true  },
-  { key: 'birth_date',           label: 'تاريخ الميلاد',        sortable: true  },
-  { key: 'probation_end_date',   label: 'انتهاء فترة التجربة',  sortable: true  },
-  { key: 'residency_expiry',     label: 'انتهاء الإقامة',       sortable: true  },
-  { key: 'days_residency',       label: 'المتبقي (يوم)',        sortable: true  },
-  { key: 'residency_status',     label: 'حالة الإقامة',         sortable: false },
-  { key: 'license_status',       label: 'حالة الرخصة',          sortable: true  },
-  { key: 'bank_account_number',  label: 'رقم الحساب البنكي',   sortable: false },
-  { key: 'email',                label: 'البريد الإلكتروني',    sortable: false },
-  { key: 'actions',              label: 'الإجراءات',            sortable: false },
+  { key: 'seq',                      label: '#',                       sortable: false },
+  { key: 'name',                     label: 'الاسم',                   sortable: true  },
+  { key: 'national_id',              label: 'رقم الهوية',              sortable: true  },
+  { key: 'job_title',                label: 'المسمى الوظيفي',          sortable: true  },
+  { key: 'city',                     label: 'المدينة',                 sortable: true  },
+  { key: 'phone',                    label: 'رقم الهاتف',              sortable: true  },
+  { key: 'nationality',              label: 'الجنسية',                 sortable: true  },
+  { key: 'sponsorship_status',       label: 'حالة الكفالة',            sortable: true  },
+  { key: 'trade_register',           label: 'السجل التجاري',           sortable: true  },
+  { key: 'join_date',                label: 'تاريخ الانضمام',          sortable: true  },
+  { key: 'birth_date',               label: 'تاريخ الميلاد',           sortable: true  },
+  { key: 'probation_end_date',       label: 'انتهاء فترة التجربة',     sortable: true  },
+  { key: 'residency_expiry',         label: 'انتهاء الإقامة',          sortable: true  },
+  { key: 'days_residency',           label: 'المتبقي (يوم)',           sortable: true  },
+  { key: 'residency_status',         label: 'حالة الإقامة',            sortable: false },
+  { key: 'health_insurance_expiry',  label: 'انتهاء التأمين الصحي',   sortable: true  },
+  { key: 'license_status',           label: 'حالة الرخصة',             sortable: true  },
+  { key: 'bank_account_number',      label: 'رقم الحساب البنكي',      sortable: false },
+  { key: 'email',                    label: 'البريد الإلكتروني',       sortable: false },
+  { key: 'actions',                  label: 'الإجراءات',               sortable: false },
 ] as const;
 
 type ColKey = typeof ALL_COLUMNS[number]['key'];
@@ -97,8 +100,8 @@ const calcResidency = (expiry?: string | null) => {
 const CityBadge = ({ city }: { city?: string | null }) => {
   if (!city) return <span className="text-muted-foreground/40">—</span>;
   return city === 'makkah'
-    ? <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-accent text-accent-foreground">مكة</span>
-    : <span className="badge-info">جدة</span>;
+    ? <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-muted text-muted-foreground">مكة</span>
+    : <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-muted text-muted-foreground">جدة</span>;
 };
 
 const LicenseBadge = ({ status }: { status?: string | null }) => {
@@ -506,6 +509,42 @@ const Employees = () => {
     XLSX.writeFile(wb, 'import_template.xlsx');
   };
 
+  // ── Print table ──
+  const tableRef = useRef<HTMLTableElement>(null);
+  const handlePrint = () => {
+    const table = tableRef.current;
+    if (!table) return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html dir="rtl" lang="ar">
+      <head>
+        <meta charset="UTF-8"/>
+        <title>بيانات الموظفين</title>
+        <style>
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: Arial, sans-serif; font-size: 11px; direction: rtl; color: #111; background: white; }
+          h2 { text-align: center; margin-bottom: 8px; font-size: 15px; }
+          p.subtitle { text-align: center; color: #666; font-size: 11px; margin-bottom: 12px; }
+          table { width: 100%; border-collapse: collapse; }
+          th { background: #1e3a5f; color: white; padding: 6px 8px; text-align: right; font-size: 10px; white-space: nowrap; }
+          td { padding: 5px 8px; border-bottom: 1px solid #e0e0e0; text-align: right; white-space: nowrap; vertical-align: middle; }
+          tr:nth-child(even) td { background: #f9f9f9; }
+          @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+        </style>
+      </head>
+      <body>
+        <h2>بيانات الموظفين</h2>
+        <p class="subtitle">المجموع: ${filtered.length} موظف — ${new Date().toLocaleDateString('ar-SA')}</p>
+        ${table.outerHTML}
+        <script>window.onload = () => { window.print(); window.onafterprint = () => window.close(); }<\/script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   // ── active cols (ordered) ──
   const activeCols = ALL_COLUMNS.filter(c => visibleCols.has(c.key));
   const hasActiveFilters = Object.keys(colFilters).length > 0;
@@ -571,7 +610,7 @@ const Employees = () => {
               )}
               <DropdownMenuItem onClick={handleTemplate}>📋 تحميل قالب</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => window.print()}>🖨️ طباعة</DropdownMenuItem>
+              <DropdownMenuItem onClick={handlePrint}>🖨️ طباعة الجدول</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -610,7 +649,7 @@ const Employees = () => {
       {/* Table */}
       <div className="ta-table-wrap">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full" ref={tableRef}>
             <thead>
               {/* Column headers — filter icon embedded beside label */}
               <tr className="ta-thead">
@@ -739,7 +778,7 @@ const Employees = () => {
                               <div className="flex items-center gap-2.5">
                                 {emp.personal_photo_url
                                   ? <img src={emp.personal_photo_url} className="w-8 h-8 rounded-full object-cover flex-shrink-0" alt="" />
-                                  : <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold flex-shrink-0">{emp.name.charAt(0)}</div>
+                                  : null
                                 }
                                 <button onClick={() => setSelectedEmployee(emp.id)} className="text-sm font-semibold text-foreground hover:text-primary transition-colors text-start">
                                   {emp.name}
@@ -842,6 +881,26 @@ const Employees = () => {
                             </td>
                           );
 
+                        case 'health_insurance_expiry': {
+                          const hiExpiry = emp.health_insurance_expiry;
+                          const hiDays = hiExpiry ? differenceInDays(parseISO(hiExpiry), new Date()) : null;
+                          const hiColor = hiDays === null ? '' : hiDays < 0 ? 'text-destructive font-bold' : hiDays <= 30 ? 'text-warning font-medium' : hiDays <= 60 ? 'text-amber-500' : 'text-success';
+                          return (
+                            <td key="health_insurance_expiry" className="px-3 py-2.5 whitespace-nowrap">
+                              {hiExpiry ? (
+                                <div className="flex flex-col gap-0.5">
+                                  <span className={`text-xs ${hiColor}`}>{format(parseISO(hiExpiry), 'yyyy/MM/dd')}</span>
+                                  {hiDays !== null && (
+                                    <span className={`text-[10px] ${hiColor}`}>
+                                      {hiDays < 0 ? `منتهي منذ ${Math.abs(hiDays)} يوم` : `متبقي ${hiDays} يوم`}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : <span className="text-muted-foreground/40">—</span>}
+                            </td>
+                          );
+                        }
+
                         case 'license_status':
                           return (
                             <td key="license_status" className="px-3 py-2.5 whitespace-nowrap">
@@ -912,11 +971,6 @@ const Employees = () => {
                                       <Edit size={14} className="me-2" /> تعديل البيانات
                                     </DropdownMenuItem>
                                   )}
-                                  {permissions.can_edit && (
-                                    <DropdownMenuItem onClick={() => { setTradeAssignEmp(emp); setTradeAssignVal(emp.trade_register?.id || '__none__'); }}>
-                                      <Building2 size={14} className="me-2" /> السجل التجاري
-                                    </DropdownMenuItem>
-                                  )}
                                   {permissions.can_delete && (
                                     <>
                                       <DropdownMenuSeparator />
@@ -951,6 +1005,8 @@ const Employees = () => {
           onClose={() => { setShowAddModal(false); setEditEmployee(null); }}
           editEmployee={editEmployee}
           onSuccess={() => { fetchEmployees(); setShowAddModal(false); setEditEmployee(null); }}
+          tradeRegisters={tradeRegisters}
+          onTradeRegisterAdded={tr => setTradeRegisters(prev => [...prev, tr])}
         />
       )}
 

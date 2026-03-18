@@ -343,11 +343,12 @@ const SpreadsheetGrid = () => {
                 {dayArr.map(d => {
                   const dow = new Date(year, month - 1, d).getDay();
                   const isWeekend = dow === 5 || dow === 6;
+                  const isThursday = dow === 4;
                   const isToday = d === today;
                   return (
                     <th key={d}
                       className={`text-center px-1 py-2.5 font-medium border-l border-border/50
-                        ${isToday ? 'bg-primary/20 text-primary font-bold' : isWeekend ? 'text-muted-foreground/50 bg-muted/40' : 'text-muted-foreground'}`}
+                        ${isToday ? 'bg-primary/20 text-primary font-bold' : isWeekend ? 'text-muted-foreground/50 bg-muted/40' : isThursday ? 'text-muted-foreground/70 bg-muted/20' : 'text-muted-foreground'}`}
                       style={{ minWidth: 42 }}>
                       {d}
                     </th>
@@ -383,9 +384,6 @@ const SpreadsheetGrid = () => {
                               {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                             </span>
                           )}
-                          <div className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold flex-shrink-0">
-                            {emp.name.charAt(0)}
-                          </div>
                           <span className="font-medium text-foreground truncate max-w-[140px]">{emp.name}</span>
                         </div>
                         {activeApps.length > 0 && (
@@ -407,6 +405,7 @@ const SpreadsheetGrid = () => {
                         const val = empDayTotal(emp.id, d);
                         const dow = new Date(year, month - 1, d).getDay();
                         const isWeekend = dow === 5 || dow === 6;
+                        const isThursday = dow === 4;
                         const isToday = d === today;
                         const isOpen = cellPopover?.empId === emp.id && cellPopover?.day === d;
                         const dayApps = apps.filter(a => getVal(emp.id, a.id, d) > 0);
@@ -414,7 +413,7 @@ const SpreadsheetGrid = () => {
                         return (
                           <td key={d}
                             className={`text-center p-0 border-l border-border/30 transition-colors
-                              ${isToday ? 'bg-primary/10' : isWeekend ? 'bg-muted/20' : ''}
+                              ${isToday ? 'bg-primary/10' : isWeekend ? 'bg-muted/20' : isThursday ? 'bg-muted/10' : ''}
                               ${isOpen ? 'ring-2 ring-inset ring-primary' : ''}
                               ${permissions.can_edit ? 'cursor-pointer hover:bg-primary/5' : ''}`}
                             style={{ minWidth: 42 }}
@@ -721,7 +720,6 @@ const MonthSummary = () => {
                     <td className="p-3 text-center text-xs text-muted-foreground font-medium">{idx + 1}</td>
                     <td className="p-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold flex-shrink-0">{emp.name.charAt(0)}</div>
                         <span className="font-medium text-foreground whitespace-nowrap">{emp.name}</span>
                       </div>
                     </td>

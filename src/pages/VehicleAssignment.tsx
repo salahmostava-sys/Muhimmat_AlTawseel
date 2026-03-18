@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Plus, RotateCcw, ClipboardList, CheckCircle, Clock, Download } from 'lucide-react';
+import { Search, Plus, RotateCcw, ClipboardList, CheckCircle, Clock, Download, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -8,10 +8,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from '@e965/xlsx';
-import { format, differenceInDays, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 
 type Vehicle = {
   id: string;
@@ -38,7 +37,14 @@ type Assignment = {
   employees?: { name: string } | null;
 };
 
-const typeLabels: Record<string, string> = { motorcycle: 'موتوسيكل', car: 'سيارة' };
+const statusLabels: Record<string, { label: string; icon: string }> = {
+  active:      { label: 'نشطة',    icon: '✅' },
+  maintenance: { label: 'صيانة',   icon: '🔧' },
+  inactive:    { label: 'خربان',   icon: '⚠️' },
+  breakdown:   { label: 'خربان',   icon: '⚠️' },
+  rental:      { label: 'إيجار',   icon: '🚙' },
+  ended:       { label: 'منتهية',  icon: '🔴' },
+};
 
 const calcDuration = (start: string | null, end: string | null) => {
   if (!start) return '—';
@@ -53,10 +59,10 @@ const calcDuration = (start: string | null, end: string | null) => {
 
 // ─── Assignment Form Modal ─────────────────────────────────────────────────────
 const AssignmentFormModal = ({
-  open, onClose, onSaved, activeVehicles, employees,
+  open, onClose, onSaved, freeVehicles, employees,
 }: {
   open: boolean; onClose: () => void; onSaved: () => void;
-  activeVehicles: Vehicle[]; employees: Employee[];
+  freeVehicles: Vehicle[]; employees: Employee[];
 }) => {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
@@ -83,7 +89,7 @@ const AssignmentFormModal = ({
     });
     setSaving(false);
     if (error) return toast({ title: 'حدث خطأ', description: error.message, variant: 'destructive' });
-    toast({ title: 'تم تسجيل التسليم بنجاح' });
+    toast({ title: '✅ تم تسجيل التسليم بنجاح' });
     onSaved(); onClose();
   };
 
@@ -97,23 +103,24 @@ const AssignmentFormModal = ({
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
-          {/* Vehicle selector — ONLY active vehicles */}
+          {/* Vehicle selector — ONLY free (active + no current assignment) vehicles */}
           <div>
             <label className="text-sm font-medium mb-1 block">
               المركبة *
               <span className="text-xs text-muted-foreground font-normal mr-2">
-                (يُعرض فقط المركبات النشطة — {activeVehicles.length} متاحة)
+                (المركبات الفاضية فقط — {freeVehicles.length} متاحة)
               </span>
             </label>
-            {activeVehicles.length === 0 ? (
-              <div className="rounded-lg border border-warning/30 bg-warning/5 p-3 text-sm text-warning">
-                ⚠️ لا توجد مركبات نشطة متاحة للتسليم حالياً
+            {freeVehicles.length === 0 ? (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive flex items-center gap-2">
+                <AlertCircle size={16} />
+                لا توجد مركبات متاحة — كل المركبات النشطة مرتبطة بمناديب أو في صيانة/إيجار
               </div>
             ) : (
               <Select value={form.vehicle_id} onValueChange={v => setForm(p => ({ ...p, vehicle_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="اختر المركبة النشطة" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="اختر المركبة الفاضية" /></SelectTrigger>
                 <SelectContent>
-                  {activeVehicles.map(v => (
+                  {freeVehicles.map(v => (
                     <SelectItem key={v.id} value={v.id}>
                       <span className="flex items-center gap-2">
                         <span>{v.type === 'motorcycle' ? '🏍️' : '🚗'}</span>
@@ -160,7 +167,7 @@ const AssignmentFormModal = ({
         </div>
         <DialogFooter className="mt-4 gap-2">
           <Button variant="outline" onClick={onClose}>إلغاء</Button>
-          <Button onClick={handleSave} disabled={saving || activeVehicles.length === 0}>
+          <Button onClick={handleSave} disabled={saving || freeVehicles.length === 0}>
             {saving ? 'جاري الحفظ...' : 'تسجيل التسليم'}
           </Button>
         </DialogFooter>
@@ -195,7 +202,7 @@ const ReturnModal = ({
     }).eq('id', assignment.id);
     setSaving(false);
     if (error) return toast({ title: 'حدث خطأ', description: error.message, variant: 'destructive' });
-    toast({ title: 'تم تسجيل الإعادة بنجاح' });
+    toast({ title: '✅ تم تسجيل الإعادة بنجاح' });
     onSaved(); onClose();
   };
 
@@ -269,8 +276,24 @@ const VehicleAssignment = () => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Only 'active' status vehicles can be assigned
-  const activeVehicles = vehicles.filter(v => v.status === 'active');
+  // Vehicles that are TRULY free:
+  // 1. Status must be 'active'
+  // 2. Must NOT have any active (non-returned) assignment
+  const assignedVehicleIds = new Set(
+    assignments.filter(a => !a.returned_at).map(a => a.vehicle_id)
+  );
+
+  const freeVehicles = vehicles.filter(
+    v => v.status === 'active' && !assignedVehicleIds.has(v.id)
+  );
+
+  // All vehicles grouped by availability for the stats
+  const stats = {
+    total: assignments.length,
+    active: assignments.filter(a => !a.returned_at).length,
+    returned: assignments.filter(a => !!a.returned_at).length,
+    free: freeVehicles.length,
+  };
 
   const filtered = assignments.filter(a => {
     const q = search.toLowerCase();
@@ -282,13 +305,6 @@ const VehicleAssignment = () => {
     return matchSearch && matchStatus;
   });
 
-  const stats = {
-    total: assignments.length,
-    active: assignments.filter(a => !a.returned_at).length,
-    returned: assignments.filter(a => !!a.returned_at).length,
-    availableVehicles: activeVehicles.length,
-  };
-
   return (
     <div className="space-y-4" dir="rtl">
       {/* Header */}
@@ -297,57 +313,51 @@ const VehicleAssignment = () => {
           <nav className="page-breadcrumb">
             <span>العمليات</span>
             <span className="page-breadcrumb-sep">/</span>
-            <span className="text-foreground font-medium">تسليم العهد</span>
+            <span className="text-foreground font-medium">سجل تسليم المركبات</span>
           </nav>
-          <h1 className="page-title">تسليم واستلام المركبات</h1>
+          <h1 className="page-title">سجل تسليم المركبات</h1>
         </div>
-        {permissions.can_edit && (
-          <Button className="gap-2" onClick={() => setShowAssignModal(true)}>
-            <Plus size={16} /> تسجيل تسليم جديد
-          </Button>
-        )}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="gap-2"><Download size={15} /> 📥 تحميل ▾</Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => {
-              const rows = filtered.map(a => ({
-                'المركبة': a.vehicles?.plate_number || '',
-                'النوع': a.vehicles?.type === 'motorcycle' ? 'موتوسيكل' : 'سيارة',
-                'المندوب': a.employees?.name || '',
-                'تاريخ الاستلام': a.start_at ? format(new Date(a.start_at), 'yyyy-MM-dd HH:mm') : '',
-                'تاريخ الإعادة': a.returned_at ? format(new Date(a.returned_at), 'yyyy-MM-dd HH:mm') : '',
-                'الحالة': a.returned_at ? 'تم الإعادة' : 'قيد الاستخدام',
-                'السبب': a.reason || '',
-                'ملاحظات': a.notes || '',
-              }));
-              const ws = XLSX.utils.json_to_sheet(rows);
-              const wb = XLSX.utils.book_new();
-              XLSX.utils.book_append_sheet(wb, ws, 'تسليم المركبات');
-              XLSX.writeFile(wb, `تسليم_المركبات_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-            }}>📊 تصدير Excel</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => {
-              const headers = [['رقم اللوحة', 'اسم المندوب', 'تاريخ الاستلام', 'السبب', 'ملاحظات']];
-              const ws = XLSX.utils.aoa_to_sheet(headers);
-              const wb = XLSX.utils.book_new();
-              XLSX.utils.book_append_sheet(wb, ws, 'قالب');
-              XLSX.writeFile(wb, 'template_assignments.xlsx');
-            }}>📋 تحميل القالب</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => window.print()}>🖨️ طباعة</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex gap-2">
+          {permissions.can_edit && (
+            <Button className="gap-2" onClick={() => setShowAssignModal(true)}>
+              <Plus size={16} /> تسجيل تسليم جديد
+            </Button>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2"><Download size={15} /> تحميل ▾</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => {
+                const rows = filtered.map(a => ({
+                  'المركبة': a.vehicles?.plate_number || '',
+                  'النوع': a.vehicles?.type === 'motorcycle' ? 'موتوسيكل' : 'سيارة',
+                  'المندوب': a.employees?.name || '',
+                  'تاريخ الاستلام': a.start_at ? format(new Date(a.start_at), 'yyyy-MM-dd HH:mm') : '',
+                  'تاريخ الإعادة': a.returned_at ? format(new Date(a.returned_at), 'yyyy-MM-dd HH:mm') : '',
+                  'الحالة': a.returned_at ? 'تم الإعادة' : 'قيد الاستخدام',
+                  'السبب': a.reason || '',
+                  'ملاحظات': a.notes || '',
+                }));
+                const ws = XLSX.utils.json_to_sheet(rows);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'سجل تسليم المركبات');
+                XLSX.writeFile(wb, `سجل_تسليم_المركبات_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+              }}>📊 تصدير Excel</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => window.print()}>🖨️ طباعة</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'إجمالي السجلات', value: stats.total, icon: '📋', cls: 'text-foreground' },
-          { label: 'قيد الاستخدام', value: stats.active, icon: '🔑', cls: 'text-primary' },
-          { label: 'تم الإعادة', value: stats.returned, icon: '✅', cls: 'text-success' },
-          { label: 'مركبات متاحة', value: stats.availableVehicles, icon: '🏍️', cls: 'text-success' },
+          { label: 'إجمالي السجلات',    value: stats.total,    icon: '📋', cls: 'text-foreground' },
+          { label: 'قيد الاستخدام',     value: stats.active,   icon: '🔑', cls: 'text-primary'    },
+          { label: 'تم الإعادة',        value: stats.returned, icon: '✅', cls: 'text-success'    },
+          { label: 'مركبات فاضية',      value: stats.free,     icon: '🏍️', cls: 'text-success'    },
         ].map(s => (
           <div key={s.label} className="bg-card border border-border rounded-xl p-4">
             <div className="flex items-center gap-2 mb-1">
@@ -359,11 +369,12 @@ const VehicleAssignment = () => {
         ))}
       </div>
 
-      {/* Active-only vehicles banner */}
+      {/* Free vehicles rule banner */}
       <div className="flex items-center gap-2 p-3 bg-primary/5 border border-primary/20 rounded-xl text-sm">
         <CheckCircle size={16} className="text-primary flex-shrink-0" />
         <span className="text-muted-foreground">
-          عند التسليم، يظهر فقط المركبات ذات الحالة <span className="font-bold text-success">نشطة</span> — المركبات في صيانة أو أعطال لا تظهر في قائمة التسليم.
+          يُسمح بالتسليم فقط للمركبات <span className="font-bold text-success">الفاضية</span> — 
+          المركبات في صيانة أو إيجار أو خربان أو مع مندوب آخر <span className="font-bold text-destructive">لا تظهر</span>. يجب تسجيل الإعادة أولاً لتصبح متاحة.
         </span>
       </div>
 
@@ -375,8 +386,8 @@ const VehicleAssignment = () => {
         </div>
         <div className="flex gap-1 bg-muted/50 rounded-lg p-1">
           {[
-            { key: 'all', label: 'الكل' },
-            { key: 'active', label: 'قيد الاستخدام' },
+            { key: 'all',      label: 'الكل' },
+            { key: 'active',   label: 'قيد الاستخدام' },
             { key: 'returned', label: 'تم الإعادة' },
           ].map(opt => (
             <button
@@ -479,7 +490,7 @@ const VehicleAssignment = () => {
         open={showAssignModal}
         onClose={() => setShowAssignModal(false)}
         onSaved={fetchData}
-        activeVehicles={activeVehicles}
+        freeVehicles={freeVehicles}
         employees={employees}
       />
       <ReturnModal

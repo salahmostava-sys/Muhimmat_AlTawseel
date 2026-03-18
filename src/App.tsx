@@ -32,7 +32,7 @@ const GeneralSettings = lazy(() => import("./pages/GeneralSettings"));
 const ViolationResolver = lazy(() => import("./pages/ViolationResolver"));
 const Motorcycles = lazy(() => import("./pages/Motorcycles"));
 const VehicleAssignment = lazy(() => import("./pages/VehicleAssignment"));
-const ActivityLog = lazy(() => import("./pages/ActivityLog"));
+
 const EmployeeTiers = lazy(() => import("./pages/EmployeeTiers"));
 const Reports = lazy(() => import("./pages/Reports"));
 const TradeRegisters = lazy(() => import("./pages/TradeRegisters"));
@@ -93,7 +93,7 @@ const App = () => (
                                     <Route path="/settings/general" element={<GeneralSettings />} />
                                     <Route path="/settings/trade-registers" element={<TradeRegisters />} />
                                     <Route path="/violation-resolver" element={<ViolationResolver />} />
-                                    <Route path="/activity-log" element={<ActivityLog />} />
+                                    <Route path="/activity-log" element={<Navigate to="/settings/general" replace />} />
                                     <Route path="*" element={<NotFound />} />
                                   </Routes>
                                 </Suspense>

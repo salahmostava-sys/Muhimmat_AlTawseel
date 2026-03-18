@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Search, Plus, CreditCard, Download, Upload, Edit2, FileText, ArrowDownCircle, ArrowUpCircle, Printer, AlertTriangle, Check, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Plus, CreditCard, Download, Upload, Edit2, FileText, ArrowDownCircle, ArrowUpCircle, Printer, AlertTriangle, Check, X, ChevronDown, ChevronUp, RotateCcw, UserPlus, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -220,7 +220,7 @@ const WriteOffDialog = ({ employeeName, remaining, advanceIds, onClose, onDone }
           <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-sm">
             <p className="font-semibold text-foreground">{employeeName}</p>
             <p className="text-muted-foreground mt-1">المبلغ الذي سيتم إعدامه: <span className="font-bold text-destructive">{remaining.toLocaleString()} ر.س</span></p>
-            <p className="text-xs text-muted-foreground mt-2">⚠️ هذا الإجراء لا يمكن التراجع عنه. الديون ستُحسب ضمن إجمالي الديون المعدومة.</p>
+            <p className="text-xs text-muted-foreground mt-2">⚠️ يمكن التراجع عن هذا الإجراء لاحقاً من خلال زر الاسترداد.</p>
           </div>
           <div>
             <label className="text-sm font-medium mb-1 block">سبب الإعدام</label>
@@ -230,6 +230,55 @@ const WriteOffDialog = ({ employeeName, remaining, advanceIds, onClose, onDone }
         <DialogFooter className="mt-2 gap-2">
           <Button variant="outline" onClick={onClose}>إلغاء</Button>
           <Button variant="destructive" onClick={handleWriteOff} disabled={saving}>{saving ? '...' : 'إعدام الديون'}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// ─── Restore Write-off Dialog ─────────────────────────────────────────────────
+interface RestoreWriteOffDialogProps {
+  employeeName: string;
+  advanceIds: string[];
+  onClose: () => void;
+  onDone: () => void;
+}
+const RestoreWriteOffDialog = ({ employeeName, advanceIds, onClose, onDone }: RestoreWriteOffDialogProps) => {
+  const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
+
+  const handleRestore = async () => {
+    setSaving(true);
+    const { error } = await supabase.from('advances').update({
+      is_written_off: false,
+      written_off_at: null,
+      written_off_reason: null,
+    } as any).in('id', advanceIds);
+    setSaving(false);
+    if (error) return toast({ title: 'حدث خطأ', description: error.message, variant: 'destructive' });
+    toast({ title: `✅ تم استرداد ديون ${employeeName}` });
+    onDone(); onClose();
+  };
+
+  return (
+    <Dialog open onOpenChange={v => !v && onClose()}>
+      <DialogContent className="max-w-md" dir="rtl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-warning">
+            <RotateCcw size={18} /> استرداد الديون المعدومة
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 text-sm">
+            <p className="font-semibold text-foreground">{employeeName}</p>
+            <p className="text-muted-foreground mt-1">سيتم إعادة تفعيل السلف المعدومة وإعادتها للحالة النشطة.</p>
+          </div>
+        </div>
+        <DialogFooter className="mt-2 gap-2">
+          <Button variant="outline" onClick={onClose}>إلغاء</Button>
+          <Button onClick={handleRestore} disabled={saving} className="bg-warning hover:bg-warning/90 text-warning-foreground">
+            {saving ? '...' : 'استرداد الديون'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -431,10 +480,16 @@ interface TransactionsModalProps {
   totalPaid: number;
   remaining: number;
   advances: Advance[];
+  allAdvances: Advance[];
+  isWrittenOff?: boolean;
+  canEdit?: boolean;
   onClose: () => void;
   onRefresh: () => void;
+  onWriteOff?: () => void;
+  onRestore?: () => void;
+  onEditAdvance?: (adv: Advance) => void;
 }
-const TransactionsModal = ({ employeeId, employeeName, nationalId, totalDebt, totalPaid, remaining, advances, onClose, onRefresh }: TransactionsModalProps) => {
+const TransactionsModal = ({ employeeId, employeeName, nationalId, totalDebt, totalPaid, remaining, advances, allAdvances, isWrittenOff, canEdit, onClose, onRefresh, onWriteOff, onRestore, onEditAdvance }: TransactionsModalProps) => {
   const { toast } = useToast();
   const empAdvances = advances.filter(a => a.employee_id === employeeId);
   const allInstallments = empAdvances.flatMap(adv =>
@@ -445,6 +500,34 @@ const TransactionsModal = ({ employeeId, employeeName, nationalId, totalDebt, to
   const [noteValue, setNoteValue] = useState('');
   const [savingNote, setSavingNote] = useState(false);
   const [showPrint, setShowPrint] = useState(false);
+  const [showInlineAdd, setShowInlineAdd] = useState(false);
+  const [deleteAdvanceId, setDeleteAdvanceId] = useState<string | null>(null);
+  const [deletingAdvance, setDeletingAdvance] = useState(false);
+  const [deleteInstallmentId, setDeleteInstallmentId] = useState<string | null>(null);
+  const [deletingInstallment, setDeletingInstallment] = useState(false);
+
+  const handleDeleteAdvance = async () => {
+    if (!deleteAdvanceId) return;
+    setDeletingAdvance(true);
+    await supabase.from('advance_installments').delete().eq('advance_id', deleteAdvanceId);
+    const { error } = await supabase.from('advances').delete().eq('id', deleteAdvanceId);
+    setDeletingAdvance(false);
+    if (error) return toast({ title: 'خطأ في الحذف', description: error.message, variant: 'destructive' });
+    toast({ title: '✅ تم حذف السلفة نهائياً' });
+    setDeleteAdvanceId(null);
+    onRefresh();
+  };
+
+  const handleDeleteInstallment = async () => {
+    if (!deleteInstallmentId) return;
+    setDeletingInstallment(true);
+    const { error } = await supabase.from('advance_installments').delete().eq('id', deleteInstallmentId);
+    setDeletingInstallment(false);
+    if (error) return toast({ title: 'خطأ في الحذف', description: error.message, variant: 'destructive' });
+    toast({ title: '✅ تم حذف الصف' });
+    setDeleteInstallmentId(null);
+    onRefresh();
+  };
 
   const startEditNote = (inst: any) => { setEditingNoteId(inst.id); setNoteValue(inst.notes || ''); };
   const saveNote = async (instId: string) => {
@@ -462,11 +545,49 @@ const TransactionsModal = ({ employeeId, employeeName, nationalId, totalDebt, to
       <Dialog open onOpenChange={v => !v && onClose()}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <FileText size={18} />
-              <span>سجل العمليات — {employeeName}</span>
-            </DialogTitle>
+            <div className="flex items-center justify-between gap-3">
+              <DialogTitle className="flex items-center gap-2">
+                <FileText size={18} />
+                سجل العمليات — {employeeName}
+              </DialogTitle>
+              {/* Action buttons inside modal header */}
+              {canEdit && !isWrittenOff && (
+                <div className="flex items-center gap-2 ml-8">
+                  <Button size="sm" variant="outline" className="h-7 text-xs gap-1.5" onClick={() => setShowInlineAdd(true)}>
+                    <Plus size={12} /> إضافة
+                  </Button>
+                  {empAdvances.length > 0 && onEditAdvance && (
+                    <Button size="sm" variant="outline" className="h-7 text-xs gap-1.5" onClick={() => onEditAdvance(empAdvances[0])}>
+                      <Edit2 size={12} /> تعديل
+                    </Button>
+                  )}
+                  {remaining > 0 && onWriteOff && (
+                    <Button size="sm" variant="destructive" className="h-7 text-xs gap-1.5" onClick={onWriteOff}>
+                      <AlertTriangle size={12} /> إعدام
+                    </Button>
+                  )}
+                </div>
+              )}
+              {canEdit && isWrittenOff && onRestore && (
+                <Button size="sm" variant="outline" className="h-7 text-xs gap-1.5 ml-8 text-warning border-warning/40 hover:bg-warning/10" onClick={onRestore}>
+                  <RotateCcw size={12} /> استرداد الديون
+                </Button>
+              )}
+            </div>
           </DialogHeader>
+
+          {/* Inline add form */}
+          {showInlineAdd && (
+            <div className="border border-border/60 rounded-xl p-4 bg-muted/20">
+              <InlineRowEntry
+                employeeId={employeeId}
+                allAdvances={allAdvances}
+                onSaved={() => { setShowInlineAdd(false); onRefresh(); }}
+                onCancel={() => setShowInlineAdd(false)}
+              />
+            </div>
+          )}
+
           <div className="grid grid-cols-3 gap-3 mb-2">
             <div className="bg-info/10 rounded-xl p-3 text-center">
               <p className="text-xs text-muted-foreground">إجمالي المديونية</p>
@@ -487,15 +608,14 @@ const TransactionsModal = ({ employeeId, employeeName, nationalId, totalDebt, to
             <div className="overflow-x-auto rounded-xl border border-border/50">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-muted/50 border-b border-border/60">
+                 <tr className="bg-muted/50 border-b border-border/60">
                     <th className="text-center px-3 py-2.5 text-xs font-semibold text-muted-foreground w-10">#</th>
                     <th className="text-center px-3 py-2.5 text-xs font-semibold text-muted-foreground">الشهر</th>
                     <th className="text-center px-3 py-2.5 text-xs font-semibold text-muted-foreground">تاريخ السلفة</th>
                     <th className="text-center px-3 py-2.5 text-xs font-semibold text-muted-foreground">أخذ كام</th>
                     <th className="text-center px-3 py-2.5 text-xs font-semibold text-muted-foreground">سدّد كام</th>
-                    <th className="text-center px-3 py-2.5 text-xs font-semibold text-muted-foreground">الحالة</th>
                     <th className="text-right px-3 py-2.5 text-xs font-semibold text-muted-foreground">ملاحظات</th>
-                    <th className="w-10" />
+                    <th className="w-16 px-2 py-2.5 text-center text-xs font-semibold text-muted-foreground">حذف</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -511,11 +631,6 @@ const TransactionsModal = ({ employeeId, employeeName, nationalId, totalDebt, to
                         {inst.status === 'deducted'
                           ? <span className="font-semibold text-success text-xs">{inst.amount.toLocaleString()} ر.س</span>
                           : <span className="text-muted-foreground/40 text-xs">—</span>}
-                      </td>
-                      <td className="px-3 py-2.5 text-center">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${inst.status === 'deducted' ? 'bg-success/10 text-success' : inst.status === 'pending' ? 'bg-warning/10 text-warning' : 'bg-muted text-muted-foreground'}`}>
-                          {inst.status === 'deducted' ? 'مخصوم' : inst.status === 'pending' ? 'معلّق' : 'مؤجل'}
-                        </span>
                       </td>
                       <td className="px-3 py-2.5 text-right max-w-xs">
                         {editingNoteId === inst.id ? (
@@ -533,9 +648,15 @@ const TransactionsModal = ({ employeeId, employeeName, nationalId, totalDebt, to
                         )}
                       </td>
                       <td className="px-2 py-2.5 text-center">
-                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground" onClick={() => startEditNote(inst)}>
-                          <Edit2 size={11} />
-                        </Button>
+                        {canEdit && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDeleteInstallmentId(inst.id); }}
+                            className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                            title="حذف هذا الصف"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -545,7 +666,7 @@ const TransactionsModal = ({ employeeId, employeeName, nationalId, totalDebt, to
                     <td colSpan={3} className="px-3 py-2.5 text-right text-xs font-bold text-muted-foreground">الإجمالي</td>
                     <td className="px-3 py-2.5 text-center text-xs font-bold text-info">{totalDebt.toLocaleString()} ر.س</td>
                     <td className="px-3 py-2.5 text-center text-xs font-bold text-success">{totalPaid.toLocaleString()} ر.س</td>
-                    <td colSpan={3} />
+                    <td colSpan={2} />
                   </tr>
                 </tfoot>
               </table>
@@ -571,6 +692,50 @@ const TransactionsModal = ({ employeeId, employeeName, nationalId, totalDebt, to
           onClose={() => setShowPrint(false)}
         />
       )}
+
+      {/* ── Confirm Delete Advance Dialog ── */}
+      {deleteAdvanceId && (
+        <Dialog open onOpenChange={v => !v && setDeleteAdvanceId(null)}>
+          <DialogContent className="max-w-sm" dir="rtl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle size={18} /> تأكيد حذف السلفة
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              سيتم حذف هذه السلفة وجميع أقساطها نهائياً ولا يمكن التراجع عن هذا الإجراء.
+            </p>
+            <DialogFooter className="gap-2 mt-2">
+              <Button variant="outline" onClick={() => setDeleteAdvanceId(null)}>إلغاء</Button>
+              <Button variant="destructive" onClick={handleDeleteAdvance} disabled={deletingAdvance}>
+                {deletingAdvance ? '...' : 'حذف نهائياً'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* ── Confirm Delete Single Installment Row ── */}
+      {deleteInstallmentId && (
+        <Dialog open onOpenChange={v => !v && setDeleteInstallmentId(null)}>
+          <DialogContent className="max-w-sm" dir="rtl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle size={18} /> حذف صف من السجل
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              سيتم حذف هذا الصف من سجل العمليات نهائياً. هل تريد المتابعة؟
+            </p>
+            <DialogFooter className="gap-2 mt-2">
+              <Button variant="outline" onClick={() => setDeleteInstallmentId(null)}>إلغاء</Button>
+              <Button variant="destructive" onClick={handleDeleteInstallment} disabled={deletingInstallment}>
+                {deletingInstallment ? '...' : 'حذف الصف'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 };
@@ -586,14 +751,32 @@ const Advances = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [showWrittenOff, setShowWrittenOff] = useState(false);
   const [editAdvance, setEditAdvance] = useState<Advance | null>(null);
-  const [transactionsEmployee, setTransactionsEmployee] = useState<{ id: string; name: string; nationalId: string; totalDebt: number; totalPaid: number; remaining: number } | null>(null);
+  const [transactionsEmployee, setTransactionsEmployee] = useState<{ id: string; name: string; nationalId: string; totalDebt: number; totalPaid: number; remaining: number; isWrittenOff?: boolean; allAdvances: Advance[] } | null>(null);
   const [writeOffEmployee, setWriteOffEmployee] = useState<{ name: string; remaining: number; advanceIds: string[] } | null>(null);
+  const [restoreWriteOffEmployee, setRestoreWriteOffEmployee] = useState<{ name: string; advanceIds: string[] } | null>(null);
+  const [showAddEmployee, setShowAddEmployee] = useState(false);
+  const [newEmpEntry, setNewEmpEntry] = useState<{ id: string; name: string } | null>(null);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
-  // inline row state: which employee has the + row open
   const [inlineRowEmpId, setInlineRowEmpId] = useState<string | null>(null);
+  const [deleteEmployeeAdvancesId, setDeleteEmployeeAdvancesId] = useState<string | null>(null);
+  const [deletingEmployeeAdvances, setDeletingEmployeeAdvances] = useState(false);
 
   const importRef = useRef<HTMLInputElement>(null);
+
+  const handleDeleteEmployeeAllAdvances = async () => {
+    if (!deleteEmployeeAdvancesId) return;
+    setDeletingEmployeeAdvances(true);
+    const empAdvIds = advances.filter(a => a.employee_id === deleteEmployeeAdvancesId).map(a => a.id);
+    if (empAdvIds.length > 0) {
+      await supabase.from('advance_installments').delete().in('advance_id', empAdvIds);
+      await supabase.from('advances').delete().in('id', empAdvIds);
+    }
+    setDeletingEmployeeAdvances(false);
+    toast({ title: '✅ تم حذف جميع سلف المندوب' });
+    setDeleteEmployeeAdvancesId(null);
+    fetchAll();
+  };
 
   const handleImportAdvances = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -763,6 +946,11 @@ const Advances = () => {
           <input ref={importRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportAdvances} />
           <Button variant="outline" size="sm" className="gap-2 h-8" onClick={handleExport}><Download size={14} /> تصدير</Button>
           <Button variant="outline" size="sm" className="gap-2 h-8" onClick={() => importRef.current?.click()}><Upload size={14} /> استيراد</Button>
+          {permissions.can_edit && !showWrittenOff && (
+            <Button size="sm" className="gap-2 h-8" onClick={() => setShowAddEmployee(true)}>
+              <UserPlus size={14} /> مندوب جديد
+            </Button>
+          )}
         </div>
       </div>
 
@@ -784,7 +972,7 @@ const Advances = () => {
       {/* Written-off summary */}
       {writtenOffTotals.count > 0 && (
         <button
-          onClick={() => setShowWrittenOff(v => !v)}
+          onClick={() => { setShowWrittenOff(v => !v); setNewEmpEntry(null); setInlineRowEmpId(null); }}
           className={`w-full flex items-center gap-3 rounded-xl border p-3 text-sm transition-colors ${showWrittenOff ? 'bg-destructive/10 border-destructive/30' : 'bg-muted/30 border-border/40 hover:bg-muted/50'}`}>
           <AlertTriangle size={16} className="text-destructive flex-shrink-0" />
           <span className="font-medium text-foreground">الديون المعدومة: {writtenOffTotals.count} مندوب</span>
@@ -873,51 +1061,20 @@ const Advances = () => {
                   <th className="px-3 py-3 text-center text-xs font-semibold text-destructive cursor-pointer hover:text-foreground select-none" onClick={() => handleSort('remaining')}>
                     المتبقي <SortIcon field="remaining" />
                   </th>
+                  {permissions.can_edit && <th className="w-20 px-2 py-3 text-center text-xs font-semibold text-muted-foreground">إجراء</th>}
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((s, idx) => (
                   <React.Fragment key={s.employeeId}>
-                    <tr className={`border-b border-border/30 hover:bg-muted/20 transition-colors ${s.isWrittenOff ? 'opacity-60' : ''}`}>
+                    <tr className={`border-b border-border/30 hover:bg-muted/20 transition-colors cursor-pointer ${s.isWrittenOff ? 'opacity-60' : ''}`}
+                      onClick={() => setTransactionsEmployee({ id: s.employeeId, name: s.employeeName, nationalId: s.nationalId, totalDebt: s.totalDebt, totalPaid: s.totalPaid, remaining: s.remaining, isWrittenOff: s.isWrittenOff, allAdvances: s.allAdvances })}>
                       <td className="px-3 py-3 text-center text-xs text-muted-foreground font-mono">{idx + 1}</td>
                       <td className="px-3 py-3 text-right">
                         <div className="flex items-center gap-2">
-                          <button
-                            className="font-semibold text-primary hover:underline text-sm text-right"
-                            onClick={() => setTransactionsEmployee({ id: s.employeeId, name: s.employeeName, nationalId: s.nationalId, totalDebt: s.totalDebt, totalPaid: s.totalPaid, remaining: s.remaining })}
-                          >
-                            {s.employeeName}
-                          </button>
+                          <span className="font-semibold text-primary text-sm">{s.employeeName}</span>
                           {s.isWrittenOff && <span className="text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full font-semibold">معدوم</span>}
                         </div>
-                        {/* Action buttons on name hover row */}
-                        {!s.isWrittenOff && permissions.can_edit && (
-                          <div className="flex items-center gap-1 mt-1">
-                            <button
-                              onClick={() => setInlineRowEmpId(inlineRowEmpId === s.employeeId ? null : s.employeeId)}
-                              className="flex items-center gap-0.5 text-[11px] text-muted-foreground hover:text-primary transition-colors"
-                              title="إضافة سلفة أو سداد">
-                              {inlineRowEmpId === s.employeeId ? <ChevronUp size={11} /> : <Plus size={11} />}
-                              <span>{inlineRowEmpId === s.employeeId ? 'إخفاء' : 'إضافة'}</span>
-                            </button>
-                            <span className="text-muted-foreground/30 mx-1">|</span>
-                            <button
-                              onClick={() => setEditAdvance(s.allAdvances[0] || null)}
-                              className="text-[11px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-0.5">
-                              <Edit2 size={11} /> تعديل
-                            </button>
-                            {s.remaining > 0 && (
-                              <>
-                                <span className="text-muted-foreground/30 mx-1">|</span>
-                                <button
-                                  onClick={() => setWriteOffEmployee({ name: s.employeeName, remaining: s.remaining, advanceIds: s.allAdvances.map(a => a.id) })}
-                                  className="text-[11px] text-muted-foreground hover:text-destructive transition-colors flex items-center gap-0.5">
-                                  <AlertTriangle size={11} /> إعدام
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        )}
                       </td>
                       <td className="px-3 py-3 text-center text-sm font-mono text-foreground" dir="ltr">{s.nationalId}</td>
                       <td className="px-3 py-3 text-center">
@@ -932,17 +1089,27 @@ const Advances = () => {
                         <span className={`font-bold text-sm ${s.remaining > 0 ? 'text-destructive' : 'text-success'}`}>{s.remaining.toLocaleString()}</span>
                         <span className="text-[10px] text-muted-foreground mr-0.5">ر.س</span>
                       </td>
+                      {permissions.can_edit && (
+                        <td className="px-2 py-3 text-center" onClick={e => e.stopPropagation()}>
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => setTransactionsEmployee({ id: s.employeeId, name: s.employeeName, nationalId: s.nationalId, totalDebt: s.totalDebt, totalPaid: s.totalPaid, remaining: s.remaining, isWrittenOff: s.isWrittenOff, allAdvances: s.allAdvances })}
+                              className="p-1.5 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                              title="عرض وتعديل السلف"
+                            >
+                              <Edit2 size={13} />
+                            </button>
+                            <button
+                              onClick={() => setDeleteEmployeeAdvancesId(s.employeeId)}
+                              className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                              title="حذف جميع سلف هذا المندوب"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
-
-                    {/* Inline add row */}
-                    {inlineRowEmpId === s.employeeId && (
-                      <InlineRowEntry
-                        employeeId={s.employeeId}
-                        allAdvances={advances}
-                        onSaved={() => { setInlineRowEmpId(null); fetchAll(); }}
-                        onCancel={() => setInlineRowEmpId(null)}
-                      />
-                    )}
                   </React.Fragment>
                 ))}
               </tbody>
@@ -964,6 +1131,7 @@ const Advances = () => {
                     <span className="font-bold text-destructive text-sm">{grandTotals.remaining.toLocaleString()}</span>
                     <span className="text-[10px] text-muted-foreground mr-0.5">ر.س</span>
                   </td>
+                  {permissions.can_edit && <td />}
                 </tr>
               </tfoot>
             </table>
@@ -985,8 +1153,22 @@ const Advances = () => {
           totalPaid={transactionsEmployee.totalPaid}
           remaining={transactionsEmployee.remaining}
           advances={advances}
+          allAdvances={advances}
+          isWrittenOff={transactionsEmployee.isWrittenOff}
+          canEdit={permissions.can_edit}
           onClose={() => setTransactionsEmployee(null)}
           onRefresh={fetchAll}
+          onEditAdvance={(adv) => { setTransactionsEmployee(null); setEditAdvance(adv); }}
+          onWriteOff={() => {
+            const s = filtered.find(x => x.employeeId === transactionsEmployee.id);
+            if (s) setWriteOffEmployee({ name: s.employeeName, remaining: s.remaining, advanceIds: s.allAdvances.map(a => a.id) });
+            setTransactionsEmployee(null);
+          }}
+          onRestore={() => {
+            const s = filtered.find(x => x.employeeId === transactionsEmployee.id);
+            if (s) setRestoreWriteOffEmployee({ name: s.employeeName, advanceIds: s.allAdvances.map(a => a.id) });
+            setTransactionsEmployee(null);
+          }}
         />
       )}
 
@@ -998,6 +1180,70 @@ const Advances = () => {
           onClose={() => setWriteOffEmployee(null)}
           onDone={fetchAll}
         />
+      )}
+
+      {restoreWriteOffEmployee && (
+        <RestoreWriteOffDialog
+          employeeName={restoreWriteOffEmployee.name}
+          advanceIds={restoreWriteOffEmployee.advanceIds}
+          onClose={() => setRestoreWriteOffEmployee(null)}
+          onDone={fetchAll}
+        />
+      )}
+
+      {/* Add new employee quick dialog — opens AddAdvanceModal directly */}
+      {showAddEmployee && (
+        <Dialog open onOpenChange={v => !v && setShowAddEmployee(false)}>
+          <DialogContent className="max-w-sm" dir="rtl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2"><UserPlus size={16} /> إضافة مندوب جديد للسلف</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">اختر مندوباً من القائمة لإضافة سلفة له مباشرة.</p>
+              <Select onValueChange={(empId) => {
+                const emp = employees.find(e => e.id === empId);
+                if (emp) {
+                  setTransactionsEmployee({ id: emp.id, name: emp.name, nationalId: '', totalDebt: 0, totalPaid: 0, remaining: 0, isWrittenOff: false, allAdvances: [] });
+                }
+                setShowAddEmployee(false);
+              }}>
+                <SelectTrigger><SelectValue placeholder="اختر المندوب..." /></SelectTrigger>
+                <SelectContent>
+                  {employees
+                    .filter(e => !employeeSummaries.some(s => s.employeeId === e.id))
+                    .map(e => (
+                      <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAddEmployee(false)}>إلغاء</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* ── Confirm Delete All Employee Advances ── */}
+      {deleteEmployeeAdvancesId && (
+        <Dialog open onOpenChange={v => !v && setDeleteEmployeeAdvancesId(null)}>
+          <DialogContent className="max-w-sm" dir="rtl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle size={18} /> تأكيد حذف جميع السلف
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              سيتم حذف جميع سلف هذا المندوب وكافة أقساطها نهائياً. هل تريد المتابعة؟
+            </p>
+            <DialogFooter className="gap-2 mt-2">
+              <Button variant="outline" onClick={() => setDeleteEmployeeAdvancesId(null)}>إلغاء</Button>
+              <Button variant="destructive" onClick={handleDeleteEmployeeAllAdvances} disabled={deletingEmployeeAdvances}>
+                {deletingEmployeeAdvances ? '...' : 'حذف نهائياً'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

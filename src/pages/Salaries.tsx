@@ -72,6 +72,10 @@ interface SalaryRow {
   isDirty?: boolean;
   preferredLanguage: SlipLanguage;
   phone?: string | null;
+  // New columns: work days from attendance, fuel from vehicle_mileage
+  workDays: number;
+  fuelCost: number;
+  platformIncome: number;
 }
 
 interface SchemeData {
@@ -79,9 +83,19 @@ interface SchemeData {
   name: string;
   name_en: string | null;
   status: string;
+  scheme_type?: 'order_based' | 'fixed_monthly';
+  monthly_amount?: number | null;
   target_orders: number | null;
   target_bonus: number | null;
-  salary_scheme_tiers?: { from_orders: number; to_orders: number | null; price_per_order: number; tier_order: number }[];
+  salary_scheme_tiers?: {
+    from_orders: number;
+    to_orders: number | null;
+    price_per_order: number;
+    tier_order: number;
+    tier_type?: 'total_multiplier' | 'fixed_amount' | 'base_plus_incremental';
+    incremental_threshold?: number | null;
+    incremental_price?: number | null;
+  }[];
   snapshot?: any;
   scheme_id?: string;
 }
@@ -496,25 +510,56 @@ const ImportModal = ({ onClose }: { onClose: () => void }) => {
 
 function calcSalaryFromTiers(
   orders: number,
-  tiers: { from_orders: number; to_orders: number | null; price_per_order: number; tier_order: number }[],
+  tiers: SchemeData['salary_scheme_tiers'],
   targetOrders: number | null,
   targetBonus: number | null
 ): number {
   if (!tiers || tiers.length === 0 || orders === 0) return 0;
   const sorted = [...tiers].sort((a, b) => a.tier_order - b.tier_order);
-  let total = 0;
+
+  // Find the matching tier for the total orders
+  let matchedTier = sorted[0];
   for (const tier of sorted) {
     const from = tier.from_orders;
     const to = tier.to_orders ?? Infinity;
-    if (orders < from) break;
-    const inTier = Math.min(orders, to) - from + 1;
-    if (inTier <= 0) continue;
-    total += inTier * tier.price_per_order;
+    if (orders >= from && orders <= to) { matchedTier = tier; break; }
+    if (orders > (tier.to_orders ?? Infinity)) matchedTier = tier;
   }
+
+  let total = 0;
+
+  // Check the tier type of the matching tier
+  const tierType = matchedTier?.tier_type || 'total_multiplier';
+
+  if (tierType === 'fixed_amount') {
+    // Fixed amount regardless of order count within range
+    total = matchedTier.price_per_order;
+  } else if (tierType === 'base_plus_incremental') {
+    const threshold = matchedTier.incremental_threshold ?? matchedTier.from_orders;
+    const incrPrice = matchedTier.incremental_price ?? 0;
+    const extra = Math.max(0, orders - threshold);
+    total = matchedTier.price_per_order + extra * incrPrice;
+  } else {
+    // Default: total_multiplier — all tiers accumulate progressively
+    for (const tier of sorted) {
+      const from = tier.from_orders;
+      const to = tier.to_orders ?? Infinity;
+      if (orders < from) break;
+      const inTier = Math.min(orders, to) - from + 1;
+      if (inTier <= 0) continue;
+      total += inTier * tier.price_per_order;
+    }
+  }
+
   if (targetOrders && targetBonus && orders >= targetOrders) {
     total += targetBonus;
   }
   return Math.round(total);
+}
+
+function calcFixedMonthlySalary(monthlyAmount: number, attendanceDays: number): number {
+  if (!monthlyAmount || monthlyAmount <= 0) return 0;
+  return Math.round((monthlyAmount / 30) * attendanceDays);
 }
 
 // ─── Salary breakdown tooltip ─────────────────────────────────────
@@ -632,7 +677,7 @@ const Salaries = () => {
       const startDate = `${selectedMonth}-01`;
       const endDate = `${selectedMonth}-${String(daysInMonth).padStart(2, '0')}`;
 
-      const [empRes, extRes, ordersRes, appsWithSchemeRes] = await Promise.all([
+      const [empRes, extRes, ordersRes, appsWithSchemeRes, attendanceRes, fuelRes] = await Promise.all([
         supabase
           .from('employees')
           .select('id, name, job_title, national_id, salary_type, base_salary, iban, city, preferred_language, phone')
@@ -651,11 +696,25 @@ const Salaries = () => {
           .gte('date', startDate)
           .lte('date', endDate),
 
-        // Fetch apps with their assigned scheme (scheme per platform)
+        // Fetch apps with their assigned scheme (scheme per platform) — include scheme_type & monthly_amount
         supabase
           .from('apps')
-          .select('id, name, scheme_id, salary_schemes(id, name, name_en, status, target_orders, target_bonus, salary_scheme_tiers(id, from_orders, to_orders, price_per_order, tier_order))')
+          .select('id, name, scheme_id, salary_schemes(id, name, name_en, status, scheme_type, monthly_amount, target_orders, target_bonus, salary_scheme_tiers(id, from_orders, to_orders, price_per_order, tier_order, tier_type, incremental_threshold, incremental_price))')
           .eq('is_active', true),
+
+        // Fetch attendance for this month (present/late = worked day)
+        supabase
+          .from('attendance')
+          .select('employee_id, status')
+          .gte('date', startDate)
+          .lte('date', endDate)
+          .in('status', ['present', 'late']),
+
+        // Fetch fuel/mileage cost for this month
+        supabase
+          .from('vehicle_mileage')
+          .select('employee_id, fuel_cost')
+          .eq('month_year', selectedMonth),
       ]);
 
       // ── Fetch saved salary records for this month (to restore status) ──
@@ -724,6 +783,18 @@ const Salaries = () => {
 
       const employees = empRes.data || [];
 
+      // Build attendance days map: employeeId → count of present/late days
+      const attendanceDaysMap: Record<string, number> = {};
+      attendanceRes.data?.forEach(r => {
+        attendanceDaysMap[r.employee_id] = (attendanceDaysMap[r.employee_id] || 0) + 1;
+      });
+
+      // Build fuel cost map: employeeId → fuel_cost
+      const fuelCostMap: Record<string, number> = {};
+      fuelRes.data?.forEach(r => {
+        fuelCostMap[r.employee_id] = (fuelCostMap[r.employee_id] || 0) + Number(r.fuel_cost);
+      });
+
       const extMap: Record<string, number> = {};
       extRes.data?.forEach(d => {
         extMap[d.employee_id] = (extMap[d.employee_id] || 0) + Number(d.amount);
@@ -760,6 +831,7 @@ const Salaries = () => {
 
       const newRows: SalaryRow[] = employees.map(emp => {
         const empOrders = ordMap[emp.id] || {};
+        const attendanceDays = attendanceDaysMap[emp.id] || 0;
         const registeredApps = Object.keys(empOrders).filter(k => empOrders[k] > 0);
 
         const platformOrders: Record<string, number> = {};
@@ -768,14 +840,24 @@ const Salaries = () => {
         platforms.forEach(p => {
           const orders = empOrders[p] || 0;
           platformOrders[p] = orders;
-          if (orders === 0) { platformSalaries[p] = 0; return; }
 
-          // Use the platform's assigned scheme; if no scheme → salary = 0 + warning
           const scheme = appSchemeMap[p];
-          if (scheme && scheme.salary_scheme_tiers) {
+          if (!scheme) { platformSalaries[p] = 0; return; }
+
+          if (scheme.scheme_type === 'fixed_monthly') {
+            // Fixed monthly: calculate once per employee, assign to first platform that has this scheme
+            // Only calculate if this is the first platform using this scheme for the employee
+            const alreadyCalcForScheme = platforms.some(prev => prev !== p && appSchemeMap[prev]?.id === scheme.id && platformSalaries[prev] !== undefined);
+            if (alreadyCalcForScheme) {
+              platformSalaries[p] = 0; // already counted
+            } else {
+              platformSalaries[p] = calcFixedMonthlySalary(scheme.monthly_amount || 0, attendanceDays);
+            }
+          } else if (orders === 0) {
+            platformSalaries[p] = 0;
+          } else if (scheme.salary_scheme_tiers) {
             platformSalaries[p] = calcSalaryFromTiers(orders, scheme.salary_scheme_tiers, scheme.target_orders, scheme.target_bonus);
           } else {
-            // Platform has no scheme assigned → 0 salary, show warning
             platformSalaries[p] = 0;
           }
         });
@@ -802,6 +884,7 @@ const Salaries = () => {
         const cityLabel = emp.city === 'makkah' ? 'مكة' : emp.city === 'jeddah' ? 'جدة' : '—';
         const bankAccount = emp.iban ? emp.iban.slice(-6) : '';
         const hasIban = !!emp.iban;
+        // platformIncome is manual — not computed from anywhere
 
         return {
           id: `${emp.id}-${selectedMonth}`,
@@ -832,6 +915,9 @@ const Salaries = () => {
           status,
           preferredLanguage: ((emp as any).preferred_language as SlipLanguage) || 'ar',
           phone: (emp as any).phone || null,
+          workDays: attendanceDays,
+          fuelCost: fuelCostMap[emp.id] || 0,
+          platformIncome: 0,
         };
       });
 
@@ -1979,6 +2065,7 @@ const Salaries = () => {
                 <tr className="bg-muted/70 border-b border-border/50">
                   <th className={`${thFrozenBase} w-10 text-center`} style={stickyLeft(0)}>#</th>
                   <th colSpan={3} className={`${thFrozenBase} border-l border-border/50`} style={stickyLeft(40)}>بيانات المندوب</th>
+                  <th colSpan={3} className="px-3 py-2 text-xs font-semibold text-info whitespace-nowrap border-b border-border/50 bg-info/10 text-center border-l-2 border-info/40">📊 بيانات المندوب الشهرية</th>
                   <th colSpan={platforms.length} className="px-3 py-2 text-xs font-semibold text-primary whitespace-nowrap border-b border-border/50 bg-muted/40 text-center border-l border-border/50">
                     المنصات (نقر مزدوج لتعديل الطلبات)
                   </th>
@@ -1997,8 +2084,18 @@ const Salaries = () => {
                   <th className={`${thFrozenBase} w-28 cursor-pointer hover:text-foreground select-none`} style={stickyLeft(216)} onClick={() => handleSort('jobTitle')}>
                     المسمى الوظيفي <SortIcon field="jobTitle" sortField={sortField} sortDir={sortDir} />
                   </th>
-                  <th className={`${thFrozenBase} w-28 border-l border-border/50 cursor-pointer hover:text-foreground select-none`} style={stickyLeft(328)} onClick={() => handleSort('nationalId')}>
+                  <th className={`${thFrozenBase} w-28 cursor-pointer hover:text-foreground select-none`} style={stickyLeft(328)} onClick={() => handleSort('nationalId')}>
                     رقم الهوية <SortIcon field="nationalId" sortField={sortField} sortDir={sortDir} />
+                  </th>
+                  {/* ── New info columns ── */}
+                  <th className="px-2 py-2 text-xs font-semibold text-info whitespace-nowrap border border-info/30 bg-info/10 text-center cursor-pointer select-none hover:brightness-95" onClick={() => handleSort('platformIncome')}>
+                    دخل <SortIcon field="platformIncome" sortField={sortField} sortDir={sortDir} />
+                  </th>
+                  <th className="px-2 py-2 text-xs font-semibold text-info whitespace-nowrap border border-info/30 bg-info/10 text-center cursor-pointer select-none hover:brightness-95" onClick={() => handleSort('workDays')}>
+                    أيام العمل <SortIcon field="workDays" sortField={sortField} sortDir={sortDir} />
+                  </th>
+                  <th className="px-2 py-2 text-xs font-semibold text-info whitespace-nowrap border-l-2 border-info/40 bg-info/10 text-center cursor-pointer select-none hover:brightness-95" onClick={() => handleSort('fuelCost')}>
+                    البنزين <SortIcon field="fuelCost" sortField={sortField} sortDir={sortDir} />
                   </th>
                   {platforms.map(p => {
                     const pc = platformColors[p];
@@ -2018,6 +2115,9 @@ const Salaries = () => {
                       </th>
                     );
                   })}
+                  <th className="px-2 py-2 text-xs font-semibold text-foreground whitespace-nowrap border border-border/30 bg-muted/30 text-center cursor-pointer select-none hover:brightness-95" onClick={() => handleSort('totalPlatformOrders')}>
+                    إجمالي الطلبات <SortIcon field="totalPlatformOrders" sortField={sortField} sortDir={sortDir} />
+                  </th>
                   <th className={thBase}>الراتب الأساسي</th>
                   <th className={`${thBase} bg-success/5`}>حوافز</th>
                   <th className={`${thBase} bg-success/5`}>إجازة مرضية</th>
@@ -2064,6 +2164,20 @@ const Salaries = () => {
                       </td>
                       <td className={`${tdClass} whitespace-nowrap`} style={{ position: 'sticky', left: 216, zIndex: 10, background: 'hsl(var(--card))' }}>{r.jobTitle}</td>
                       <td className={`${tdClass} border-l border-border/30 text-muted-foreground text-xs whitespace-nowrap`} style={{ position: 'sticky', left: 328, zIndex: 10, background: 'hsl(var(--card))' }}>{r.nationalId}</td>
+                      {/* ── New info columns: income (manual), work days, fuel ── */}
+                      <td className="px-2 py-2 text-xs text-center border border-info/20 bg-info/5 whitespace-nowrap">
+                        <EditableCell value={r.platformIncome} onChange={v => updateRow(r.id, { platformIncome: v })} className="text-foreground" />
+                      </td>
+                      <td className="px-2 py-2 text-xs text-center border border-info/20 bg-info/5 whitespace-nowrap">
+                        {r.workDays > 0
+                          ? <span className="font-semibold text-foreground">{r.workDays}</span>
+                          : <span className="text-muted-foreground/30">—</span>}
+                      </td>
+                      <td className="px-2 py-2 text-xs text-center border-l-2 border-info/30 bg-info/5 whitespace-nowrap">
+                        {r.fuelCost > 0
+                          ? <span className="font-semibold text-foreground">{r.fuelCost.toLocaleString()}</span>
+                          : <span className="text-muted-foreground/30">—</span>}
+                      </td>
                       {platforms.map(p => {
                         const pc = platformColors[p];
                         const orders = r.platformOrders[p] || 0;
@@ -2112,6 +2226,9 @@ const Salaries = () => {
                           </td>
                         );
                       })}
+                      <td className={`${tdClass} text-center font-bold text-foreground border-l border-border/20`}>
+                        {Object.values(r.platformOrders).reduce((s, v) => s + v, 0) || <span className="text-muted-foreground/30">—</span>}
+                      </td>
                       <td className={`${tdClass} font-bold text-foreground border-l border-border/20`}>{c.totalPlatformSalary.toLocaleString()}</td>
                       <td className={tdClass}><EditableCell value={r.incentives} onChange={v => updateRow(r.id, { incentives: v })} className="text-foreground" /></td>
                       <td className={tdClass}><EditableCell value={r.sickAllowance} onChange={v => updateRow(r.id, { sickAllowance: v })} className="text-foreground" /></td>
@@ -2199,23 +2316,9 @@ const Salaries = () => {
                         )}
                       </td>
                       <td className={tdClass}>
-                        <div className="flex items-center gap-1 justify-center">
-                          <button onClick={() => setPayslipRow(r)} className="text-muted-foreground hover:text-primary transition-colors" title="فتح كشف الراتب">
-                            <Printer size={14} />
-                          </button>
-                          <button
-                            onClick={() => {
-                              const mLabel = months.find(m => m.v === selectedMonth)?.l || selectedMonth;
-                              const html = generateEmployeePDF(r, mLabel);
-                              const win = window.open('', '_blank');
-                              if (win) { win.document.write(html); win.document.close(); setTimeout(() => win.print(), 400); }
-                            }}
-                            className="text-muted-foreground hover:text-destructive transition-colors"
-                            title="تصدير PDF مباشر"
-                          >
-                            <FileText size={12} />
-                          </button>
-                        </div>
+                        <button onClick={() => setPayslipRow(r)} className="text-muted-foreground hover:text-primary transition-colors" title="فتح كشف الراتب">
+                          <Printer size={14} />
+                        </button>
                       </td>
                     </tr>
                   );
@@ -2226,6 +2329,16 @@ const Salaries = () => {
                    <td className={`${tfClass} sticky text-right border-l border-border/30`} style={{ left: 40, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}>الإجمالي</td>
                    <td className={tfClass} style={{ position: 'sticky', left: 216, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}></td>
                    <td className={`${tfClass} border-l border-border/30`} style={{ position: 'sticky', left: 328, zIndex: 20, background: 'hsl(var(--muted) / 0.6)' }}></td>
+                   {/* New info columns totals */}
+                   <td className="px-2 py-2 text-xs font-bold text-center border border-info/20 bg-info/10 text-foreground">
+                     {filtered.reduce((s, r) => s + r.platformIncome, 0).toLocaleString()}
+                   </td>
+                   <td className="px-2 py-2 text-xs font-bold text-center border border-info/20 bg-info/10 text-foreground">
+                     {Math.round(filtered.reduce((s, r) => s + r.workDays, 0) / Math.max(filtered.length, 1))}
+                   </td>
+                   <td className="px-2 py-2 text-xs font-bold text-center border-l-2 border-info/30 bg-info/10 text-foreground">
+                     {filtered.reduce((s, r) => s + r.fuelCost, 0).toLocaleString()}
+                   </td>
                   {platforms.map(p => {
                     const totalOrders = totals.platform[p] || 0;
                     const totalSal = filtered.reduce((s, r) => s + (r.platformSalaries[p] || 0), 0);
@@ -2237,7 +2350,10 @@ const Salaries = () => {
                         </div>
                       </td>
                     );
-                  })}
+                   })}
+                   <td className={`${tfClass} text-center font-bold text-foreground border-l border-border/20`}>
+                     {filtered.reduce((s, r) => s + Object.values(r.platformOrders).reduce((a, v) => a + v, 0), 0).toLocaleString()}
+                   </td>
                    <td className={`${tfClass} text-foreground border-l border-border/30`}>{totals.platformSalaries.toLocaleString()}</td>
                   <td className={`${tfClass} text-foreground`}>{totals.incentives.toLocaleString()}</td>
                   <td className={`${tfClass} text-foreground`}>{totals.sickAllowance.toLocaleString()}</td>
@@ -2278,6 +2394,13 @@ const Salaries = () => {
       {detailRow && (() => {
         const c = computeRow(detailRow);
         const monthLabel = months.find(m => m.v === selectedMonth)?.l || selectedMonth;
+        // All custom deduction columns across apps
+        const allCustomCols: { appName: string; key: string; label: string; fullKey: string }[] = [];
+        platforms.forEach(p => {
+          (appCustomColumns[p] || []).forEach(col => {
+            allCustomCols.push({ appName: p, key: col.key, label: col.label, fullKey: `${p}___${col.key}` });
+          });
+        });
         return (
           <Dialog open onOpenChange={() => setDetailRow(null)}>
             <DialogContent dir="rtl" className="max-w-xl max-h-[85vh] overflow-y-auto">
@@ -2307,16 +2430,18 @@ const Salaries = () => {
                     <p className="font-bold text-xs text-success uppercase tracking-wide">✅ الطلبات والاستحقاقات</p>
                   </div>
                   <div className="divide-y divide-border/30">
-                    {detailOrders.length === 0 ? (
-                      <div className="px-3 py-4 text-center text-xs text-muted-foreground">لا توجد طلبات مسجّلة لهذا الشهر</div>
-                    ) : detailOrders.map(({ appName, orders, salary }) => {
-                      const pc = platformColors[appName];
+                    {/* All platforms — show orders + salary for each */}
+                    {platforms.map(p => {
+                      const orders = detailRow.platformOrders[p] || 0;
+                      const salary = detailRow.platformSalaries[p] || 0;
+                      if (orders === 0 && salary === 0) return null;
+                      const pc = platformColors[p];
                       return (
-                        <div key={appName} className="flex justify-between items-center px-3 py-2.5">
+                        <div key={p} className="flex justify-between items-center px-3 py-2.5">
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: pc?.header || 'hsl(var(--primary))' }} />
                             <div>
-                              <span className="font-medium text-xs text-foreground">{appName}</span>
+                              <span className="font-medium text-xs text-foreground">{p}</span>
                               <span className="text-[10px] text-muted-foreground mr-1.5">{orders.toLocaleString()} طلب</span>
                             </div>
                           </div>
@@ -2324,6 +2449,9 @@ const Salaries = () => {
                         </div>
                       );
                     })}
+                    {detailOrders.length === 0 && platforms.every(p => !detailRow.platformOrders[p]) && (
+                      <div className="px-3 py-4 text-center text-xs text-muted-foreground">لا توجد طلبات مسجّلة لهذا الشهر</div>
+                    )}
                     {detailRow.incentives > 0 && (
                       <div className="flex justify-between items-center px-3 py-2.5">
                         <span className="text-xs text-foreground">حوافز</span>
@@ -2343,50 +2471,58 @@ const Salaries = () => {
                   </div>
                 </div>
 
-                {/* Deductions */}
-                {c.totalDeductions > 0 && (
-                  <div className="rounded-xl border border-destructive/20 bg-destructive/5 overflow-hidden">
-                    <div className="px-3 py-2 bg-destructive/10 border-b border-destructive/20">
-                      <p className="font-bold text-xs text-destructive uppercase tracking-wide">🔻 الاستقطاعات</p>
-                    </div>
-                    <div className="divide-y divide-border/30">
-                      {detailRow.advanceDeduction > 0 && (
-                        <div className="flex justify-between items-center px-3 py-2.5">
-                          <span className="text-xs text-foreground">قسط سلفة</span>
-                          <span className="text-xs font-semibold text-destructive">-{detailRow.advanceDeduction.toLocaleString()} ر.س</span>
-                        </div>
-                      )}
-                      {detailRow.advanceRemaining > 0 && (
-                        <div className="flex justify-between items-center px-3 py-2.5">
-                          <span className="text-xs text-muted-foreground">رصيد السلفة المتبقي</span>
-                          <span className="text-xs font-semibold text-warning">{detailRow.advanceRemaining.toLocaleString()} ر.س</span>
-                        </div>
-                      )}
-                      {detailRow.externalDeduction > 0 && (
-                        <div className="flex justify-between items-center px-3 py-2.5">
-                          <span className="text-xs text-foreground">خصومات خارجية</span>
-                          <span className="text-xs font-semibold text-destructive">-{detailRow.externalDeduction.toLocaleString()} ر.س</span>
-                        </div>
-                      )}
-                      {detailRow.violations > 0 && (
-                        <div className="flex justify-between items-center px-3 py-2.5">
-                          <span className="text-xs text-foreground">مخالفات مرورية</span>
-                          <span className="text-xs font-semibold text-destructive">-{detailRow.violations.toLocaleString()} ر.س</span>
-                        </div>
-                      )}
-                      {Object.entries(detailRow.customDeductions || {}).filter(([, v]) => v > 0).map(([k, v]) => (
-                        <div key={k} className="flex justify-between items-center px-3 py-2.5">
-                          <span className="text-xs text-foreground">{k.split('___').slice(1).join('___') || k}</span>
-                          <span className="text-xs font-semibold text-destructive">-{v.toLocaleString()} ر.س</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex justify-between items-center px-3 py-2.5 bg-destructive/15 font-bold">
-                      <span className="text-xs text-destructive">إجمالي الاستقطاعات</span>
-                      <span className="text-sm text-destructive">-{c.totalDeductions.toLocaleString()} ر.س</span>
-                    </div>
+                {/* Deductions — always show all including custom columns */}
+                <div className="rounded-xl border border-destructive/20 bg-destructive/5 overflow-hidden">
+                  <div className="px-3 py-2 bg-destructive/10 border-b border-destructive/20">
+                    <p className="font-bold text-xs text-destructive uppercase tracking-wide">🔻 الاستقطاعات</p>
                   </div>
-                )}
+                  <div className="divide-y divide-border/30">
+                    <div className="flex justify-between items-center px-3 py-2.5">
+                      <span className="text-xs text-foreground">قسط سلفة</span>
+                      <span className={`text-xs font-semibold ${detailRow.advanceDeduction > 0 ? 'text-destructive' : 'text-muted-foreground/40'}`}>
+                        {detailRow.advanceDeduction > 0 ? `-${detailRow.advanceDeduction.toLocaleString()} ر.س` : '—'}
+                      </span>
+                    </div>
+                    {detailRow.advanceRemaining > 0 && (
+                      <div className="flex justify-between items-center px-3 py-2.5">
+                        <span className="text-xs text-muted-foreground">رصيد السلفة المتبقي</span>
+                        <span className="text-xs font-semibold text-warning">{detailRow.advanceRemaining.toLocaleString()} ر.س</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center px-3 py-2.5">
+                      <span className="text-xs text-foreground">خصومات خارجية</span>
+                      <span className={`text-xs font-semibold ${detailRow.externalDeduction > 0 ? 'text-destructive' : 'text-muted-foreground/40'}`}>
+                        {detailRow.externalDeduction > 0 ? `-${detailRow.externalDeduction.toLocaleString()} ر.س` : '—'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center px-3 py-2.5">
+                      <span className="text-xs text-foreground">مخالفات</span>
+                      <span className={`text-xs font-semibold ${detailRow.violations > 0 ? 'text-destructive' : 'text-muted-foreground/40'}`}>
+                        {detailRow.violations > 0 ? `-${detailRow.violations.toLocaleString()} ر.س` : '—'}
+                      </span>
+                    </div>
+                    {/* All custom columns from apps — always visible */}
+                    {allCustomCols.map(col => {
+                      const v = detailRow.customDeductions?.[col.fullKey] || 0;
+                      return (
+                        <div key={col.fullKey} className="flex justify-between items-center px-3 py-2.5">
+                          <span className="text-xs text-foreground flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: platformColors[col.appName]?.header || 'hsl(var(--muted-foreground))' }} />
+                            {col.label}
+                            <span className="text-[9px] text-muted-foreground">({col.appName})</span>
+                          </span>
+                          <span className={`text-xs font-semibold ${v > 0 ? 'text-destructive' : 'text-muted-foreground/40'}`}>
+                            {v > 0 ? `-${v.toLocaleString()} ر.س` : '—'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-between items-center px-3 py-2.5 bg-destructive/15 font-bold">
+                    <span className="text-xs text-destructive">إجمالي الاستقطاعات</span>
+                    <span className="text-sm text-destructive">-{c.totalDeductions.toLocaleString()} ر.س</span>
+                  </div>
+                </div>
 
                 {/* Net salary */}
                 <div className="flex justify-between items-center py-3.5 bg-primary text-primary-foreground rounded-xl px-5">
