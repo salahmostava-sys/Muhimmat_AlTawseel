@@ -134,6 +134,7 @@ const VehicleFormModal = ({
       type: form.type,
       brand: form.brand || null, model: form.model || null,
       year: form.year ? parseInt(form.year) : null, status: form.status,
+      has_fuel_chip: form.has_fuel_chip,
       insurance_expiry: form.insurance_expiry || null,
       registration_expiry: form.registration_expiry || null,
       authorization_expiry: form.authorization_expiry || null,
