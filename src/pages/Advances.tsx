@@ -639,8 +639,7 @@ const Advances = () => {
   const [writeOffEmployee, setWriteOffEmployee] = useState<{ name: string; remaining: number; advanceIds: string[] } | null>(null);
   const [restoreWriteOffEmployee, setRestoreWriteOffEmployee] = useState<{ name: string; advanceIds: string[] } | null>(null);
   const [showAddEmployee, setShowAddEmployee] = useState(false);
-  const [newEmployeeName, setNewEmployeeName] = useState('');
-  const [addingEmployee, setAddingEmployee] = useState(false);
+  const [newEmpEntry, setNewEmpEntry] = useState<{ id: string; name: string } | null>(null);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [inlineRowEmpId, setInlineRowEmpId] = useState<string | null>(null);
