@@ -10,7 +10,8 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { SystemSettingsProvider } from "@/context/SystemSettingsContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import AppLayout from "./components/AppLayout";
+import DashboardLayout from "@/layouts/DashboardLayout";
+import AuthLayout from "@/layouts/AuthLayout";
 import { Loader2 } from "lucide-react";
 import "@/i18n";
 
@@ -59,14 +60,14 @@ const App = () => (
                 <ErrorBoundary>
                   <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><Loader2 size={32} className="animate-spin text-primary" /></div>}>
                     <Routes>
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/forgot-password" element={<ForgotPassword />} />
-                      <Route path="/reset-password" element={<ResetPassword />} />
+                      <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
+                      <Route path="/forgot-password" element={<AuthLayout><ForgotPassword /></AuthLayout>} />
+                      <Route path="/reset-password" element={<AuthLayout><ResetPassword /></AuthLayout>} />
                       <Route
                         path="/*"
                         element={
                           <ProtectedRoute>
-                            <AppLayout>
+                            <DashboardLayout>
                               <ErrorBoundary>
                                 <Suspense fallback={<PageLoader />}>
                                   <Routes>
@@ -98,7 +99,7 @@ const App = () => (
                                   </Routes>
                                 </Suspense>
                               </ErrorBoundary>
-                            </AppLayout>
+                            </DashboardLayout>
                           </ProtectedRoute>
                         }
                       />
