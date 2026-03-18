@@ -425,19 +425,60 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee, tradeRegisters: in
                 <Input value={form.bank_account_number} onChange={e => setField('bank_account_number', e.target.value)} dir="ltr" />
               </F>
               <F label="السجل التجاري">
-                <Select value={form.trade_register_id || '__none__'} onValueChange={v => setField('trade_register_id', v === '__none__' ? '' : v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="اختر السجل التجاري (اختياري)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">— بدون سجل —</SelectItem>
-                    {tradeRegisters.map(tr => (
-                      <SelectItem key={tr.id} value={tr.id}>
-                        {tr.name}{tr.cr_number ? ` (${tr.cr_number})` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Select value={form.trade_register_id || '__none__'} onValueChange={v => setField('trade_register_id', v === '__none__' ? '' : v)}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="اختر السجل التجاري (اختياري)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">— بدون سجل —</SelectItem>
+                      {tradeRegisters.map(tr => (
+                        <SelectItem key={tr.id} value={tr.id}>
+                          {tr.name}{tr.cr_number ? ` (${tr.cr_number})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddRegister(v => !v)}
+                    className="flex items-center gap-1 px-3 rounded-lg border border-dashed border-primary/50 text-primary hover:bg-primary/5 text-xs font-medium transition-colors whitespace-nowrap"
+                    title="إضافة سجل تجاري جديد"
+                  >
+                    <Plus size={12} /> جديد
+                  </button>
+                </div>
+                {showAddRegister && (
+                  <div className="mt-2 p-3 rounded-xl border border-primary/20 bg-primary/5 space-y-2">
+                    <p className="text-xs font-semibold text-primary">إضافة سجل تجاري جديد</p>
+                    <div className="flex gap-2">
+                      <Input
+                        className="h-8 text-xs flex-1"
+                        placeholder="اسم السجل *"
+                        value={newRegName}
+                        onChange={e => setNewRegName(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleAddRegister()}
+                        autoFocus
+                      />
+                      <Input
+                        className="h-8 text-xs w-32"
+                        placeholder="رقم السجل"
+                        value={newRegCr}
+                        onChange={e => setNewRegCr(e.target.value)}
+                        dir="ltr"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" className="h-7 text-xs gap-1 flex-1" onClick={handleAddRegister} disabled={savingRegister || !newRegName.trim()}>
+                        {savingRegister ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />}
+                        حفظ السجل
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setShowAddRegister(false); setNewRegName(''); setNewRegCr(''); }}>
+                        إلغاء
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </F>
               <F label="المدينة">
                 <div className="flex gap-3 mt-1">
