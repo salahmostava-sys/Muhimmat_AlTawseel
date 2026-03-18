@@ -33,7 +33,6 @@ const ViolationResolver = lazy(() => import("./pages/ViolationResolver"));
 const Motorcycles = lazy(() => import("./pages/Motorcycles"));
 const VehicleAssignment = lazy(() => import("./pages/VehicleAssignment"));
 const ActivityLog = lazy(() => import("./pages/ActivityLog"));
-const Reports = lazy(() => import("./pages/Reports"));
 const EmployeeTiers = lazy(() => import("./pages/EmployeeTiers"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
