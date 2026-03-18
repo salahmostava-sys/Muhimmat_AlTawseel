@@ -258,6 +258,7 @@ const AddEmployeeModal = ({ onClose, onSuccess, editEmployee }: Props) => {
         join_date: form.join_date || null,
         birth_date: form.birth_date || null,
         residency_expiry: form.residency_expiry || null,
+        probation_end_date: form.probation_end_date || null,
         license_status: form.license_status,
         sponsorship_status: form.sponsorship_status,
         salary_type: form.salary_type,
