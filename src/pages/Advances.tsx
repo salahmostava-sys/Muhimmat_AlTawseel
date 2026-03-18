@@ -975,6 +975,15 @@ const Advances = () => {
                             )}
                           </div>
                         )}
+                        {s.isWrittenOff && permissions.can_edit && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <button
+                              onClick={() => setRestoreWriteOffEmployee({ name: s.employeeName, advanceIds: s.allAdvances.map(a => a.id) })}
+                              className="flex items-center gap-0.5 text-[11px] text-warning hover:text-warning/80 transition-colors">
+                              <RotateCcw size={11} /> استرداد الديون
+                            </button>
+                          </div>
+                        )}
                       </td>
                       <td className="px-3 py-3 text-center text-sm font-mono text-foreground" dir="ltr">{s.nationalId}</td>
                       <td className="px-3 py-3 text-center">
