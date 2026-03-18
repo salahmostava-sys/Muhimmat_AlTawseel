@@ -359,18 +359,20 @@ const TransactionsModal = ({ employeeId, employeeName, advances, onClose, onRefr
   );
 };
 
-// ─── Add Advance Modal ────────────────────────────────────────────────────────
+// ─── Add / Payment Modal ─────────────────────────────────────────────────────
 interface AddAdvanceModalProps {
   open: boolean;
   onClose: () => void;
   onSaved: () => void;
   defaultEmployeeId?: string;
+  defaultType?: 'advance' | 'payment';
   allAdvances: Advance[];
   employees: { id: string; name: string }[];
 }
-const AddAdvanceModalInline = ({ open, onClose, onSaved, defaultEmployeeId, allAdvances, employees }: AddAdvanceModalProps) => {
+const AddAdvanceModalInline = ({ open, onClose, onSaved, defaultEmployeeId, defaultType = 'advance', allAdvances, employees }: AddAdvanceModalProps) => {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
+  const [type, setType] = useState<'advance' | 'payment'>(defaultType);
   const [form, setForm] = useState({
     employee_id: defaultEmployeeId || '',
     amount: '',
@@ -379,10 +381,172 @@ const AddAdvanceModalInline = ({ open, onClose, onSaved, defaultEmployeeId, allA
     first_deduction_month: format(new Date(), 'yyyy-MM'),
     note: '',
   });
+  const [payForm, setPayForm] = useState({
+    employee_id: defaultEmployeeId || '',
+    amount: '',
+    payment_date: format(new Date(), 'yyyy-MM-dd'),
+    note: '',
+  });
 
   useEffect(() => {
-    if (open) setForm(p => ({ ...p, employee_id: defaultEmployeeId || '' }));
-  }, [open, defaultEmployeeId]);
+    if (open) {
+      setType(defaultType);
+      setForm(p => ({ ...p, employee_id: defaultEmployeeId || '' }));
+      setPayForm(p => ({ ...p, employee_id: defaultEmployeeId || '' }));
+    }
+  }, [open, defaultEmployeeId, defaultType]);
+
+  const projectedInstallments = form.amount && form.monthly_amount
+    ? Math.ceil(parseFloat(form.amount) / parseFloat(form.monthly_amount))
+    : 0;
+
+  const hasActiveAdvance = form.employee_id &&
+    allAdvances.some(a => a.employee_id === form.employee_id && a.status === 'active');
+
+  const handleSaveAdvance = async () => {
+    if (!form.employee_id || !form.amount || !form.monthly_amount || !form.disbursement_date || !form.first_deduction_month)
+      return toast({ title: 'يرجى ملء جميع الحقول المطلوبة', variant: 'destructive' });
+    setSaving(true);
+    const { data: adv, error } = await supabase.from('advances').insert({
+      employee_id: form.employee_id,
+      amount: parseFloat(form.amount),
+      monthly_amount: parseFloat(form.monthly_amount),
+      total_installments: projectedInstallments,
+      disbursement_date: form.disbursement_date,
+      first_deduction_month: form.first_deduction_month,
+      note: form.note || null,
+      status: 'active',
+    }).select().single();
+    if (error || !adv) { setSaving(false); return toast({ title: 'حدث خطأ', description: error?.message, variant: 'destructive' }); }
+    const installments = [];
+    let [year, month] = form.first_deduction_month.split('-').map(Number);
+    for (let i = 0; i < projectedInstallments; i++) {
+      const my = `${year}-${String(month).padStart(2, '0')}`;
+      installments.push({ advance_id: adv.id, month_year: my, amount: parseFloat(form.monthly_amount), status: 'pending' as const });
+      month++; if (month > 12) { month = 1; year++; }
+    }
+    if (installments.length > 0) await supabase.from('advance_installments').insert(installments);
+    setSaving(false);
+    toast({ title: 'تم إضافة السلفة بنجاح ✅' });
+    onSaved(); onClose();
+  };
+
+  const handleSavePayment = async () => {
+    if (!payForm.employee_id || !payForm.amount)
+      return toast({ title: 'يرجى تحديد المندوب والمبلغ', variant: 'destructive' });
+    const empAdvances = allAdvances.filter(a => a.employee_id === payForm.employee_id && a.status === 'active');
+    const pendingInst = empAdvances
+      .flatMap(a => (a.advance_installments || []).filter(i => i.status === 'pending'))
+      .sort((a, b) => a.month_year.localeCompare(b.month_year));
+    if (pendingInst.length === 0)
+      return toast({ title: 'لا توجد أقساط معلّقة لهذا المندوب', variant: 'destructive' });
+    setSaving(true);
+    const inst = pendingInst[0];
+    const noteText = payForm.note || `سداد يدوي بتاريخ ${payForm.payment_date} — ${payForm.amount} ر.س`;
+    const { error } = await supabase.from('advance_installments').update({
+      status: 'deducted' as const,
+      deducted_at: new Date().toISOString(),
+      notes: noteText,
+    } as any).eq('id', inst.id);
+    if (error) { setSaving(false); return toast({ title: 'حدث خطأ', description: error.message, variant: 'destructive' }); }
+    setSaving(false);
+    toast({ title: `تم تسجيل السداد ✅ — ${payForm.amount} ر.س` });
+    onSaved(); onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={v => !v && onClose()}>
+      <DialogContent className="max-w-lg" dir="rtl">
+        <div className="flex gap-2 p-1 bg-muted rounded-lg mb-1">
+          <button onClick={() => setType('advance')}
+            className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-1.5
+              ${type === 'advance' ? 'bg-background shadow text-info' : 'text-muted-foreground hover:text-foreground'}`}>
+            <ArrowDownCircle size={14} /> تسجيل سلفة
+          </button>
+          <button onClick={() => setType('payment')}
+            className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-1.5
+              ${type === 'payment' ? 'bg-background shadow text-success' : 'text-muted-foreground hover:text-foreground'}`}>
+            <ArrowUpCircle size={14} /> تسجيل سداد
+          </button>
+        </div>
+        <DialogHeader>
+          <DialogTitle>{type === 'advance' ? '💰 إضافة سلفة جديدة' : '✅ تسجيل سداد'}</DialogTitle>
+        </DialogHeader>
+        {type === 'advance' ? (
+          <div className="grid grid-cols-2 gap-3">
+            {hasActiveAdvance && (
+              <div className="col-span-2 bg-warning/10 border border-warning/30 rounded-lg p-3 text-sm text-warning">
+                ⚠️ هذا المندوب لديه سلفة نشطة — هل تريد المتابعة؟
+              </div>
+            )}
+            <div className="col-span-2">
+              <label className="text-sm font-medium mb-1 block">المندوب *</label>
+              <Select value={form.employee_id} onValueChange={v => setForm(p => ({ ...p, employee_id: v }))}>
+                <SelectTrigger><SelectValue placeholder="اختر المندوب" /></SelectTrigger>
+                <SelectContent>{employees.map(e => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">المبلغ الإجمالي (ر.س) *</label>
+              <Input type="number" value={form.amount} onChange={e => setForm(p => ({ ...p, amount: e.target.value }))} placeholder="0" />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">القسط الشهري (ر.س) *</label>
+              <Input type="number" value={form.monthly_amount} onChange={e => setForm(p => ({ ...p, monthly_amount: e.target.value }))} placeholder="0" />
+              {projectedInstallments > 0 && <p className="text-xs text-muted-foreground mt-1">عدد الأقساط = {projectedInstallments}</p>}
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">تاريخ الصرف *</label>
+              <Input type="date" value={form.disbursement_date} onChange={e => setForm(p => ({ ...p, disbursement_date: e.target.value }))} />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">أول شهر خصم *</label>
+              <Input type="month" value={form.first_deduction_month} onChange={e => setForm(p => ({ ...p, first_deduction_month: e.target.value }))} dir="ltr" />
+            </div>
+            <div className="col-span-2">
+              <label className="text-sm font-medium mb-1 block">ملاحظات</label>
+              <textarea value={form.note} onChange={e => setForm(p => ({ ...p, note: e.target.value }))} rows={2}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring" />
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <label className="text-sm font-medium mb-1 block">المندوب *</label>
+              <Select value={payForm.employee_id} onValueChange={v => setPayForm(p => ({ ...p, employee_id: v }))}>
+                <SelectTrigger><SelectValue placeholder="اختر المندوب" /></SelectTrigger>
+                <SelectContent>{employees.map(e => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">المبلغ المسدّد (ر.س) *</label>
+              <Input type="number" value={payForm.amount} onChange={e => setPayForm(p => ({ ...p, amount: e.target.value }))} placeholder="0" />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">تاريخ السداد</label>
+              <Input type="date" value={payForm.payment_date} onChange={e => setPayForm(p => ({ ...p, payment_date: e.target.value }))} />
+            </div>
+            <div className="col-span-2">
+              <label className="text-sm font-medium mb-1 block">ملاحظات</label>
+              <textarea value={payForm.note} onChange={e => setPayForm(p => ({ ...p, note: e.target.value }))} rows={2}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+                placeholder="مثال: سدّد في يوم كذا..." />
+            </div>
+          </div>
+        )}
+        <DialogFooter className="mt-4 gap-2">
+          <Button variant="outline" onClick={onClose}>إلغاء</Button>
+          <Button onClick={type === 'advance' ? handleSaveAdvance : handleSavePayment} disabled={saving}
+            className={type === 'payment' ? 'bg-success text-success-foreground hover:bg-success/90' : ''}>
+            {saving ? 'جاري الحفظ...' : type === 'advance' ? 'إضافة السلفة' : 'تسجيل السداد'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+
 
   const projectedInstallments = form.amount && form.monthly_amount
     ? Math.ceil(parseFloat(form.amount) / parseFloat(form.monthly_amount))
