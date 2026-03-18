@@ -90,7 +90,7 @@ const App = () => (
                                     <Route path="/settings/schemes" element={<SalarySchemes />} />
                                     <Route path="/settings/users" element={<UsersAndPermissions />} />
                                     <Route path="/settings/general" element={<GeneralSettings />} />
-                                    <Route path="/analytics" element={<Analytics />} />
+                                    <Route path="/analytics" element={<Navigate to="/" replace />} />
                                     <Route path="/violation-resolver" element={<ViolationResolver />} />
                                     <Route path="/activity-log" element={<ActivityLog />} />
                                     <Route path="*" element={<NotFound />} />
