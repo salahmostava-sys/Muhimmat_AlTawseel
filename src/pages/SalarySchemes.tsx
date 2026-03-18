@@ -304,7 +304,7 @@ const SalarySchemes = () => {
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h3 className="font-semibold text-foreground">{s.name}</h3>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${isFixed ? 'bg-blue-500/10 text-blue-600' : 'bg-primary/10 text-primary'}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${isFixed ? 'bg-accent text-accent-foreground' : 'bg-primary/10 text-primary'}`}>
                       {isFixed ? '📅 راتب شهري ثابت' : '📦 بالطلبات'}
                     </span>
                   </div>
