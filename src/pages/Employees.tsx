@@ -55,6 +55,7 @@ type Employee = {
   base_salary: number;
   nationality?: string | null;
   preferred_language?: string | null;
+  trade_register_id?: string | null;
   trade_register?: { id: string; name: string } | null;
 };
 
@@ -946,11 +947,6 @@ const Employees = () => {
                                   {permissions.can_edit && (
                                     <DropdownMenuItem onClick={() => { setEditEmployee(emp); setShowAddModal(true); }}>
                                       <Edit size={14} className="me-2" /> تعديل البيانات
-                                    </DropdownMenuItem>
-                                  )}
-                                  {permissions.can_edit && (
-                                    <DropdownMenuItem onClick={() => { setTradeAssignEmp(emp); setTradeAssignVal(emp.trade_register?.id || '__none__'); }}>
-                                      <Building2 size={14} className="me-2" /> السجل التجاري
                                     </DropdownMenuItem>
                                   )}
                                   {permissions.can_delete && (
