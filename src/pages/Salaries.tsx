@@ -1762,22 +1762,6 @@ const Salaries = () => {
         })()}
       </div>
 
-      {/* Status mini-cards */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="stat-card">
-          <p className="text-xs text-muted-foreground">بانتظار الاعتماد</p>
-          <p className="text-2xl font-bold text-warning mt-1">{pendingCount}</p>
-        </div>
-        <div className="stat-card">
-          <p className="text-xs text-muted-foreground">معتمد</p>
-          <p className="text-2xl font-bold text-success mt-1">{approvedCount}</p>
-        </div>
-        <div className="stat-card">
-          <p className="text-xs text-muted-foreground">مصروف</p>
-          <p className="text-2xl font-bold text-info mt-1">{paidCount}</p>
-        </div>
-      </div>
-
       {/* Setup Required Banner — platforms without scheme */}
       {appsWithoutScheme.length > 0 && (
         <div className="flex items-center gap-3 bg-warning/10 border border-warning/30 rounded-xl px-4 py-3">
