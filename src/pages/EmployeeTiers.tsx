@@ -70,7 +70,7 @@ const EmployeeTiers = () => {
   const fetchAll = async () => {
     setLoading(true);
     const [{ data: tiersData }, { data: empsData }] = await Promise.all([
-      supabase.from('employee_tiers').select('*').order('created_at', { ascending: false }),
+      (supabase as any).from('employee_tiers').select('*').order('created_at', { ascending: false }),
       supabase.from('employees').select('id, name, phone, national_id, city').eq('status', 'active').order('name'),
     ]);
     setEmployees((empsData || []) as Employee[]);
