@@ -939,6 +939,40 @@ const Employees = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Trade Register Assignment Dialog */}
+      <Dialog open={!!tradeAssignEmp} onOpenChange={open => !open && setTradeAssignEmp(null)}>
+        <DialogContent dir="rtl" className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 size={16} /> السجل التجاري — {tradeAssignEmp?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <Label>اختر السجل التجاري</Label>
+            <Select value={tradeAssignVal} onValueChange={setTradeAssignVal}>
+              <SelectTrigger>
+                <SelectValue placeholder="اختر سجلاً..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— بدون سجل —</SelectItem>
+                {tradeRegisters.map(r => (
+                  <SelectItem key={r.id} value={r.id}>
+                    {r.name}{r.cr_number ? ` (${r.cr_number})` : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setTradeAssignEmp(null)}>إلغاء</Button>
+            <Button onClick={handleTradeAssign} disabled={tradeSaving}>
+              {tradeSaving && <Loader2 size={14} className="animate-spin ml-1" />}
+              حفظ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
