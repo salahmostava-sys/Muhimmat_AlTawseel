@@ -637,9 +637,12 @@ const Advances = () => {
   const [editAdvance, setEditAdvance] = useState<Advance | null>(null);
   const [transactionsEmployee, setTransactionsEmployee] = useState<{ id: string; name: string; nationalId: string; totalDebt: number; totalPaid: number; remaining: number } | null>(null);
   const [writeOffEmployee, setWriteOffEmployee] = useState<{ name: string; remaining: number; advanceIds: string[] } | null>(null);
+  const [restoreWriteOffEmployee, setRestoreWriteOffEmployee] = useState<{ name: string; advanceIds: string[] } | null>(null);
+  const [showAddEmployee, setShowAddEmployee] = useState(false);
+  const [newEmployeeName, setNewEmployeeName] = useState('');
+  const [addingEmployee, setAddingEmployee] = useState(false);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
-  // inline row state: which employee has the + row open
   const [inlineRowEmpId, setInlineRowEmpId] = useState<string | null>(null);
 
   const importRef = useRef<HTMLInputElement>(null);
