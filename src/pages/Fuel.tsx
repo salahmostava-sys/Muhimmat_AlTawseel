@@ -620,14 +620,13 @@ const FuelPage = () => {
                     const orders = row.orders_count || 0;
                     const fuelPerOrder = orders > 0 ? row.fuel_cost / orders : null;
                     const kmPerOrder = orders > 0 ? row.km_total / orders : null;
-                    const initial = (row.employee?.name || '?').charAt(0);
                     return (
                       <tr key={row.id} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             {row.employee?.personal_photo_url
                               ? <img src={row.employee.personal_photo_url} className="w-8 h-8 rounded-full object-cover" alt="" />
-                              : <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">{initial}</div>
+                              : null
                             }
                             <span className="font-medium text-foreground">{row.employee?.name}</span>
                           </div>

@@ -100,8 +100,8 @@ const calcResidency = (expiry?: string | null) => {
 const CityBadge = ({ city }: { city?: string | null }) => {
   if (!city) return <span className="text-muted-foreground/40">—</span>;
   return city === 'makkah'
-    ? <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-accent text-accent-foreground">مكة</span>
-    : <span className="badge-info">جدة</span>;
+    ? <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-muted text-muted-foreground">مكة</span>
+    : <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-muted text-muted-foreground">جدة</span>;
 };
 
 const LicenseBadge = ({ status }: { status?: string | null }) => {
@@ -778,7 +778,7 @@ const Employees = () => {
                               <div className="flex items-center gap-2.5">
                                 {emp.personal_photo_url
                                   ? <img src={emp.personal_photo_url} className="w-8 h-8 rounded-full object-cover flex-shrink-0" alt="" />
-                                  : <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold flex-shrink-0">{emp.name.charAt(0)}</div>
+                                  : null
                                 }
                                 <button onClick={() => setSelectedEmployee(emp.id)} className="text-sm font-semibold text-foreground hover:text-primary transition-colors text-start">
                                   {emp.name}
