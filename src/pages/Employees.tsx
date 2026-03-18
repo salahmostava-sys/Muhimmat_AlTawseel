@@ -44,6 +44,7 @@ type Employee = {
   join_date?: string | null;
   birth_date?: string | null;
   residency_expiry?: string | null;
+  health_insurance_expiry?: string | null;
   probation_end_date?: string | null;
   license_status?: string | null;
   sponsorship_status?: string | null;
@@ -64,25 +65,26 @@ type SortDir = 'asc' | 'desc' | null;
 
 // ─── Column definitions ───────────────────────────────────────────────────────
 const ALL_COLUMNS = [
-  { key: 'seq',                  label: '#',                    sortable: false },
-  { key: 'name',                 label: 'الاسم',                sortable: true  },
-  { key: 'national_id',          label: 'رقم الهوية',           sortable: true  },
-  { key: 'job_title',            label: 'المسمى الوظيفي',       sortable: true  },
-  { key: 'city',                 label: 'المدينة',              sortable: true  },
-  { key: 'phone',                label: 'رقم الهاتف',           sortable: true  },
-  { key: 'nationality',          label: 'الجنسية',              sortable: true  },
-  { key: 'sponsorship_status',   label: 'حالة الكفالة',         sortable: true  },
-  { key: 'trade_register',       label: 'السجل التجاري',        sortable: true  },
-  { key: 'join_date',            label: 'تاريخ الانضمام',       sortable: true  },
-  { key: 'birth_date',           label: 'تاريخ الميلاد',        sortable: true  },
-  { key: 'probation_end_date',   label: 'انتهاء فترة التجربة',  sortable: true  },
-  { key: 'residency_expiry',     label: 'انتهاء الإقامة',       sortable: true  },
-  { key: 'days_residency',       label: 'المتبقي (يوم)',        sortable: true  },
-  { key: 'residency_status',     label: 'حالة الإقامة',         sortable: false },
-  { key: 'license_status',       label: 'حالة الرخصة',          sortable: true  },
-  { key: 'bank_account_number',  label: 'رقم الحساب البنكي',   sortable: false },
-  { key: 'email',                label: 'البريد الإلكتروني',    sortable: false },
-  { key: 'actions',              label: 'الإجراءات',            sortable: false },
+  { key: 'seq',                      label: '#',                       sortable: false },
+  { key: 'name',                     label: 'الاسم',                   sortable: true  },
+  { key: 'national_id',              label: 'رقم الهوية',              sortable: true  },
+  { key: 'job_title',                label: 'المسمى الوظيفي',          sortable: true  },
+  { key: 'city',                     label: 'المدينة',                 sortable: true  },
+  { key: 'phone',                    label: 'رقم الهاتف',              sortable: true  },
+  { key: 'nationality',              label: 'الجنسية',                 sortable: true  },
+  { key: 'sponsorship_status',       label: 'حالة الكفالة',            sortable: true  },
+  { key: 'trade_register',           label: 'السجل التجاري',           sortable: true  },
+  { key: 'join_date',                label: 'تاريخ الانضمام',          sortable: true  },
+  { key: 'birth_date',               label: 'تاريخ الميلاد',           sortable: true  },
+  { key: 'probation_end_date',       label: 'انتهاء فترة التجربة',     sortable: true  },
+  { key: 'residency_expiry',         label: 'انتهاء الإقامة',          sortable: true  },
+  { key: 'days_residency',           label: 'المتبقي (يوم)',           sortable: true  },
+  { key: 'residency_status',         label: 'حالة الإقامة',            sortable: false },
+  { key: 'health_insurance_expiry',  label: 'انتهاء التأمين الصحي',   sortable: true  },
+  { key: 'license_status',           label: 'حالة الرخصة',             sortable: true  },
+  { key: 'bank_account_number',      label: 'رقم الحساب البنكي',      sortable: false },
+  { key: 'email',                    label: 'البريد الإلكتروني',       sortable: false },
+  { key: 'actions',                  label: 'الإجراءات',               sortable: false },
 ] as const;
 
 type ColKey = typeof ALL_COLUMNS[number]['key'];

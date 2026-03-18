@@ -22,6 +22,7 @@ interface EmployeeData {
   join_date?: string | null;
   birth_date?: string | null;
   residency_expiry?: string | null;
+  health_insurance_expiry?: string | null;
   probation_end_date?: string | null;
   license_status?: string | null;
   sponsorship_status?: string | null;
