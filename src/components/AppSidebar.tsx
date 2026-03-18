@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Clock, Package, Wallet, CreditCard,
   Bike, FileDown, Bell, Smartphone,
   Settings, ChevronDown, Fuel, Settings2, X, FileWarning, Activity,
-  Briefcase, Layers,
+  Briefcase, Layers, ChevronsLeft, ChevronsRight,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -25,6 +25,17 @@ const AppSidebar = () => {
     hr: true, finance: false, operations: false, reports: false, settings: false,
   });
   const [showProfile, setShowProfile] = useState(false);
+  const [collapsed, setCollapsed] = useState<boolean>(
+    () => localStorage.getItem('sidebar_collapsed') === 'true'
+  );
+
+  const toggleCollapse = () => {
+    setCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem('sidebar_collapsed', String(next));
+      return next;
+    });
+  };
 
   const toggleGroup = (key: string) =>
     setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }));
@@ -103,10 +114,11 @@ const AppSidebar = () => {
       )}
 
       <aside className={cn(
-        'fixed top-0 h-screen w-[260px] flex flex-col z-50',
+        'fixed top-0 h-screen flex flex-col z-50',
         'bg-[hsl(var(--sidebar-background))] border-[hsl(var(--sidebar-border))]',
-        'transition-transform duration-300 ease-in-out',
+        'transition-all duration-300 ease-in-out',
         'shadow-sidebar',
+        collapsed ? 'w-[64px]' : 'w-[260px]',
         isRTL
           ? 'right-0 border-l'
           : 'left-0 border-r',
@@ -117,7 +129,10 @@ const AppSidebar = () => {
       )}>
 
         {/* ── Logo / Brand ─────────────────────────────────────── */}
-        <div className="h-[70px] px-6 flex items-center justify-between border-b border-[hsl(var(--sidebar-border))] flex-shrink-0">
+        <div className={cn(
+          'h-[70px] flex items-center justify-between border-b border-[hsl(var(--sidebar-border))] flex-shrink-0',
+          collapsed ? 'px-3 justify-center' : 'px-6'
+        )}>
           <Link to="/" className="flex items-center gap-3 min-w-0">
             {settings?.logo_url ? (
               <img
@@ -133,42 +148,48 @@ const AppSidebar = () => {
                 🚀
               </div>
             )}
-            <div className="min-w-0">
-              <span className="text-sm font-bold text-[hsl(var(--sidebar-accent-foreground))] leading-tight block truncate">
-                {projectName}
-              </span>
-              {projectSubtitle && (
-                <span className="text-[11px] text-[hsl(var(--sidebar-muted))] block truncate leading-tight mt-0.5">
-                  {projectSubtitle}
+            {!collapsed && (
+              <div className="min-w-0">
+                <span className="text-sm font-bold text-[hsl(var(--sidebar-accent-foreground))] leading-tight block truncate">
+                  {projectName}
                 </span>
-              )}
-            </div>
+                {projectSubtitle && (
+                  <span className="text-[11px] text-[hsl(var(--sidebar-muted))] block truncate leading-tight mt-0.5">
+                    {projectSubtitle}
+                  </span>
+                )}
+              </div>
+            )}
           </Link>
 
           {/* Mobile close */}
-          <button
-            onClick={close}
-            className="lg:hidden w-7 h-7 rounded-lg flex items-center justify-center text-[hsl(var(--sidebar-muted))] hover:bg-[hsl(var(--sidebar-accent))] transition-colors flex-shrink-0"
-          >
-            <X size={15} />
-          </button>
+          {!collapsed && (
+            <button
+              onClick={close}
+              className="lg:hidden w-7 h-7 rounded-lg flex items-center justify-center text-[hsl(var(--sidebar-muted))] hover:bg-[hsl(var(--sidebar-accent))] transition-colors flex-shrink-0"
+            >
+              <X size={15} />
+            </button>
+          )}
         </div>
 
         {/* ── Nav ──────────────────────────────────────────────── */}
-        <nav className="flex-1 overflow-y-auto py-4 px-4 space-y-1">
+        <nav className={cn('flex-1 overflow-y-auto py-4 space-y-1', collapsed ? 'px-2' : 'px-4')}>
 
           {/* Dashboard — always visible standalone item */}
           <Link
             to="/"
+            title={collapsed ? t('dashboard') : undefined}
             className={cn(
               'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium w-full transition-all duration-150',
+              collapsed && 'justify-center px-0',
               isActive('/')
                 ? 'bg-primary text-primary-foreground shadow-brand-sm'
                 : 'text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-accent-foreground))]'
             )}
           >
             <LayoutDashboard size={17} className={isActive('/') ? 'text-white' : 'text-[hsl(var(--sidebar-muted))]'} />
-            <span>{t('dashboard')}</span>
+            {!collapsed && <span>{t('dashboard')}</span>}
           </Link>
 
           {/* Grouped nav items */}
@@ -176,34 +197,38 @@ const AppSidebar = () => {
             const isGroupOpen = openGroups[group.key];
             return (
               <div key={group.key}>
-                {/* Section label / collapsible trigger */}
-                <button
-                  onClick={() => toggleGroup(group.key)}
-                  className="w-full flex items-center justify-between px-3 py-2 mt-2 rounded-lg transition-colors hover:bg-[hsl(var(--sidebar-accent))] group"
-                >
-                  <span className="text-sm font-medium text-[hsl(var(--sidebar-muted))] group-hover:text-[hsl(var(--sidebar-accent-foreground))] transition-colors">
-                    {group.sectionLabel}
-                  </span>
-                  <ChevronIcon
-                    size={14}
-                    className={cn(
-                      'text-[hsl(var(--sidebar-muted))] transition-transform duration-200',
-                      isGroupOpen ? 'rotate-0' : '-rotate-90'
-                    )}
-                  />
-                </button>
+                {/* Section label / collapsible trigger — hidden when collapsed */}
+                {!collapsed && (
+                  <button
+                    onClick={() => toggleGroup(group.key)}
+                    className="w-full flex items-center justify-between px-3 py-2 mt-2 rounded-lg transition-colors hover:bg-[hsl(var(--sidebar-accent))] group"
+                  >
+                    <span className="text-sm font-medium text-[hsl(var(--sidebar-muted))] group-hover:text-[hsl(var(--sidebar-accent-foreground))] transition-colors">
+                      {group.sectionLabel}
+                    </span>
+                    <ChevronIcon
+                      size={14}
+                      className={cn(
+                        'text-[hsl(var(--sidebar-muted))] transition-transform duration-200',
+                        isGroupOpen ? 'rotate-0' : '-rotate-90'
+                      )}
+                    />
+                  </button>
+                )}
 
-                {/* Items */}
-                {isGroupOpen && (
-                  <div className="mt-0.5 space-y-0.5">
+                {/* Items — always show when collapsed (icons only), else respect group open */}
+                {(collapsed || isGroupOpen) && (
+                  <div className={cn('space-y-0.5', !collapsed && 'mt-0.5')}>
                     {group.items.map(item => {
                       const active = isActive(item.path);
                       return (
                         <Link
                           key={item.path}
                           to={item.path}
+                          title={collapsed ? item.label : undefined}
                           className={cn(
                             'relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150',
+                            collapsed && 'justify-center px-0',
                             active
                               ? 'sidebar-item-active bg-[hsl(var(--sidebar-accent))] text-primary font-semibold'
                               : 'font-normal text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-accent-foreground))]'
@@ -217,7 +242,7 @@ const AppSidebar = () => {
                               active ? 'text-primary' : 'text-[hsl(var(--sidebar-muted))]'
                             )}
                           />
-                          <span>{item.label}</span>
+                          {!collapsed && <span>{item.label}</span>}
                         </Link>
                       );
                     })}
@@ -228,11 +253,29 @@ const AppSidebar = () => {
           })}
         </nav>
 
+        {/* ── Collapse toggle — desktop only ───────────────────── */}
+        <div className="hidden lg:flex px-3 py-2 border-t border-[hsl(var(--sidebar-border))] flex-shrink-0 justify-end">
+          <button
+            onClick={toggleCollapse}
+            title={collapsed ? 'توسيع القائمة' : 'تصغير القائمة'}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[hsl(var(--sidebar-muted))] hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-accent-foreground))] transition-colors"
+          >
+            {collapsed
+              ? (isRTL ? <ChevronsLeft size={16} /> : <ChevronsRight size={16} />)
+              : (isRTL ? <ChevronsRight size={16} /> : <ChevronsLeft size={16} />)
+            }
+          </button>
+        </div>
+
         {/* ── Footer / User ────────────────────────────────────── */}
-        <div className="p-4 border-t border-[hsl(var(--sidebar-border))] flex-shrink-0">
+        <div className={cn('border-t border-[hsl(var(--sidebar-border))] flex-shrink-0', collapsed ? 'p-2' : 'p-4')}>
           <button
             onClick={() => setShowProfile(true)}
-            className="w-full flex items-center gap-3 rounded-xl p-2.5 hover:bg-[hsl(var(--sidebar-accent))] transition-colors text-start group"
+            title={collapsed ? user?.email : undefined}
+            className={cn(
+              'w-full flex items-center gap-3 rounded-xl p-2.5 hover:bg-[hsl(var(--sidebar-accent))] transition-colors text-start group',
+              collapsed && 'justify-center p-2'
+            )}
           >
             <div
               className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
@@ -240,13 +283,17 @@ const AppSidebar = () => {
             >
               {user?.email?.[0]?.toUpperCase() || 'A'}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-[hsl(var(--sidebar-accent-foreground))] truncate">
-                {user?.email}
-              </p>
-              <p className="text-[10px] text-[hsl(var(--sidebar-muted))] mt-0.5">{t('systemAdmin')}</p>
-            </div>
-            <div className="w-2 h-2 rounded-full bg-success flex-shrink-0" title="Online" />
+            {!collapsed && (
+              <>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-[hsl(var(--sidebar-accent-foreground))] truncate">
+                    {user?.email}
+                  </p>
+                  <p className="text-[10px] text-[hsl(var(--sidebar-muted))] mt-0.5">{t('systemAdmin')}</p>
+                </div>
+                <div className="w-2 h-2 rounded-full bg-success flex-shrink-0" title="Online" />
+              </>
+            )}
           </button>
         </div>
 

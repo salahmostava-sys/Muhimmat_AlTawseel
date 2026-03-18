@@ -66,6 +66,16 @@ const AppLayoutInner = ({ children }: AppLayoutProps) => {
   const { t } = useTranslation();
   const location = useLocation();
   const [profileName, setProfileName] = useState<string | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => localStorage.getItem('sidebar_collapsed') === 'true'
+  );
+
+  useEffect(() => {
+    const onStorage = () => setSidebarCollapsed(localStorage.getItem('sidebar_collapsed') === 'true');
+    window.addEventListener('storage', onStorage);
+    const id = setInterval(onStorage, 200);
+    return () => { window.removeEventListener('storage', onStorage); clearInterval(id); };
+  }, []);
 
   const pageKey = routeTitles[location.pathname] || 'dashboard';
   const pageTitle = t(pageKey);
@@ -95,7 +105,9 @@ const AppLayoutInner = ({ children }: AppLayoutProps) => {
       <main className={cn(
         'flex flex-col transition-all duration-300',
         'h-screen overflow-hidden',
-        isRTL ? 'lg:mr-[260px]' : 'lg:ml-[260px]'
+        isRTL
+          ? (sidebarCollapsed ? 'lg:mr-[64px]' : 'lg:mr-[260px]')
+          : (sidebarCollapsed ? 'lg:ml-[64px]' : 'lg:ml-[260px]')
       )}>
         {/* ── Header ──────────────────────────────────────────── */}
         <header className="h-[70px] bg-[hsl(var(--card))] border-b border-border flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40">

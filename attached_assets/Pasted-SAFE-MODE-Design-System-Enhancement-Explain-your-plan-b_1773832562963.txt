@@ -1,0 +1,67 @@
+SAFE MODE — Design System Enhancement
+
+Explain your plan before making changes.
+
+IMPORTANT CONTEXT: This project already has a working layout with AppLayout.tsx, AppSidebar.tsx, and a full routing system. Do NOT create a new layout or sidebar. Only enhance what exists.
+
+🎨 STEP 1 — Colors & Typography in index.css
+
+Add these CSS variables to :root without removing anything existing:
+
+css
+--brand:         #1a56db;
+--brand-light:   #e8f1fd;
+--brand-dark:    #1240a8;
+--success:       #057a55;
+--warning:       #d97706;
+--danger:        #dc2626;
+--text-primary:  #111827;
+--text-secondary:#6b7280;
+--text-muted:    #9ca3af;
+--bg-page:       #f3f4f6;
+--bg-card:       #ffffff;
+--border:        #e5e7eb;
+--radius-md:     10px;
+--radius-lg:     14px;
+--shadow-sm:     0 1px 3px rgba(0,0,0,0.08);
+🎨 STEP 2 — Update existing primary color
+
+In index.css, update the existing --primary HSL value to match 
+#1a56db. Do not add a new variable, just update the existing one.
+
+🎨 STEP 3 — Sidebar toggle behavior
+
+In AppSidebar.tsx, add a collapse toggle button at the bottom of the sidebar. When collapsed, width shrinks to 64px showing icons only. When expanded, width is 260px showing icons and labels. Save the state in localStorage key sidebar_collapsed so it persists between sessions. Do NOT change any navigation links or routing.
+
+🎨 STEP 4 — Unify card styles
+
+Add these utility classes to index.css under @layer components:
+
+css
+.ds-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  padding: 20px;
+}
+.ds-btn-primary {
+  background: var(--brand);
+  color: white;
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+}
+.ds-btn-primary:hover { background: var(--brand-dark); }
+Do NOT replace existing button or card components. These are additive classes only.
+
+⚠️ RULES
+
+Do NOT rewrite AppLayout.tsx structure
+Do NOT touch any page business logic
+Do NOT change routing
+Do NOT duplicate existing components
+Maximum 4 files changed in total
