@@ -163,7 +163,7 @@
 @layer components {
   /* ─── TailAdmin v2.2 card ────────────────────────────────────── */
   .tailcard {
-    @apply bg-card rounded-xl border border-border shadow-card p-5 transition-shadow duration-200;
+    @apply bg-card rounded-xl shadow-card p-5 transition-shadow duration-200;
   }
 
   .tailcard:hover {
@@ -172,17 +172,17 @@
 
   /* ─── KPI metric card ───────────────────────────────────────── */
   .metric-card {
-    @apply bg-card rounded-xl border border-border p-5 shadow-card transition-all duration-200 hover:shadow-card-hover;
+    @apply bg-card rounded-xl p-5 shadow-card transition-all duration-200 hover:shadow-card-hover;
   }
 
   /* ─── Stat card ─────────────────────────────────────────────── */
   .stat-card {
-    @apply bg-card rounded-xl border border-border p-4 sm:p-5 shadow-card transition-all duration-200 hover:shadow-card-hover hover:border-primary/20;
+    @apply bg-card rounded-xl p-4 sm:p-5 shadow-card transition-all duration-200 hover:shadow-card-hover;
   }
 
   /* ─── Chart container ───────────────────────────────────────── */
   .chart-card {
-    @apply bg-card rounded-xl border border-border shadow-card overflow-hidden;
+    @apply bg-card rounded-xl shadow-card overflow-hidden;
   }
 
   .chart-card-header {
@@ -195,7 +195,7 @@
 
   /* ─── Table style ───────────────────────────────────────────── */
   .ta-table-wrap {
-    @apply overflow-hidden rounded-xl border border-border bg-card;
+    @apply overflow-hidden rounded-xl bg-card shadow-card;
   }
 
   .ta-thead {
@@ -271,18 +271,18 @@
 
   /* ─── Glass card ────────────────────────────────────────────── */
   .glass-card {
-    @apply bg-card/80 backdrop-blur-sm border border-border/50 shadow-card;
+    @apply bg-card/80 backdrop-blur-sm shadow-card;
   }
 
   /* ─── Responsive utilities ──────────────────────────────────── */
   .table-wrapper {
-    @apply w-full overflow-x-auto rounded-xl border border-border bg-card shadow-card;
+    @apply w-full overflow-x-auto rounded-xl bg-card shadow-card;
     -webkit-overflow-scrolling: touch;
   }
 
   /* ─── Data table (unified reusable table) ────────────────────── */
   .data-table-wrapper {
-    @apply w-full overflow-x-auto rounded-xl border border-border bg-card shadow-card;
+    @apply w-full overflow-x-auto rounded-xl bg-card shadow-card;
     -webkit-overflow-scrolling: touch;
   }
 
@@ -334,7 +334,6 @@
   .ds-card {
     background: var(--bg-card);
     border-radius: var(--radius-lg);
-    border: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
     padding: 20px;
   }
