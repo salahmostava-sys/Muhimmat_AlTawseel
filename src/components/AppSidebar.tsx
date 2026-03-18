@@ -3,8 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, Users, Clock, Package, Wallet, CreditCard,
   Bike, FileDown, Bell, Smartphone,
-  Settings, ChevronDown, Fuel, Settings2, X, FileWarning, Activity,
-  Briefcase, Layers,
+  Settings, ChevronDown, Fuel, Settings2, X, FileWarning, Layers,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -22,7 +21,7 @@ const AppSidebar = () => {
   const { projectName, projectSubtitle, settings } = useSystemSettings();
   const { isOpen, close } = useMobileSidebar();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    hr: true, finance: false, operations: false, reports: false, settings: false,
+    hr: true, finance: false, operations: false, settings: false,
   });
   const [showProfile, setShowProfile] = useState(false);
 
@@ -60,13 +59,6 @@ const AppSidebar = () => {
         { label: t('fuel'), icon: Fuel, path: '/fuel' },
         { label: t('violationResolver'), icon: FileWarning, path: '/violation-resolver' },
         { label: 'شرائح الشركة', icon: Layers, path: '/employee-tiers' },
-      ],
-    },
-    {
-      key: 'reports',
-      sectionLabel: t('reports'),
-      items: [
-        { label: t('activityLog'), icon: Activity, path: '/activity-log' },
       ],
     },
     {
