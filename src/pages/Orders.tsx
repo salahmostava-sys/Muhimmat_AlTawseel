@@ -290,9 +290,10 @@ const SpreadsheetGrid = () => {
   };
 
   return (
-    <div className="flex flex-col gap-3 h-full">
+    <div className="flex flex-col gap-3 h-full min-h-0">
       {/* Controls bar */}
       <div className="flex items-center gap-2 flex-wrap flex-shrink-0">
+
         <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
           <button onClick={prevMonth} className="p-1.5 rounded hover:bg-background transition-colors"><ChevronRight size={16} /></button>
           <span className="px-3 text-sm font-medium min-w-28 text-center">{monthLabel(year, month)}</span>
