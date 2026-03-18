@@ -112,10 +112,7 @@ const PayslipModal = ({ row, onClose, onApprove, selectedMonth, companyName }: P
     { key: 'advance',   label: t.advanceInstallment,  val: row.advanceDeduction },
     { key: 'external',  label: t.externalDeductions,  val: row.externalDeduction },
     { key: 'violation', label: t.violations,           val: row.violations },
-    { key: 'hunger',    label: t.walletHunger,         val: row.walletHunger },
-    { key: 'tuyo',      label: t.walletTuyo,           val: row.walletTuyo },
-    { key: 'jahiz',     label: t.walletJahiz,          val: row.walletJahiz },
-    { key: 'food',      label: t.foodDamage,           val: row.foodDamage },
+    ...Object.entries(row.customDeductions || {}).map(([k, v]) => ({ key: k, label: k.split('___')[1] || k, val: v })),
   ];
 
   const hasAnyDeduction = allDeductions.some(d => d.val > 0);
