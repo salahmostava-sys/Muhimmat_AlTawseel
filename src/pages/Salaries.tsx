@@ -506,25 +506,56 @@ const ImportModal = ({ onClose }: { onClose: () => void }) => {
 
 function calcSalaryFromTiers(
   orders: number,
-  tiers: { from_orders: number; to_orders: number | null; price_per_order: number; tier_order: number }[],
+  tiers: SchemeData['salary_scheme_tiers'],
   targetOrders: number | null,
   targetBonus: number | null
 ): number {
   if (!tiers || tiers.length === 0 || orders === 0) return 0;
   const sorted = [...tiers].sort((a, b) => a.tier_order - b.tier_order);
-  let total = 0;
+
+  // Find the matching tier for the total orders
+  let matchedTier = sorted[0];
   for (const tier of sorted) {
     const from = tier.from_orders;
     const to = tier.to_orders ?? Infinity;
-    if (orders < from) break;
-    const inTier = Math.min(orders, to) - from + 1;
-    if (inTier <= 0) continue;
-    total += inTier * tier.price_per_order;
+    if (orders >= from && orders <= to) { matchedTier = tier; break; }
+    if (orders > (tier.to_orders ?? Infinity)) matchedTier = tier;
   }
+
+  let total = 0;
+
+  // Check the tier type of the matching tier
+  const tierType = matchedTier?.tier_type || 'total_multiplier';
+
+  if (tierType === 'fixed_amount') {
+    // Fixed amount regardless of order count within range
+    total = matchedTier.price_per_order;
+  } else if (tierType === 'base_plus_incremental') {
+    const threshold = matchedTier.incremental_threshold ?? matchedTier.from_orders;
+    const incrPrice = matchedTier.incremental_price ?? 0;
+    const extra = Math.max(0, orders - threshold);
+    total = matchedTier.price_per_order + extra * incrPrice;
+  } else {
+    // Default: total_multiplier — all tiers accumulate progressively
+    for (const tier of sorted) {
+      const from = tier.from_orders;
+      const to = tier.to_orders ?? Infinity;
+      if (orders < from) break;
+      const inTier = Math.min(orders, to) - from + 1;
+      if (inTier <= 0) continue;
+      total += inTier * tier.price_per_order;
+    }
+  }
+
   if (targetOrders && targetBonus && orders >= targetOrders) {
     total += targetBonus;
   }
   return Math.round(total);
+}
+
+function calcFixedMonthlySalary(monthlyAmount: number, attendanceDays: number): number {
+  if (!monthlyAmount || monthlyAmount <= 0) return 0;
+  return Math.round((monthlyAmount / 30) * attendanceDays);
 }
 
 // ─── Salary breakdown tooltip ─────────────────────────────────────
