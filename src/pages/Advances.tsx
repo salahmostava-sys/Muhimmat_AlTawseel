@@ -220,7 +220,7 @@ const WriteOffDialog = ({ employeeName, remaining, advanceIds, onClose, onDone }
           <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-sm">
             <p className="font-semibold text-foreground">{employeeName}</p>
             <p className="text-muted-foreground mt-1">المبلغ الذي سيتم إعدامه: <span className="font-bold text-destructive">{remaining.toLocaleString()} ر.س</span></p>
-            <p className="text-xs text-muted-foreground mt-2">⚠️ هذا الإجراء لا يمكن التراجع عنه. الديون ستُحسب ضمن إجمالي الديون المعدومة.</p>
+            <p className="text-xs text-muted-foreground mt-2">⚠️ يمكن التراجع عن هذا الإجراء لاحقاً من خلال زر الاسترداد.</p>
           </div>
           <div>
             <label className="text-sm font-medium mb-1 block">سبب الإعدام</label>
@@ -230,6 +230,55 @@ const WriteOffDialog = ({ employeeName, remaining, advanceIds, onClose, onDone }
         <DialogFooter className="mt-2 gap-2">
           <Button variant="outline" onClick={onClose}>إلغاء</Button>
           <Button variant="destructive" onClick={handleWriteOff} disabled={saving}>{saving ? '...' : 'إعدام الديون'}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// ─── Restore Write-off Dialog ─────────────────────────────────────────────────
+interface RestoreWriteOffDialogProps {
+  employeeName: string;
+  advanceIds: string[];
+  onClose: () => void;
+  onDone: () => void;
+}
+const RestoreWriteOffDialog = ({ employeeName, advanceIds, onClose, onDone }: RestoreWriteOffDialogProps) => {
+  const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
+
+  const handleRestore = async () => {
+    setSaving(true);
+    const { error } = await supabase.from('advances').update({
+      is_written_off: false,
+      written_off_at: null,
+      written_off_reason: null,
+    } as any).in('id', advanceIds);
+    setSaving(false);
+    if (error) return toast({ title: 'حدث خطأ', description: error.message, variant: 'destructive' });
+    toast({ title: `✅ تم استرداد ديون ${employeeName}` });
+    onDone(); onClose();
+  };
+
+  return (
+    <Dialog open onOpenChange={v => !v && onClose()}>
+      <DialogContent className="max-w-md" dir="rtl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-warning">
+            <RotateCcw size={18} /> استرداد الديون المعدومة
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 text-sm">
+            <p className="font-semibold text-foreground">{employeeName}</p>
+            <p className="text-muted-foreground mt-1">سيتم إعادة تفعيل السلف المعدومة وإعادتها للحالة النشطة.</p>
+          </div>
+        </div>
+        <DialogFooter className="mt-2 gap-2">
+          <Button variant="outline" onClick={onClose}>إلغاء</Button>
+          <Button onClick={handleRestore} disabled={saving} className="bg-warning hover:bg-warning/90 text-warning-foreground">
+            {saving ? '...' : 'استرداد الديون'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
