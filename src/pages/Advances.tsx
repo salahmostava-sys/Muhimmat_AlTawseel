@@ -1214,6 +1214,28 @@ const Advances = () => {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* ── Confirm Delete All Employee Advances ── */}
+      {deleteEmployeeAdvancesId && (
+        <Dialog open onOpenChange={v => !v && setDeleteEmployeeAdvancesId(null)}>
+          <DialogContent className="max-w-sm" dir="rtl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle size={18} /> تأكيد حذف جميع السلف
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              سيتم حذف جميع سلف هذا المندوب وكافة أقساطها نهائياً. هل تريد المتابعة؟
+            </p>
+            <DialogFooter className="gap-2 mt-2">
+              <Button variant="outline" onClick={() => setDeleteEmployeeAdvancesId(null)}>إلغاء</Button>
+              <Button variant="destructive" onClick={handleDeleteEmployeeAllAdvances} disabled={deletingEmployeeAdvances}>
+                {deletingEmployeeAdvances ? '...' : 'حذف نهائياً'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
