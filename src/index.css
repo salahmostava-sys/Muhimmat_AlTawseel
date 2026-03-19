@@ -7,7 +7,7 @@
 @layer base {
   :root {
     /* ─── TailAdmin v2.2 Light Palette ─────────────────────────── */
-    --background: 220 18% 96%;       /* #f1f5f9 cool page bg */
+    --background: 0 0% 100%;          /* white page bg */
     --foreground: 222 47% 11%;       /* #0f172a dark text */
 
     --card: 0 0% 100%;               /* pure white cards */
@@ -66,7 +66,7 @@
     --text-primary:   #111827;
     --text-secondary: #6b7280;
     --text-muted:     #9ca3af;
-    --bg-page:        #f3f4f6;
+    --bg-page:        #ffffff;
     --bg-card:        #ffffff;
 
     /* ── Renamed to avoid overriding HSL tokens above ───────── */
@@ -253,11 +253,13 @@
   }
 
   .page-title {
-    @apply text-lg font-bold text-foreground tracking-tight;
+    @apply text-lg font-bold tracking-tight;
+    color: #0a0a0a;
   }
 
   .page-subtitle {
-    @apply text-xs text-muted-foreground;
+    @apply text-xs;
+    color: #6b7280;
   }
 
   /* ─── Badges ────────────────────────────────────────────────── */
