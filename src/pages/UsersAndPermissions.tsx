@@ -75,10 +75,11 @@ const BlueSwitch = ({ checked, onCheckedChange, disabled }: { checked: boolean; 
 );
 
 // ─── 3-dot Actions Menu ───────────────────────────────────────────────────────
-const DropdownMenuRoot = ({ u, openEdit, setDeleteTarget, handleReactivate, isReactivating }: {
+const DropdownMenuRoot = ({ u, openEdit, setDeleteTarget, setHardDeleteTarget, handleReactivate, isReactivating }: {
   u: Profile;
   openEdit: (u: Profile) => void;
   setDeleteTarget: (u: Profile) => void;
+  setHardDeleteTarget: (u: Profile) => void;
   handleReactivate: (u: Profile) => void;
   isReactivating: boolean;
 }) => {
@@ -98,7 +99,7 @@ const DropdownMenuRoot = ({ u, openEdit, setDeleteTarget, handleReactivate, isRe
         <MoreVertical size={15} />
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 bg-card border border-border rounded-xl shadow-lg py-1 min-w-[140px]" dir="rtl">
+        <div className="absolute left-0 top-full mt-1 z-50 bg-card border border-border rounded-xl shadow-lg py-1 min-w-[150px]" dir="rtl">
           <button
             onClick={() => { openEdit(u); setOpen(false); }}
             className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted/60 transition-colors text-foreground"
@@ -121,6 +122,13 @@ const DropdownMenuRoot = ({ u, openEdit, setDeleteTarget, handleReactivate, isRe
               <UserCheck size={13} /> تفعيل
             </button>
           )}
+          <div className="h-px bg-border/50 my-0.5" />
+          <button
+            onClick={() => { setHardDeleteTarget(u); setOpen(false); }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-destructive/10 transition-colors text-destructive"
+          >
+            <Trash2 size={13} /> حذف نهائي
+          </button>
         </div>
       )}
     </div>
