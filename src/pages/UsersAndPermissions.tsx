@@ -382,7 +382,7 @@ const UsersTab = () => {
 
                     <td className="p-3 text-center">
                       <div className="relative inline-block" onClick={e => e.stopPropagation()}>
-                        <DropdownMenuRoot u={u} openEdit={openEdit} setDeleteTarget={setDeleteTarget} handleReactivate={handleReactivate} isReactivating={reactivating === u.id} />
+                        <DropdownMenuRoot u={u} openEdit={openEdit} setDeleteTarget={setDeleteTarget} setHardDeleteTarget={setHardDeleteTarget} handleReactivate={handleReactivate} isReactivating={reactivating === u.id} />
                       </div>
                     </td>
                   </tr>
