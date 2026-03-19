@@ -62,18 +62,35 @@
     --brand:          #1a56db;
     --brand-light:    #e8f1fd;
     --brand-dark:     #1240a8;
-    --success:        #057a55;
-    --warning:        #d97706;
     --danger:         #dc2626;
     --text-primary:   #111827;
     --text-secondary: #6b7280;
     --text-muted:     #9ca3af;
     --bg-page:        #f3f4f6;
     --bg-card:        #ffffff;
-    --border:         #e5e7eb;
-    --radius-md:      10px;
-    --radius-lg:      14px;
+
+    /* ── Renamed to avoid overriding HSL tokens above ───────── */
+    --ds-border:      #e5e7eb;
+    --ds-success:     #057a55;
+    --ds-warning:     #d97706;
+
+    /* ── Spacing scale ───────────────────────────────────────── */
+    --space-xs:  0.25rem;   /* 4px  */
+    --space-sm:  0.5rem;    /* 8px  */
+    --space-md:  1rem;      /* 16px */
+    --space-lg:  1.5rem;    /* 24px */
+    --space-xl:  2rem;      /* 32px */
+
+    /* ── Radius scale (tied to --radius base = 0.625rem) ─────── */
+    --radius-sm:  calc(var(--radius) - 0.25rem);   /* ~6px  */
+    --radius-md:  var(--radius);                    /* 10px  */
+    --radius-lg:  calc(var(--radius) + 0.25rem);   /* ~14px */
+    --radius-xl:  calc(var(--radius) + 0.5rem);    /* ~18px */
+
+    /* ── Shadows ─────────────────────────────────────────────── */
     --shadow-sm:      0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md:      0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.05);
+    --shadow-focus:   0 0 0 3px hsl(var(--ring) / 0.35);
   }
 
   .dark {
@@ -331,26 +348,120 @@
   }
 
   /* ── Design System additive classes ────────────────────────── */
+
+  /* Card */
   .ds-card {
-    background: var(--bg-card);
+    background: hsl(var(--card));
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
-    padding: 20px;
+    padding: var(--space-lg);
+    transition: box-shadow 200ms;
   }
 
-  .ds-btn-primary {
-    background: var(--brand);
-    color: white;
+  .ds-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  /* ── Button base ─────────────────────────────────────────────── */
+  .ds-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    height: 2.25rem;
+    padding: 0 var(--space-md);
     border-radius: var(--radius-md);
-    padding: 8px 16px;
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 500;
     border: none;
     cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 150ms ease, transform 100ms ease, box-shadow 150ms ease;
+    text-decoration: none;
   }
 
-  .ds-btn-primary:hover {
-    background: var(--brand-dark);
+  .ds-btn:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+
+  .ds-btn:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  .ds-btn:disabled {
+    opacity: 0.45;
+    pointer-events: none;
+    cursor: not-allowed;
+  }
+
+  /* ── Button variants ─────────────────────────────────────────── */
+  .ds-btn--primary {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+
+  .ds-btn--primary:hover:not(:disabled) {
+    opacity: 0.88;
+  }
+
+  .ds-btn--secondary {
+    background: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+  }
+
+  .ds-btn--secondary:hover:not(:disabled) {
+    opacity: 0.78;
+  }
+
+  .ds-btn--danger {
+    background: hsl(var(--destructive));
+    color: hsl(var(--destructive-foreground));
+  }
+
+  .ds-btn--danger:hover:not(:disabled) {
+    opacity: 0.88;
+  }
+
+  .ds-btn--ghost {
+    background: transparent;
+    color: hsl(var(--foreground));
+  }
+
+  .ds-btn--ghost:hover:not(:disabled) {
+    background: hsl(var(--muted));
+  }
+
+  /* Legacy alias — keep for backward compat */
+  .ds-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    height: 2.25rem;
+    padding: 0 var(--space-md);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 150ms ease, transform 100ms ease;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+
+  .ds-btn-primary:hover:not(:disabled) {
+    opacity: 0.88;
+  }
+
+  .ds-btn-primary:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  .ds-btn-primary:disabled {
+    opacity: 0.45;
+    pointer-events: none;
   }
 }
 
