@@ -15,6 +15,8 @@ A full-featured delivery management SPA (Single Page Application) built with Rea
 - Bilingual: Arabic (RTL) and English (LTR)
 - Dark/Light theme
 - Collapsible sidebar (64px collapsed / 260px expanded, state in localStorage)
+- Dashboard (Overview tab): Employee analysis (city × license × sponsorship cross-filter), Orders by platform with target %, configurable Top-N leaderboard (per platform + overall), Comprehensive attendance section (today breakdown + 7-day chart)
+- Dashboard (Analytics tab): 6-month trend chart, predictive projections for current month, "needs improvement" vs "improving" rider lists, platform MoM comparison, riders below average list
 
 ## Key Configuration
 - **Supabase project ID**: `bumamlmemykmffxmtofk`
