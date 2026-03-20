@@ -36,7 +36,17 @@ const AppSidebar = () => {
   const toggleGroup = (key: string) =>
     setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }));
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    const [pathPart, queryPart] = path.split('?');
+    if (pathPart !== location.pathname) return false;
+    if (!queryPart) return true;
+    const params = new URLSearchParams(queryPart);
+    const locationParams = new URLSearchParams(location.search);
+    for (const [key, value] of params.entries()) {
+      if (locationParams.get(key) !== value) return false;
+    }
+    return true;
+  };
 
   const navGroups = [
     {
@@ -73,11 +83,11 @@ const AppSidebar = () => {
       key: 'settings',
       sectionLabel: t('settings'),
       items: [
-        { label: t('schemes'), icon: Settings, path: '/settings/schemes' },
-        { label: t('users'), icon: Users, path: '/settings/users' },
-        { label: t('generalSettings'), icon: Settings2, path: '/settings/general' },
-        { label: isRTL ? 'السجلات التجارية' : 'Trade Registers', icon: Briefcase, path: '/settings/trade-registers' },
-        { label: t('activityLog'), icon: Activity, path: '/activity-log' },
+        { label: t('generalSettings'), icon: Settings2, path: '/settings?tab=general' },
+        { label: t('users'), icon: Users, path: '/settings?tab=users' },
+        { label: t('schemes'), icon: Settings, path: '/settings?tab=schemes' },
+        { label: isRTL ? 'السجلات التجارية' : 'Trade Registers', icon: Briefcase, path: '/settings?tab=trade-registers' },
+        { label: t('activityLog'), icon: Activity, path: '/settings?tab=activity' },
       ],
     },
   ];

@@ -27,15 +27,12 @@ const Advances = lazy(() => import("./pages/Advances"));
 const FuelPage = lazy(() => import("./pages/Fuel"));
 const Apps = lazy(() => import("./pages/Apps"));
 const Alerts = lazy(() => import("./pages/Alerts"));
-const SalarySchemes = lazy(() => import("./pages/SalarySchemes"));
-const UsersAndPermissions = lazy(() => import("./pages/UsersAndPermissions"));
-const GeneralSettings = lazy(() => import("./pages/GeneralSettings"));
+const SettingsHub = lazy(() => import("./pages/SettingsHub"));
 const ViolationResolver = lazy(() => import("./pages/ViolationResolver"));
 const Motorcycles = lazy(() => import("./pages/Motorcycles"));
 const VehicleAssignment = lazy(() => import("./pages/VehicleAssignment"));
 
 const EmployeeTiers = lazy(() => import("./pages/EmployeeTiers"));
-const TradeRegisters = lazy(() => import("./pages/TradeRegisters"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageLoader = () => (
@@ -83,18 +80,21 @@ const App = () => (
                                     <Route path="/alerts" element={<Alerts />} />
 
                                     <Route path="/employee-tiers" element={<EmployeeTiers />} />
-                                    <Route path="/settings" element={<Navigate to="/settings/schemes" replace />} />
-                                    <Route path="/settings/permissions" element={<Navigate to="/settings/users" replace />} />
+
+                                    {/* ── Unified Settings Hub ── */}
+                                    <Route path="/settings" element={<SettingsHub />} />
+                                    <Route path="/settings/general" element={<Navigate to="/settings?tab=general" replace />} />
+                                    <Route path="/settings/schemes" element={<Navigate to="/settings?tab=schemes" replace />} />
+                                    <Route path="/settings/users" element={<Navigate to="/settings?tab=users" replace />} />
+                                    <Route path="/settings/permissions" element={<Navigate to="/settings?tab=users" replace />} />
+                                    <Route path="/settings/trade-registers" element={<Navigate to="/settings?tab=trade-registers" replace />} />
+                                    <Route path="/activity-log" element={<Navigate to="/settings?tab=activity" replace />} />
+                                    <Route path="/reports" element={<Navigate to="/settings?tab=activity" replace />} />
+
                                     <Route path="/vehicles" element={<Navigate to="/motorcycles" replace />} />
                                     <Route path="/vehicle-tracking" element={<Navigate to="/motorcycles" replace />} />
                                     <Route path="/deductions" element={<Navigate to="/advances" replace />} />
-                                    <Route path="/settings/schemes" element={<SalarySchemes />} />
-                                    <Route path="/settings/users" element={<UsersAndPermissions />} />
-                                    <Route path="/settings/general" element={<GeneralSettings />} />
-                                    <Route path="/settings/trade-registers" element={<TradeRegisters />} />
                                     <Route path="/violation-resolver" element={<ViolationResolver />} />
-                                    <Route path="/activity-log" element={<Navigate to="/settings/general?tab=activity" replace />} />
-                                    <Route path="/reports" element={<Navigate to="/settings/general?tab=activity" replace />} />
                                     <Route path="*" element={<NotFound />} />
                                   </Routes>
                                 </Suspense>
