@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Outfit', 'Cairo', 'sans-serif'],
-        arabic: ['Cairo', 'Outfit', 'sans-serif'],
+        sans: ['"IBM Plex Sans Arabic"', 'sans-serif'],
+        arabic: ['"IBM Plex Sans Arabic"', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -26,10 +26,12 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          container: "#465fff",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
+          container: "#5165f5",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -74,19 +76,32 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
           muted: "hsl(var(--sidebar-muted))",
         },
-        // TailAdmin v2.2 brand palette — True Blue #465FFF
+        /* ── MD3 surface tokens ─────────────────────────────────── */
+        surface: {
+          DEFAULT: "#f9f9fb",
+          lowest: "#ffffff",
+          low: "#f3f3f5",
+          container: "#edeef0",
+          high: "#e8e8ea",
+        },
+        "on-surface": {
+          DEFAULT: "#1a1c1d",
+          variant: "#444656",
+        },
+        "outline-variant": "#c5c5d8",
+        /* ── Brand palette ────────────────────────────────────────── */
         brand: {
-          25:  '#F5F7FF',
-          50:  '#ECF0FF',
-          100: '#D8E0FF',
-          200: '#B0C0FF',
-          300: '#849DFF',
-          400: '#617BFF',
-          500: '#465FFF',   /* primary */
-          600: '#3347D9',
-          700: '#2433B3',
-          800: '#172290',
-          900: '#0E1575',
+          25:  '#f0f2ff',
+          50:  '#e6e9ff',
+          100: '#c7cdff',
+          200: '#9aa5ff',
+          300: '#6d7dff',
+          400: '#465fff',
+          500: '#2642e6',
+          600: '#1c33cc',
+          700: '#1426a8',
+          800: '#0d1a85',
+          900: '#08126b',
         },
       },
       borderRadius: {
@@ -95,13 +110,14 @@ export default {
         sm: "calc(var(--radius) - 4px)",
         "2xl": "1rem",
         "3xl": "1.25rem",
+        "4xl": "1.5rem",
       },
       boxShadow: {
-        'card': '0 1px 2px 0 rgba(0,0,0,0.05)',
-        'card-hover': '0 4px 12px 0 rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.05)',
-        'brand': '0 4px 14px 0 rgba(70,95,255,0.30)',
-        'brand-sm': '0 2px 8px 0 rgba(70,95,255,0.22)',
-        'sidebar': '4px 0 12px 0 rgba(0,0,0,0.06)',
+        'card':       '0px 10px 40px rgba(26, 28, 29, 0.06)',
+        'card-hover': '0px 16px 48px rgba(26, 28, 29, 0.10)',
+        'brand':      '0 4px 16px 0 rgba(38, 66, 230, 0.28)',
+        'brand-sm':   '0 2px 8px 0 rgba(38, 66, 230, 0.20)',
+        'sidebar':    '4px 0 24px 0 rgba(26, 28, 29, 0.06)',
       },
       keyframes: {
         "accordion-down": {

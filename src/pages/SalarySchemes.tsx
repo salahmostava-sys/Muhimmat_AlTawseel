@@ -300,7 +300,7 @@ const SalarySchemes = () => {
             const assignedApps = getAssignedApps(s.id);
             const isFixed = s.scheme_type === 'fixed_monthly';
             return (
-              <div key={s.id} className={`bg-card rounded-xl border shadow-sm p-5 ${s.status === 'active' ? 'border-border/50' : 'border-border/30 opacity-70'}`}>
+              <div key={s.id} className={`bg-card rounded-xl border shadow-card p-5 ${s.status === 'active' ? 'border-border/50' : 'border-border/30 opacity-70'}`}>
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h3 className="font-semibold text-foreground">{s.name}</h3>

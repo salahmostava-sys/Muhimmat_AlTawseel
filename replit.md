@@ -80,10 +80,19 @@ src/
     └── salarySlipTranslations.ts # Salary slip bilingual labels
 ```
 
-## Design System
-- **Brand color**: `#1a56db` = HSL `221 77% 48%`
-- **CSS variables**: `--brand`, `--brand-light`, `--brand-dark`, `--success`, `--warning`, `--danger`, etc. (in `index.css` `:root`)
-- **Utility classes**: `.ds-card`, `.ds-btn-primary`, `.stat-card`, `.chart-card`, `.metric-card`, `.data-table`, etc.
+## Design System — High-End Editorial Dashboard
+- **Font**: IBM Plex Sans Arabic (replaces Cairo/Outfit) — loaded via Google Fonts in `index.html`
+- **Primary color**: `#2642e6` (HSL 232 77% 52%) / Container: `#465fff`
+- **Surface palette**: `surface #f9f9fb` (page), `surface-lowest #ffffff` (cards), `surface-low #f3f3f5` (sidebar), `surface-container #edeef0` (dividers/table heads)
+- **On-surface**: `#1a1c1d` (text), `#444656` (muted/variant text)
+- **Outline-variant**: `#c5c5d8` (subtle borders only when absolutely needed)
+- **Card style**: `bg-white rounded-2xl shadow-card` — NO `border` classes on cards (use bg-color shifts)
+- **Shadow**: `0px 10px 40px rgba(26,28,29,0.06)` mapped to Tailwind `shadow-card`
+- **Sidebar**: `surface-low` (#f3f3f5) background. Active item: blue gradient pill `linear-gradient(135deg,#2642e6,#465fff)` with `shadow-brand-sm`
+- **Header**: Glass morphism — `rgba(255,255,255,0.85)` + `backdrop-filter: blur(12px)` + `surface-container` bottom line
+- **Primary CTA button**: `linear-gradient(135deg, #2642e6, #465fff)` with brand shadow
+- **CSS variables**: All MD3 surface tokens as `--ds-surface*`, `--ds-on-surface*`, `--ds-primary`, etc. in `index.css` `:root`
+- **Utility classes**: `.ds-card`, `.ds-btn--primary`, `.stat-card`, `.chart-card`, `.metric-card`, `.data-table`, `.ta-table-wrap`, etc.
 
 ## Routes
 | Path | Page |

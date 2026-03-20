@@ -1793,7 +1793,7 @@ const Salaries = () => {
       {/* Summary cards — total + per-platform + admin */}
       <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(auto-fit, minmax(160px, 1fr))` }}>
         {/* Total Grand Card */}
-        <div className="bg-card border-t-4 border-primary rounded-xl p-4 shadow-sm">
+        <div className="bg-card border-t-4 border-primary rounded-xl p-4 shadow-card">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground leading-tight">إجمالي الرواتب</p>
@@ -1811,7 +1811,7 @@ const Salaries = () => {
           const pc = platformColors[p];
           const platformTotal = filtered.reduce((s, r) => s + (r.platformSalaries[p] || 0), 0);
           return (
-            <div key={p} className="bg-card rounded-xl p-4 shadow-sm border-t-4" style={{ borderTopColor: pc?.header || 'hsl(var(--primary))' }}>
+            <div key={p} className="bg-card rounded-xl p-4 shadow-card border-t-4" style={{ borderTopColor: pc?.header || 'hsl(var(--primary))' }}>
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-xs text-muted-foreground leading-tight truncate">{p}</p>
@@ -1832,7 +1832,7 @@ const Salaries = () => {
             .filter(r => r.jobTitle !== 'مندوب توصيل' && r.jobTitle !== 'Delivery Rider')
             .reduce((s, r) => s + computeRow(r).netSalary, 0);
           return (
-            <div className="bg-card border-t-4 border-muted-foreground/30 rounded-xl p-4 shadow-sm">
+            <div className="bg-card border-t-4 border-muted-foreground/30 rounded-xl p-4 shadow-card">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-xs text-muted-foreground leading-tight">الرواتب الإدارية</p>
@@ -2049,7 +2049,7 @@ const Salaries = () => {
         // Fixed deduction columns count: سلف (manual), violations + dynamic custom cols + total = 2 + allCustomCols.length + 1
         const dedColCount = 2 + allCustomCols.length + 1;
         return (
-      <div className="rounded-xl border border-border/50 shadow-sm bg-card overflow-hidden">
+      <div className="rounded-xl shadow-card bg-card overflow-hidden">
         {loadingData ? (
           <div className="h-48 flex items-center justify-center text-muted-foreground">
             جارٍ تحميل بيانات الرواتب...

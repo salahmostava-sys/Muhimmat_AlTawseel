@@ -50,10 +50,10 @@ const roleLabelsMap: Record<string, string> = {
   operations: 'عمليات', viewer: 'عارض',
 };
 const roleColors: Record<string, string> = {
-  admin: 'text-red-600 dark:text-red-400',
-  hr: 'text-blue-600 dark:text-blue-400',
-  finance: 'text-green-600 dark:text-green-400',
-  operations: 'text-orange-600 dark:text-orange-400',
+  admin: 'text-red-600',
+  hr: 'text-blue-600',
+  finance: 'text-emerald-600',
+  operations: 'text-orange-600',
   viewer: 'text-muted-foreground',
 };
 
@@ -84,7 +84,6 @@ const AppLayoutInner = ({ children }: AppLayoutProps) => {
     document.title = `${projectName} | ${pageTitle}`;
   }, [location.pathname, projectName, pageTitle]);
 
-  // Fetch profile name
   useEffect(() => {
     if (!user?.id) return;
     supabase.from('profiles').select('name').eq('id', user.id).maybeSingle()
@@ -99,7 +98,11 @@ const AppLayoutInner = ({ children }: AppLayoutProps) => {
   const roleColor = role ? roleColors[role] || 'text-muted-foreground' : '';
 
   return (
-    <div className="min-h-screen bg-background" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div
+      className="min-h-screen"
+      dir={isRTL ? 'rtl' : 'ltr'}
+      style={{ background: 'var(--ds-surface)' }}
+    >
       <AppSidebar />
 
       <main className={cn(
@@ -109,40 +112,49 @@ const AppLayoutInner = ({ children }: AppLayoutProps) => {
           ? (sidebarCollapsed ? 'lg:mr-[64px]' : 'lg:mr-[260px]')
           : (sidebarCollapsed ? 'lg:ml-[64px]' : 'lg:ml-[260px]')
       )}>
-        {/* ── Header ──────────────────────────────────────────── */}
-        <header className="h-[70px] bg-[hsl(var(--card))] border-b border-border flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40">
+
+        {/* ── Glass Header ─────────────────────────────────── */}
+        <header
+          className="h-[70px] flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40"
+          style={{
+            background: 'rgba(255,255,255,0.85)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            borderBottom: '1px solid var(--ds-surface-container)',
+          }}
+        >
 
           {/* Start: hamburger + breadcrumb */}
           <div className="flex items-center gap-2 lg:gap-4">
             <button
               onClick={toggle}
-              className="lg:hidden h-8 w-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              className="lg:hidden h-8 w-8 flex items-center justify-center rounded-lg transition-colors"
+              style={{ color: 'var(--ds-on-surface-variant)' }}
               aria-label="Toggle sidebar"
             >
               <Menu size={18} />
             </button>
 
-            <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span className="text-foreground/70 font-medium">{projectName}</span>
+            <div className="hidden md:flex items-center gap-1.5 text-xs" style={{ color: 'var(--ds-on-surface-variant)' }}>
+              <span className="font-medium" style={{ color: 'var(--ds-on-surface-variant)' }}>{projectName}</span>
               <Sep size={12} className="opacity-40" />
-              <span className="font-semibold text-foreground">{pageTitle}</span>
+              <span className="font-semibold" style={{ color: 'var(--ds-on-surface)' }}>{pageTitle}</span>
             </div>
           </div>
 
           {/* End: tools + user profile */}
           <div className="flex items-center gap-1 lg:gap-1.5">
-            {/* Global search */}
             <div className="hidden sm:block">
               <GlobalSearch />
             </div>
 
-            {/* Notifications */}
             <NotificationCenter />
 
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              className="h-8 w-8 flex items-center justify-center rounded-lg transition-colors"
+              style={{ color: 'var(--ds-on-surface-variant)' }}
               title={isDark ? 'Light mode' : 'Dark mode'}
             >
               {isDark
@@ -153,44 +165,55 @@ const AppLayoutInner = ({ children }: AppLayoutProps) => {
 
             {/* Language toggle */}
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={toggleLang}
-              className="text-xs font-medium h-8 px-2 lg:px-3 gap-1 border-border"
+              className="text-xs font-medium h-8 px-2 lg:px-3 gap-1 rounded-xl"
+              style={{
+                background: 'var(--ds-surface-container)',
+                color: 'var(--ds-on-surface)',
+                border: 'none',
+              }}
             >
               <Languages size={13} />
               <span className="hidden sm:inline">{lang === 'ar' ? 'English' : 'عربي'}</span>
               <span className="sm:hidden">{lang === 'ar' ? 'EN' : 'ع'}</span>
             </Button>
 
-            {/* ── User profile chip ─────────────────────────── */}
+            {/* ── User profile chip ─────────────────────── */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 h-9 px-2 rounded-xl hover:bg-muted transition-colors border border-border/60 hover:border-border">
-                  {/* Avatar circle */}
+                <button
+                  className="flex items-center gap-2 h-9 px-2 rounded-xl transition-colors"
+                  style={{ background: 'var(--ds-surface-container)' }}
+                >
                   <div
                     className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                    style={{ background: 'linear-gradient(135deg, #465FFF, #3347D9)' }}
+                    style={{ background: 'linear-gradient(135deg, #2642e6, #465fff)' }}
                   >
                     {initials || 'A'}
                   </div>
-                  {/* Name + role — hidden on small screens */}
                   <div className={`hidden md:flex flex-col items-${isRTL ? 'end' : 'start'} leading-none`}>
-                    <span className="text-xs font-semibold text-foreground truncate max-w-[120px]">{displayName || t('systemAdmin')}</span>
+                    <span className="text-xs font-semibold truncate max-w-[120px]" style={{ color: 'var(--ds-on-surface)' }}>
+                      {displayName || t('systemAdmin')}
+                    </span>
                     {roleLabel && (
                       <span className={`text-[10px] font-medium ${roleColor}`}>{roleLabel}</span>
                     )}
                   </div>
-                  <ChevronDown size={12} className="text-muted-foreground hidden md:block" />
+                  <ChevronDown size={12} className="hidden md:block" style={{ color: 'var(--ds-on-surface-variant)' }} />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align={isRTL ? 'start' : 'end'} className="w-56">
-                {/* Profile header */}
-                <div className="px-3 py-2.5 border-b border-border/50">
+                <div className="px-3 py-2.5" style={{ borderBottom: '1px solid var(--ds-surface-container)' }}>
                   <div className="flex items-center gap-2.5">
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{displayName}</p>
-                      <p className="text-[11px] text-muted-foreground truncate">{displayEmail}</p>
+                      <p className="text-sm font-semibold truncate" style={{ color: 'var(--ds-on-surface)' }}>
+                        {displayName}
+                      </p>
+                      <p className="text-[11px] truncate" style={{ color: 'var(--ds-on-surface-variant)' }}>
+                        {displayEmail}
+                      </p>
                       {roleLabel && (
                         <span className={`text-[10px] font-semibold ${roleColor}`}>{roleLabel}</span>
                       )}
@@ -215,8 +238,11 @@ const AppLayoutInner = ({ children }: AppLayoutProps) => {
           </div>
         </header>
 
-        {/* ── Page content ───────────────────────────────────── */}
-        <div className="flex-1 overflow-auto p-4 sm:p-5 lg:p-6 xl:p-8 min-h-0 flex flex-col">
+        {/* ── Page content ─────────────────────────────────── */}
+        <div
+          className="flex-1 overflow-auto p-4 sm:p-5 lg:p-6 xl:p-8 min-h-0 flex flex-col"
+          style={{ background: 'var(--ds-surface)' }}
+        >
           {children}
         </div>
       </main>

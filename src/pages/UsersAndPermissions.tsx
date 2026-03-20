@@ -315,7 +315,7 @@ const UsersTab = () => {
         </div>
       </div>
 
-      <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
+      <div className="bg-card rounded-xl shadow-card overflow-hidden">
         {loading ? (
           <div className="p-8 flex justify-center"><Loader2 size={24} className="animate-spin text-muted-foreground" /></div>
         ) : profiles.length === 0 ? (

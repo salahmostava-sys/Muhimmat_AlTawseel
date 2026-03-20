@@ -82,7 +82,6 @@ const AppSidebar = () => {
     },
   ];
 
-  // auto-open group containing active route
   useEffect(() => {
     const activeGroup = navGroups.find(g => g.items.some(i => isActive(i.path)));
     if (activeGroup && !openGroups[activeGroup.key]) {
@@ -91,38 +90,38 @@ const AppSidebar = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
-  const ChevronIcon = ChevronDown;
-
   return (
     <>
       {/* Backdrop — mobile only */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
           onClick={close}
           aria-hidden="true"
         />
       )}
 
-      <aside className={cn(
-        'fixed top-0 h-screen flex flex-col z-50',
-        'bg-[hsl(var(--sidebar-background))] border-[hsl(var(--sidebar-border))]',
-        'transition-all duration-300 ease-in-out',
-        'shadow-sidebar',
-        collapsed ? 'w-[64px]' : 'w-[260px]',
-        isRTL
-          ? 'right-0 border-l'
-          : 'left-0 border-r',
-        isRTL
-          ? (isOpen ? 'translate-x-0' : 'translate-x-full')
-          : (isOpen ? 'translate-x-0' : '-translate-x-full'),
-        'lg:translate-x-0',
-      )}>
+      <aside
+        className={cn(
+          'fixed top-0 h-screen flex flex-col z-50',
+          'transition-all duration-300 ease-in-out',
+          collapsed ? 'w-[64px]' : 'w-[260px]',
+          isRTL
+            ? (isOpen ? 'translate-x-0' : 'translate-x-full')
+            : (isOpen ? 'translate-x-0' : '-translate-x-full'),
+          isRTL ? 'right-0' : 'left-0',
+          'lg:translate-x-0',
+        )}
+        style={{
+          background: 'var(--ds-surface-low)',
+          boxShadow: '4px 0 24px rgba(26,28,29,0.06)',
+        }}
+      >
 
-        {/* ── Logo / Brand ─────────────────────────────────────── */}
+        {/* ── Logo / Brand ───────────────────────────────────── */}
         <div className={cn(
-          'h-[70px] flex items-center justify-between border-b border-[hsl(var(--sidebar-border))] flex-shrink-0',
-          collapsed ? 'px-3 justify-center' : 'px-6'
+          'h-[70px] flex items-center justify-between flex-shrink-0',
+          collapsed ? 'px-3 justify-center' : 'px-5',
         )}>
           <Link to="/" className="flex items-center gap-3 min-w-0">
             {settings?.logo_url ? (
@@ -133,19 +132,25 @@ const AppSidebar = () => {
               />
             ) : (
               <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-base font-bold flex-shrink-0"
-                style={{ background: 'linear-gradient(135deg, #465FFF, #3347D9)' }}
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-base font-bold flex-shrink-0 shadow-brand-sm"
+                style={{ background: 'linear-gradient(135deg, #2642e6, #465fff)' }}
               >
                 🚀
               </div>
             )}
             {!collapsed && (
               <div className="min-w-0">
-                <span className="text-sm font-bold text-[hsl(var(--sidebar-accent-foreground))] leading-tight block truncate">
+                <span
+                  className="text-sm font-bold leading-tight block truncate"
+                  style={{ color: 'var(--ds-on-surface)' }}
+                >
                   {projectName}
                 </span>
                 {projectSubtitle && (
-                  <span className="text-[11px] text-[hsl(var(--sidebar-muted))] block truncate leading-tight mt-0.5">
+                  <span
+                    className="text-[11px] block truncate leading-tight mt-0.5"
+                    style={{ color: 'var(--ds-on-surface-variant)' }}
+                  >
                     {projectSubtitle}
                   </span>
                 )}
@@ -157,29 +162,50 @@ const AppSidebar = () => {
           {!collapsed && (
             <button
               onClick={close}
-              className="lg:hidden w-7 h-7 rounded-lg flex items-center justify-center text-[hsl(var(--sidebar-muted))] hover:bg-[hsl(var(--sidebar-accent))] transition-colors flex-shrink-0"
+              className="lg:hidden w-7 h-7 rounded-lg flex items-center justify-center transition-colors flex-shrink-0"
+              style={{ color: 'var(--ds-on-surface-variant)' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--ds-surface-container)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
             >
               <X size={15} />
             </button>
           )}
         </div>
 
-        {/* ── Nav ──────────────────────────────────────────────── */}
-        <nav className={cn('flex-1 overflow-y-auto py-4 space-y-1', collapsed ? 'px-2' : 'px-4')}>
+        {/* ── Nav ──────────────────────────────────────────── */}
+        <nav className={cn('flex-1 overflow-y-auto py-3 space-y-0.5', collapsed ? 'px-2' : 'px-3')}>
 
-          {/* Dashboard — always visible standalone item */}
+          {/* Dashboard */}
           <Link
             to="/"
             title={collapsed ? t('dashboard') : undefined}
             className={cn(
-              'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium w-full transition-all duration-150',
+              'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium w-full transition-all duration-150',
               collapsed && 'justify-center px-0',
-              isActive('/')
-                ? 'bg-primary text-primary-foreground shadow-brand-sm'
-                : 'text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-accent-foreground))]'
             )}
+            style={
+              isActive('/')
+                ? {
+                    background: 'linear-gradient(135deg, #2642e6, #465fff)',
+                    color: '#ffffff',
+                    boxShadow: '0 4px 12px rgba(38,66,230,0.20)',
+                  }
+                : { color: 'var(--ds-on-surface-variant)' }
+            }
+            onMouseEnter={e => {
+              if (!isActive('/')) {
+                e.currentTarget.style.background = 'var(--ds-surface-container)';
+                e.currentTarget.style.color = 'var(--ds-on-surface)';
+              }
+            }}
+            onMouseLeave={e => {
+              if (!isActive('/')) {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'var(--ds-on-surface-variant)';
+              }
+            }}
           >
-            <LayoutDashboard size={17} className={isActive('/') ? 'text-white' : 'text-[hsl(var(--sidebar-muted))]'} />
+            <LayoutDashboard size={17} className="flex-shrink-0" />
             {!collapsed && <span>{t('dashboard')}</span>}
           </Link>
 
@@ -188,26 +214,28 @@ const AppSidebar = () => {
             const isGroupOpen = openGroups[group.key];
             return (
               <div key={group.key}>
-                {/* Section label / collapsible trigger — hidden when collapsed */}
+                {/* Section label */}
                 {!collapsed && (
                   <button
                     onClick={() => toggleGroup(group.key)}
-                    className="w-full flex items-center justify-between px-3 py-2 mt-2 rounded-lg transition-colors hover:bg-[hsl(var(--sidebar-accent))] group"
+                    className="w-full flex items-center justify-between px-3 py-2 mt-3 rounded-lg transition-colors group"
+                    style={{ color: 'var(--ds-on-surface-variant)' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--ds-surface-container)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <span className="text-sm font-medium text-[hsl(var(--sidebar-muted))] group-hover:text-[hsl(var(--sidebar-accent-foreground))] transition-colors">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider">
                       {group.sectionLabel}
                     </span>
-                    <ChevronIcon
-                      size={14}
+                    <ChevronDown
+                      size={13}
                       className={cn(
-                        'text-[hsl(var(--sidebar-muted))] transition-transform duration-200',
+                        'transition-transform duration-200',
                         isGroupOpen ? 'rotate-0' : '-rotate-90'
                       )}
                     />
                   </button>
                 )}
 
-                {/* Items — always show when collapsed (icons only), else respect group open */}
                 {(collapsed || isGroupOpen) && (
                   <div className={cn('space-y-0.5', !collapsed && 'mt-0.5')}>
                     {group.items.map(item => {
@@ -218,21 +246,34 @@ const AppSidebar = () => {
                           to={item.path}
                           title={collapsed ? item.label : undefined}
                           className={cn(
-                            'relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150',
+                            'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150',
                             collapsed && 'justify-center px-0',
-                            active
-                              ? 'sidebar-item-active bg-[hsl(var(--sidebar-accent))] text-primary font-semibold'
-                              : 'font-normal text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-accent-foreground))]'
                           )}
+                          style={
+                            active
+                              ? {
+                                  background: 'linear-gradient(135deg, #2642e6, #465fff)',
+                                  color: '#ffffff',
+                                  fontWeight: 600,
+                                  boxShadow: '0 4px 12px rgba(38,66,230,0.20)',
+                                }
+                              : { color: 'var(--ds-on-surface-variant)', fontWeight: 400 }
+                          }
+                          onMouseEnter={e => {
+                            if (!active) {
+                              e.currentTarget.style.background = 'var(--ds-surface-container)';
+                              e.currentTarget.style.color = 'var(--ds-on-surface)';
+                            }
+                          }}
+                          onMouseLeave={e => {
+                            if (!active) {
+                              e.currentTarget.style.background = 'transparent';
+                              e.currentTarget.style.color = 'var(--ds-on-surface-variant)';
+                            }
+                          }}
                           onClick={close}
                         >
-                          <item.icon
-                            size={16}
-                            className={cn(
-                              'flex-shrink-0 transition-colors',
-                              active ? 'text-primary' : 'text-[hsl(var(--sidebar-muted))]'
-                            )}
-                          />
+                          <item.icon size={16} className="flex-shrink-0" />
                           {!collapsed && <span>{item.label}</span>}
                         </Link>
                       );
@@ -244,12 +285,18 @@ const AppSidebar = () => {
           })}
         </nav>
 
-        {/* ── Collapse toggle — desktop only ───────────────────── */}
-        <div className="hidden lg:flex px-3 py-2 border-t border-[hsl(var(--sidebar-border))] flex-shrink-0 justify-end">
+        {/* ── Collapse toggle — desktop only ────────────────── */}
+        <div
+          className="hidden lg:flex px-3 py-3 flex-shrink-0 justify-end"
+          style={{ borderTop: '1px solid var(--ds-surface-container)' }}
+        >
           <button
             onClick={toggleCollapse}
             title={collapsed ? 'توسيع القائمة' : 'تصغير القائمة'}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[hsl(var(--sidebar-muted))] hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-accent-foreground))] transition-colors"
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+            style={{ color: 'var(--ds-on-surface-variant)' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--ds-surface-container)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
             {collapsed
               ? (isRTL ? <ChevronsLeft size={16} /> : <ChevronsRight size={16} />)

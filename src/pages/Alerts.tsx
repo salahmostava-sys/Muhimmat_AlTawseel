@@ -299,7 +299,7 @@ const Alerts = () => {
           const order = { urgent: 0, warning: 1, info: 2 };
           return (order[a.severity as keyof typeof order] || 0) - (order[b.severity as keyof typeof order] || 0);
         }).map(a => (
-          <div key={a.id} className={`bg-card rounded-xl border shadow-sm p-4 flex items-center gap-4 hover:shadow-md transition-shadow ${a.severity === 'urgent' ? 'border-destructive/30' : a.severity === 'warning' ? 'border-warning/30' : 'border-border/50'}`}>
+          <div key={a.id} className={`bg-card rounded-xl border shadow-card p-4 flex items-center gap-4 hover:shadow-md transition-shadow ${a.severity === 'urgent' ? 'border-destructive/30' : a.severity === 'warning' ? 'border-warning/30' : 'border-border/50'}`}>
             <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${a.severity === 'urgent' ? 'bg-destructive/10' : a.severity === 'warning' ? 'bg-warning/10' : 'bg-info/10'}`}>
               {typeIcons[a.type] || '📌'}
             </div>

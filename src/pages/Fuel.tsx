@@ -62,7 +62,7 @@ const fuelPerOrderBadge = (v: number | null) => {
 };
 
 const StatCard = ({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub?: string }) => (
-  <div className="bg-card rounded-xl border border-border/50 shadow-sm p-5 flex items-center gap-4">
+  <div className="bg-card rounded-xl shadow-card p-5 flex items-center gap-4">
     <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">{icon}</div>
     <div>
       <p className="text-xs text-muted-foreground">{label}</p>
@@ -577,7 +577,7 @@ const FuelPage = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
+      <div className="bg-card rounded-xl shadow-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] text-sm">
             <thead>

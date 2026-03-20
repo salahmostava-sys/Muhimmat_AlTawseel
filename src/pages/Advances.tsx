@@ -1049,7 +1049,7 @@ const Advances = () => {
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground bg-card rounded-xl border border-border/50">لا توجد سلف مطابقة</div>
       ) : (
-        <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
+        <div className="bg-card rounded-xl shadow-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

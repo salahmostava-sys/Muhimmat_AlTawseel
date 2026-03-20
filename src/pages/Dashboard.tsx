@@ -51,7 +51,7 @@ interface KpiCardProps {
   loading?: boolean;
 }
 const KpiCard = ({ label, value, icon: Icon, color, bg, sub, trend, loading }: KpiCardProps) => (
-  <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col gap-3 hover:shadow-md transition-shadow">
+  <div className="bg-white rounded-2xl p-4 shadow-card flex flex-col gap-3 hover:shadow-card-hover transition-shadow">
     {loading ? (
       <>
         <div className="h-9 w-9 rounded-xl bg-muted/40 animate-pulse" />
@@ -88,7 +88,7 @@ const PlatformCard = ({ name, orders, totalOrders, brandColor, textColor, riders
 }) => {
   const pct = totalOrders > 0 ? Math.round((orders / totalOrders) * 100) : 0;
   return (
-    <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-2xl p-4 shadow-card hover:shadow-card-hover transition-shadow">
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs font-bold px-2.5 py-1 rounded-lg" style={{ backgroundColor: brandColor, color: textColor }}>{name}</span>
         <span className="text-lg font-black text-gray-900">{orders.toLocaleString()}</span>
@@ -144,8 +144,8 @@ const Leaderboard = ({ leaders, loading }: { leaders: LeaderEntry[]; loading: bo
 
 // ─── Chart wrapper ────────────────────────────────────────────────
 const Card = ({ title, subtitle, children, action }: { title: string; subtitle?: string; children: React.ReactNode; action?: React.ReactNode }) => (
-  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
+  <div className="bg-white rounded-2xl shadow-card overflow-hidden">
+    <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--ds-surface-container)' }}>
       <div>
         <h3 className="text-sm font-bold text-gray-900">{title}</h3>
         {subtitle && <p className="text-[11px] text-gray-400 mt-0.5">{subtitle}</p>}
@@ -243,7 +243,7 @@ const AnalyticsTab = () => {
     <div className="space-y-5">
       <div className="flex justify-between items-center">
         <div className="flex gap-4">
-          <div className="bg-white rounded-2xl px-4 py-3 border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-2xl px-4 py-3 shadow-card">
             <p className="text-[11px] text-gray-400">إجمالي الطلبات</p>
             <p className="text-2xl font-black text-gray-900">{totalOrders.toLocaleString()}</p>
             <div className={`flex items-center gap-0.5 text-[11px] font-semibold ${growth >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
@@ -251,7 +251,7 @@ const AnalyticsTab = () => {
               {Math.abs(growth).toFixed(1)}% مقارنة بالشهر السابق
             </div>
           </div>
-          <div className="bg-white rounded-2xl px-4 py-3 border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-2xl px-4 py-3 shadow-card">
             <p className="text-[11px] text-gray-400">المناديب النشطون</p>
             <p className="text-2xl font-black text-gray-900">{totalEmployees}</p>
             <p className="text-[11px] text-gray-400">متوسط {totalEmployees > 0 ? Math.round(totalOrders / totalEmployees) : 0} طلب/مندوب</p>
