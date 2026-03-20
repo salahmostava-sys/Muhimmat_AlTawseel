@@ -1,7 +1,7 @@
 # نظام إدارة التوصيل — Delivery Management System
 
 ## Overview
-A full-featured delivery management SPA (Single Page Application) built with React/TypeScript/Vite. Migrated from Lovable to Replit. Uses Supabase exclusively for all backend needs (auth, PostgreSQL database, storage).
+A full-featured delivery management SPA (Single Page Application) built with React/TypeScript/Vite. Migrated from Lovable → Replit Agent → Replit. Uses Supabase exclusively for all backend needs (auth, PostgreSQL database, storage).
 
 ## Architecture
 - **Frontend**: React 18 + TypeScript + Vite (port 5000)
