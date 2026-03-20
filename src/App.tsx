@@ -9,6 +9,7 @@ import { LanguageProvider } from "@/context/LanguageContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { SystemSettingsProvider } from "@/context/SystemSettingsContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import PageGuard from "@/components/PageGuard";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import AuthLayout from "@/layouts/AuthLayout";
@@ -31,7 +32,6 @@ const SettingsHub = lazy(() => import("./pages/SettingsHub"));
 const ViolationResolver = lazy(() => import("./pages/ViolationResolver"));
 const Motorcycles = lazy(() => import("./pages/Motorcycles"));
 const VehicleAssignment = lazy(() => import("./pages/VehicleAssignment"));
-
 const EmployeeTiers = lazy(() => import("./pages/EmployeeTiers"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -68,21 +68,20 @@ const App = () => (
                                 <Suspense fallback={<PageLoader />}>
                                   <Routes>
                                     <Route path="/" element={<Dashboard />} />
-                                    <Route path="/employees" element={<Employees />} />
-                                    <Route path="/attendance" element={<Attendance />} />
-                                    <Route path="/orders" element={<Orders />} />
-                                    <Route path="/salaries" element={<Salaries />} />
-                                    <Route path="/advances" element={<Advances />} />
-                                    <Route path="/motorcycles" element={<Motorcycles />} />
-                                    <Route path="/vehicle-assignment" element={<VehicleAssignment />} />
-                                    <Route path="/fuel" element={<FuelPage />} />
-                                    <Route path="/apps" element={<Apps />} />
-                                    <Route path="/alerts" element={<Alerts />} />
-
-                                    <Route path="/employee-tiers" element={<EmployeeTiers />} />
+                                    <Route path="/employees" element={<PageGuard pageKey="employees"><Employees /></PageGuard>} />
+                                    <Route path="/attendance" element={<PageGuard pageKey="attendance"><Attendance /></PageGuard>} />
+                                    <Route path="/orders" element={<PageGuard pageKey="orders"><Orders /></PageGuard>} />
+                                    <Route path="/salaries" element={<PageGuard pageKey="salaries"><Salaries /></PageGuard>} />
+                                    <Route path="/advances" element={<PageGuard pageKey="advances"><Advances /></PageGuard>} />
+                                    <Route path="/motorcycles" element={<PageGuard pageKey="vehicles"><Motorcycles /></PageGuard>} />
+                                    <Route path="/vehicle-assignment" element={<PageGuard pageKey="vehicles"><VehicleAssignment /></PageGuard>} />
+                                    <Route path="/fuel" element={<PageGuard pageKey="vehicles"><FuelPage /></PageGuard>} />
+                                    <Route path="/apps" element={<PageGuard pageKey="apps"><Apps /></PageGuard>} />
+                                    <Route path="/alerts" element={<PageGuard pageKey="alerts"><Alerts /></PageGuard>} />
+                                    <Route path="/employee-tiers" element={<PageGuard pageKey="employees"><EmployeeTiers /></PageGuard>} />
 
                                     {/* ── Unified Settings Hub ── */}
-                                    <Route path="/settings" element={<SettingsHub />} />
+                                    <Route path="/settings" element={<PageGuard pageKey="settings"><SettingsHub /></PageGuard>} />
                                     <Route path="/settings/general" element={<Navigate to="/settings?tab=general" replace />} />
                                     <Route path="/settings/schemes" element={<Navigate to="/settings?tab=schemes" replace />} />
                                     <Route path="/settings/users" element={<Navigate to="/settings?tab=users" replace />} />
@@ -94,7 +93,7 @@ const App = () => (
                                     <Route path="/vehicles" element={<Navigate to="/motorcycles" replace />} />
                                     <Route path="/vehicle-tracking" element={<Navigate to="/motorcycles" replace />} />
                                     <Route path="/deductions" element={<Navigate to="/advances" replace />} />
-                                    <Route path="/violation-resolver" element={<ViolationResolver />} />
+                                    <Route path="/violation-resolver" element={<PageGuard pageKey="employees"><ViolationResolver /></PageGuard>} />
                                     <Route path="*" element={<NotFound />} />
                                   </Routes>
                                 </Suspense>
