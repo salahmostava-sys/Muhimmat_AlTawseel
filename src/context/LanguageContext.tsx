@@ -12,7 +12,8 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType>({} as LanguageContextType);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [lang, setLang] = useState<Lang>((localStorage.getItem('lang') as Lang) || 'ar');
+  // Always start in Arabic — this is an Arabic-first RTL system
+  const [lang, setLang] = useState<Lang>('ar');
 
   useEffect(() => {
     const dir = lang === 'ar' ? 'rtl' : 'ltr';
@@ -20,14 +21,12 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     document.documentElement.lang = lang;
     document.documentElement.style.fontFamily =
       lang === 'ar' ? "'IBM Plex Sans Arabic', sans-serif" : "'Inter', sans-serif";
-    localStorage.setItem('lang', lang);
     i18n.changeLanguage(lang);
   }, [lang]);
 
   const toggleLang = () => {
     setLang(prev => {
       const next = prev === 'ar' ? 'en' : 'ar';
-      // Force layout recalculation after direction change
       requestAnimationFrame(() => {
         document.body.style.display = 'none';
         requestAnimationFrame(() => { document.body.style.display = ''; });

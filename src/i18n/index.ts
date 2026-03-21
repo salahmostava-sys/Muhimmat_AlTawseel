@@ -382,11 +382,9 @@ const resources = {
   },
 };
 
-const savedLang = localStorage.getItem('lang') || 'ar';
-
 i18n.use(initReactI18next).init({
   resources,
-  lng: savedLang,
+  lng: 'ar',
   fallbackLng: 'ar',
   interpolation: { escapeValue: false },
 });
