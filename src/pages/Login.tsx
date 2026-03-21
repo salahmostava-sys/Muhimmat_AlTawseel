@@ -85,7 +85,7 @@ const Login = () => {
             <img
               src={settings.logo_url}
               alt="logo"
-              className="w-16 h-16 rounded-2xl object-cover mb-3 shadow-lg border border-border"
+              className="w-24 h-16 rounded-2xl object-cover mb-3 shadow-lg border border-border"
             />
           ) : (
             <div
