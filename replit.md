@@ -1,7 +1,7 @@
 # نظام إدارة التوصيل — Delivery Management System
 
 ## Overview
-A full-featured delivery management SPA (Single Page Application) built with React/TypeScript/Vite. Running on Replit. Uses Supabase exclusively for all backend needs (auth, PostgreSQL database, storage).
+A full-featured delivery management SPA (Single Page Application) built with React/TypeScript/Vite. Running on Replit. Uses Supabase exclusively for all backend needs (auth, PostgreSQL database, storage). Successfully migrated from Replit Agent to Replit environment.
 
 ## Replit Setup
 - **Run command**: `npm run dev` (Vite dev server on port 5000)
