@@ -422,7 +422,6 @@ interface EmpDetail {
 }
 
 const Dashboard = () => {
-  const { lang } = useLanguage();
   const [activeTab, setActiveTab] = useState<'overview' | 'analytics'>('overview');
   const [topN, setTopN] = useState(5);
   const [topNInput, setTopNInput] = useState('5');
@@ -568,7 +567,7 @@ const Dashboard = () => {
     };
 
     fetchData();
-  }, [lang]);
+  }, []);
 
   // ── Derived ──
   const orderGrowth = kpis.prevMonthOrders > 0 ? ((kpis.totalOrders - kpis.prevMonthOrders) / kpis.prevMonthOrders) * 100 : 0;

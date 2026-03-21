@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from '@e965/xlsx';
 import { useAppColors, getAppColor } from '@/hooks/useAppColors';
 import { usePermissions } from '@/hooks/usePermissions';
-import { useLanguage } from '@/context/LanguageContext';
+
 
 // ─── Types ──────────────────────────────────────────────────────────
 type Employee = { id: string; name: string; salary_type: string; status: string; sponsorship_status: string | null };
@@ -795,18 +795,16 @@ const MonthSummary = () => {
 
 // ─── Page ────────────────────────────────────────────────────────────
 const Orders = () => {
-  const { lang } = useLanguage();
-
   return (
-    <div className="flex flex-col gap-3 flex-1 min-h-0" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="flex flex-col gap-3 flex-1 min-h-0" dir="rtl">
       <div className="flex-shrink-0">
         <nav className="page-breadcrumb">
-          <span>{lang === 'ar' ? 'الرئيسية' : 'Home'}</span>
+          <span>الرئيسية</span>
           <span className="page-breadcrumb-sep">/</span>
-          <span>{lang === 'ar' ? 'الطلبات اليومية' : 'Daily Orders'}</span>
+          <span>الطلبات اليومية</span>
         </nav>
         <h1 className="page-title flex items-center gap-2">
-          <Package size={18} /> {lang === 'ar' ? 'الطلبات اليومية' : 'Daily Orders'}
+          <Package size={18} /> الطلبات اليومية
         </h1>
       </div>
 

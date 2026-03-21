@@ -245,7 +245,7 @@ const SkeletonRow = ({ cols }: { cols: number }) => (
 // ─── Main Component ───────────────────────────────────────────────────────────
 const Employees = () => {
   const { t } = useTranslation();
-  const { lang } = useLanguage();
+  const { isRTL } = useLanguage();
   const { toast } = useToast();
   const { permissions } = usePermissions('employees');
 

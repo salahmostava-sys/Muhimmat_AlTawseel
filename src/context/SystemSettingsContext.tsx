@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useLanguage } from '@/context/LanguageContext';
 
 interface SystemSettings {
   id: string;
@@ -45,7 +44,6 @@ const SystemSettingsContext = createContext<SystemSettingsContextType>({
 export const SystemSettingsProvider = ({ children }: { children: ReactNode }) => {
   const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [loading, setLoading] = useState(true);
-  const { lang } = useLanguage();
 
   const fetchSettings = useCallback(async () => {
     const { data } = await supabase
@@ -62,8 +60,8 @@ export const SystemSettingsProvider = ({ children }: { children: ReactNode }) =>
   }, [fetchSettings]);
 
   const s = settings ?? defaults;
-  const projectName = lang === 'ar' ? s.project_name_ar : s.project_name_en;
-  const projectSubtitle = lang === 'ar' ? s.project_subtitle_ar : s.project_subtitle_en;
+  const projectName = s.project_name_ar;
+  const projectSubtitle = s.project_subtitle_ar;
 
   // Sync browser title
   useEffect(() => {

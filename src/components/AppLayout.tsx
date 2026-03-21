@@ -12,7 +12,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Languages, Sun, Moon, Menu, ChevronLeft, ChevronRight, LogOut, Settings, User, ChevronDown } from 'lucide-react';
+import { Sun, Moon, Menu, ChevronLeft, ChevronRight, LogOut, Settings, User, ChevronDown } from 'lucide-react';
 import NotificationCenter from '@/components/NotificationCenter';
 import GlobalSearch from '@/components/GlobalSearch';
 import { cn } from '@/lib/utils';
@@ -58,7 +58,7 @@ const roleColors: Record<string, string> = {
 };
 
 const AppLayoutInner = ({ children }: AppLayoutProps) => {
-  const { lang, toggleLang, isRTL } = useLanguage();
+  const { isRTL } = useLanguage();
   const { signOut, role, user } = useAuth();
   const { toggleTheme, isDark } = useTheme();
   const { projectName } = useSystemSettings();
@@ -163,23 +163,6 @@ const AppLayoutInner = ({ children }: AppLayoutProps) => {
               }
             </button>
 
-            {/* Language toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleLang}
-              className="text-xs font-medium h-8 px-2 lg:px-3 gap-1 rounded-xl"
-              style={{
-                background: 'var(--ds-surface-container)',
-                color: 'var(--ds-on-surface)',
-                border: 'none',
-              }}
-            >
-              <Languages size={13} />
-              <span className="hidden sm:inline">{lang === 'ar' ? 'English' : 'عربي'}</span>
-              <span className="sm:hidden">{lang === 'ar' ? 'EN' : 'ع'}</span>
-            </Button>
-
             {/* ── User profile chip ─────────────────────── */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -204,7 +187,7 @@ const AppLayoutInner = ({ children }: AppLayoutProps) => {
                   <ChevronDown size={12} className="hidden md:block" style={{ color: 'var(--ds-on-surface-variant)' }} />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align={isRTL ? 'start' : 'end'} className="w-56">
+              <DropdownMenuContent align="start" className="w-56">
                 <div className="px-3 py-2.5" style={{ borderBottom: '1px solid var(--ds-surface-container)' }}>
                   <div className="flex items-center gap-2.5">
                     <div className="min-w-0">
@@ -222,11 +205,11 @@ const AppLayoutInner = ({ children }: AppLayoutProps) => {
                 </div>
                 <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => window.location.href = '/settings?tab=profile'}>
                   <User size={14} />
-                  <span>{isRTL ? 'الملف الشخصي' : 'My Profile'}</span>
+                  <span>الملف الشخصي</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => window.location.href = '/settings'}>
                   <Settings size={14} />
-                  <span>{isRTL ? 'إعدادات النظام' : 'System Settings'}</span>
+                  <span>إعدادات النظام</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="gap-2 cursor-pointer text-destructive focus:text-destructive" onClick={signOut}>

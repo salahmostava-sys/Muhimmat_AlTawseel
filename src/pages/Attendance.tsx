@@ -24,9 +24,9 @@ const currentYear = new Date().getFullYear();
 const YEARS = [currentYear - 2, currentYear - 1, currentYear];
 
 const Attendance = () => {
-  const { lang, isRTL } = useLanguage();
+  const { isRTL } = useLanguage();
   const { t } = useTranslation();
-  const MONTHS = lang === 'ar' ? MONTHS_AR : MONTHS_EN;
+  const MONTHS = MONTHS_AR;
   const importRef = useRef<HTMLInputElement>(null);
 
   const [selectedMonth, setSelectedMonth] = useState(String(new Date().getMonth()));
@@ -35,7 +35,7 @@ const Attendance = () => {
   const handleExportAttendance = () => {
     const ws = XLSX.utils.json_to_sheet([{ 'Note': `Attendance — ${MONTHS[Number(selectedMonth)]} ${selectedYear}` }]);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, lang === 'ar' ? 'الحضور' : 'Attendance');
+    XLSX.utils.book_append_sheet(wb, ws, 'الحضور');
     XLSX.writeFile(wb, `attendance_${selectedYear}-${String(Number(selectedMonth) + 1).padStart(2, '0')}.xlsx`);
   };
 
@@ -43,7 +43,7 @@ const Attendance = () => {
     const headers = [['اسم الموظف', 'التاريخ (YYYY-MM-DD)', 'الحالة (present/absent/leave/sick/late)', 'ملاحظات']];
     const ws = XLSX.utils.aoa_to_sheet(headers);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, lang === 'ar' ? 'قالب' : 'Template');
+    XLSX.utils.book_append_sheet(wb, ws, 'قالب');
     XLSX.writeFile(wb, 'template_attendance.xlsx');
   };
 
@@ -54,7 +54,7 @@ const Attendance = () => {
         {/* Left: breadcrumb + title */}
         <div>
           <nav className="page-breadcrumb">
-            <span>{lang === 'ar' ? 'الرئيسية' : 'Home'}</span>
+            <span>الرئيسية</span>
             <span className="page-breadcrumb-sep">/</span>
             <span>{t('attendance')}</span>
           </nav>
@@ -90,18 +90,18 @@ const Attendance = () => {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1.5 h-9">
                 <FolderOpen size={14} />
-                {lang === 'ar' ? 'ملفات' : 'Files'}
+                ملفات
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleExportAttendance}>
-                📊 {lang === 'ar' ? 'تصدير Excel (ملخص شهري)' : 'Export Excel (Monthly Summary)'}
+                📊 تصدير Excel (ملخص شهري)
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleAttendanceTemplate}>
-                📋 {lang === 'ar' ? 'تحميل قالب الاستيراد' : 'Download Import Template'}
+                📋 تحميل قالب الاستيراد
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => importRef.current?.click()}>
-                <Upload size={14} className="ms-2" /> {lang === 'ar' ? 'استيراد Excel' : 'Import Excel'}
+                <Upload size={14} className="ms-2" /> استيراد Excel
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => {
@@ -109,9 +109,9 @@ const Attendance = () => {
                 if (!table) return;
                 const win = window.open('', '_blank');
                 if (!win) return;
-                win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"/><title>${lang === 'ar' ? 'الحضور' : 'Attendance'}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:11px;direction:rtl;color:#111;background:#fff}h2{text-align:center;margin-bottom:12px;font-size:15px}table{width:100%;border-collapse:collapse}th{background:#1e3a5f;color:#fff;padding:6px 8px;text-align:right;font-size:10px}td{padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right}tr:nth-child(even) td{background:#f9f9f9}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><h2>${lang === 'ar' ? 'سجل الحضور' : 'Attendance Record'}</h2>${table.outerHTML}<script>window.onload=()=>{window.print();window.onafterprint=()=>window.close()}<\/script></body></html>`);
+                win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"/><title>الحضور</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:11px;direction:rtl;color:#111;background:#fff}h2{text-align:center;margin-bottom:12px;font-size:15px}table{width:100%;border-collapse:collapse}th{background:#1e3a5f;color:#fff;padding:6px 8px;text-align:right;font-size:10px}td{padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right}tr:nth-child(even) td{background:#f9f9f9}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><h2>سجل الحضور</h2>${table.outerHTML}<script>window.onload=()=>{window.print();window.onafterprint=()=>window.close()}<\/script></body></html>`);
                 win.document.close();
-              }}>🖨️ {lang === 'ar' ? 'طباعة الجدول' : 'Print Table'}</DropdownMenuItem>
+              }}>🖨️ طباعة الجدول</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -122,15 +122,15 @@ const Attendance = () => {
         <TabsList className="bg-muted/50">
           <TabsTrigger value="daily" className="gap-2">
             <ClipboardCheck size={15} />
-            {lang === 'ar' ? 'التسجيل اليومي' : 'Daily Record'}
+            التسجيل اليومي
           </TabsTrigger>
           <TabsTrigger value="monthly" className="gap-2">
             <CalendarDays size={15} />
-            {lang === 'ar' ? 'السجل الشهري' : 'Monthly Record'}
+            السجل الشهري
           </TabsTrigger>
           <TabsTrigger value="stats" className="gap-2">
             <BarChart2 size={15} />
-            {lang === 'ar' ? 'الإحصائيات' : 'Statistics'}
+            الإحصائيات
           </TabsTrigger>
         </TabsList>
 

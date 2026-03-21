@@ -17,13 +17,12 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function ProjectSettings() {
   const { t } = useTranslation();
-  const { lang } = useLanguage();
+  const { isRTL } = useLanguage();
   const { isDark, toggleTheme } = useTheme();
   const { user } = useAuth();
   const { settings, refresh } = useSystemSettings();
   const { toast } = useToast();
   const { isAdmin } = usePermissions('settings');
-  const isRTL = lang === 'ar';
 
   const [nameAr, setNameAr] = useState('');
   const [nameEn, setNameEn] = useState('');

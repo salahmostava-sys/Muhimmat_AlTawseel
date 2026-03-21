@@ -83,8 +83,7 @@ export default function NotificationCenter() {
   });
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { lang } = useLanguage();
-  const isRTL = lang === 'ar';
+  const { isRTL } = useLanguage();
 
   /* ── Fetch alerts (same logic as Alerts.tsx) ─────────────── */
   const fetchAlerts = useCallback(async () => {

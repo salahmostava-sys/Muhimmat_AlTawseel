@@ -41,7 +41,7 @@ const TAB_TITLES: Record<TabKey, { ar: string; en: string }> = {
 };
 
 export default function SettingsHub() {
-  const { isRTL, lang } = useLanguage();
+  const { isRTL } = useLanguage();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 

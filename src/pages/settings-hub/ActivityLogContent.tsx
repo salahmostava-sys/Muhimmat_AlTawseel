@@ -56,7 +56,7 @@ const tableLabels: Record<string, { ar: string; en: string }> = {
 };
 
 export default function ActivityLogContent() {
-  const { isRTL, lang } = useLanguage();
+  const { isRTL } = useLanguage();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -116,11 +116,11 @@ export default function ActivityLogContent() {
     const { data } = await supabase.from('audit_log').select('*').order('created_at', { ascending: false }).limit(1000);
     if (!data) return;
     const rows = data.map(l => ({
-      [lang === 'ar' ? 'التاريخ' : 'Date']: format(new Date(l.created_at), 'yyyy-MM-dd HH:mm:ss'),
-      [lang === 'ar' ? 'الجدول' : 'Table']: l.table_name,
-      [lang === 'ar' ? 'العملية' : 'Action']: l.action,
-      [lang === 'ar' ? 'معرف المستخدم' : 'User ID']: l.user_id || '',
-      [lang === 'ar' ? 'معرف السجل' : 'Record ID']: l.record_id || '',
+      'التاريخ': format(new Date(l.created_at), 'yyyy-MM-dd HH:mm:ss'),
+      'الجدول': l.table_name,
+      'العملية': l.action,
+      'معرف المستخدم': l.user_id || '',
+      'معرف السجل': l.record_id || '',
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
@@ -129,8 +129,8 @@ export default function ActivityLogContent() {
   };
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
-  const getActionLabel = (action: string) => actionLabels[action]?.[lang as 'ar' | 'en'] || action;
-  const getTableLabel = (table: string) => tableLabels[table]?.[lang as 'ar' | 'en'] || table;
+  const getActionLabel = (action: string) => actionLabels[action]?.ar || action;
+  const getTableLabel = (table: string) => tableLabels[table]?.ar || table;
   const activeFilters = [filterAction !== 'all', filterTable !== 'all'].filter(Boolean).length;
 
   return (
@@ -144,20 +144,18 @@ export default function ActivityLogContent() {
         </div>
         <div>
           <h2 className="text-lg font-bold" style={{ color: 'var(--ds-on-surface)' }}>
-            {lang === 'ar' ? 'سجل النشاطات' : 'Activity Log'}
+            سجل النشاطات
           </h2>
           <p className="text-xs" style={{ color: 'var(--ds-on-surface-variant)' }}>
-            {lang === 'ar'
-              ? `${totalCount.toLocaleString()} سجل محفوظ`
-              : `${totalCount.toLocaleString()} records stored`}
+            {`${totalCount.toLocaleString()} سجل محفوظ`}
           </p>
         </div>
         <div className="flex items-center gap-2 mr-auto">
           <Button variant="outline" size="sm" className="gap-2 h-8" onClick={fetchLogs}>
-            <RefreshCw size={13} /> {lang === 'ar' ? 'تحديث' : 'Refresh'}
+            <RefreshCw size={13} /> تحديث
           </Button>
           <Button variant="outline" size="sm" className="gap-2 h-8" onClick={handleExport}>
-            <Download size={13} /> {lang === 'ar' ? 'تصدير' : 'Export'}
+            <Download size={13} /> تصدير
           </Button>
         </div>
       </div>
@@ -172,25 +170,25 @@ export default function ActivityLogContent() {
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder={lang === 'ar' ? 'بحث...' : 'Search...'}
+            placeholder="بحث..."
             className={`h-8 text-sm ${isRTL ? 'pr-8' : 'pl-8'}`}
           />
         </div>
         <Select value={filterAction} onValueChange={setFilterAction}>
           <SelectTrigger className="h-8 text-xs w-36"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{lang === 'ar' ? 'كل العمليات' : 'All Actions'}</SelectItem>
-            <SelectItem value="INSERT">{lang === 'ar' ? 'إضافة' : 'Create'}</SelectItem>
-            <SelectItem value="UPDATE">{lang === 'ar' ? 'تعديل' : 'Update'}</SelectItem>
-            <SelectItem value="DELETE">{lang === 'ar' ? 'حذف' : 'Delete'}</SelectItem>
+            <SelectItem value="all">كل العمليات</SelectItem>
+            <SelectItem value="INSERT">إضافة</SelectItem>
+            <SelectItem value="UPDATE">تعديل</SelectItem>
+            <SelectItem value="DELETE">حذف</SelectItem>
           </SelectContent>
         </Select>
         <Select value={filterTable} onValueChange={setFilterTable}>
           <SelectTrigger className="h-8 text-xs w-44"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{lang === 'ar' ? 'كل الجداول' : 'All Tables'}</SelectItem>
+            <SelectItem value="all">كل الجداول</SelectItem>
             {Object.entries(tableLabels).map(([key, label]) => (
-              <SelectItem key={key} value={key}>{label[lang as 'ar' | 'en']}</SelectItem>
+              <SelectItem key={key} value={key}>{label.ar}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -199,7 +197,7 @@ export default function ActivityLogContent() {
             onClick={() => { setFilterAction('all'); setFilterTable('all'); }}
             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors"
           >
-            <X size={12} /> {lang === 'ar' ? 'مسح' : 'Clear'}
+            <X size={12} /> مسح
             <Badge variant="secondary" className="h-4 w-4 p-0 flex items-center justify-center text-[9px]">
               {activeFilters}
             </Badge>
@@ -217,11 +215,11 @@ export default function ActivityLogContent() {
             <thead>
               <tr style={{ background: 'var(--ds-surface-low)', borderBottom: '1px solid var(--ds-surface-container)' }}>
                 {[
-                  lang === 'ar' ? 'التاريخ والوقت' : 'Date & Time',
-                  lang === 'ar' ? 'المستخدم' : 'User',
-                  lang === 'ar' ? 'العملية' : 'Action',
-                  lang === 'ar' ? 'الوحدة' : 'Module',
-                  lang === 'ar' ? 'التفاصيل' : 'Details',
+                  'التاريخ والوقت',
+                  'المستخدم',
+                  'العملية',
+                  'الوحدة',
+                  'التفاصيل',
                 ].map((h, i) => (
                   <th
                     key={i}
@@ -250,7 +248,7 @@ export default function ActivityLogContent() {
                       <td colSpan={5} className="p-12 text-center">
                         <Activity size={32} className="mx-auto mb-3 opacity-20" style={{ color: 'var(--ds-on-surface-variant)' }} />
                         <p className="text-sm" style={{ color: 'var(--ds-on-surface-variant)' }}>
-                          {lang === 'ar' ? 'لا توجد سجلات' : 'No records found'}
+                          لا توجد سجلات
                         </p>
                       </td>
                     </tr>
@@ -285,7 +283,7 @@ export default function ActivityLogContent() {
                           </div>
                         ) : (
                           <span className="text-xs" style={{ color: 'var(--ds-on-surface-variant)' }}>
-                            {lang === 'ar' ? 'النظام' : 'System'}
+                            النظام
                           </span>
                         )}
                       </td>
@@ -335,9 +333,7 @@ export default function ActivityLogContent() {
             }}
           >
             <p className="text-xs" style={{ color: 'var(--ds-on-surface-variant)' }}>
-              {lang === 'ar'
-                ? `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, totalCount)} من ${totalCount}`
-                : `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, totalCount)} of ${totalCount}`}
+              {`${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, totalCount)} من ${totalCount}`}
             </p>
             <div className="flex items-center gap-1">
               <button

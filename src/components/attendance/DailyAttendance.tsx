@@ -58,10 +58,10 @@ interface Props {
 }
 
 const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
-  const { lang, isRTL } = useLanguage();
+  const { isRTL } = useLanguage();
   const { permissions } = usePermissions("attendance");
-  const dateLocale = lang === "ar" ? ar : enUS;
-  const statusLabels = lang === "ar" ? STATUS_LABELS_AR : STATUS_LABELS_EN;
+  const dateLocale = ar;
+  const statusLabels = STATUS_LABELS_AR;
 
   const [date, setDate] = useState<Date>(() => {
     const d = new Date();
@@ -147,7 +147,7 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
       });
       return updated;
     });
-    toast({ title: lang === "ar" ? "تم تسجيل الكل حاضرين ✅" : "All marked as present ✅" });
+    toast({ title: "تم تسجيل الكل حاضرين ✅" });
   };
 
   const addCustomStatus = (empId: string) => {
@@ -197,7 +197,7 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
 
     setSaving(false);
     toast({
-      title: lang === "ar" ? `تم حفظ حضور ${saved} مندوب بنجاح ✅` : `Saved attendance for ${saved} employees ✅`,
+      title: `تم حفظ حضور ${saved} مندوب بنجاح ✅`,
       description: format(date, "dd MMMM yyyy", { locale: dateLocale }),
     });
   };
@@ -219,11 +219,11 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
   ];
 
   const colHeaders = {
-    employee: lang === "ar" ? "المندوب" : "Employee",
-    status: lang === "ar" ? "الحالة" : "Status",
-    checkIn: lang === "ar" ? "وقت الحضور" : "Check In",
-    checkOut: lang === "ar" ? "وقت الانصراف" : "Check Out",
-    note: lang === "ar" ? "ملاحظة" : "Note",
+    employee: "المندوب",
+    status: "الحالة",
+    checkIn: "وقت الحضور",
+    checkOut: "وقت الانصراف",
+    note: "ملاحظة",
   };
 
   return (
@@ -251,24 +251,20 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
             </PopoverContent>
           </Popover>
           <span className="text-sm text-muted-foreground">
-            {employees.length} {lang === "ar" ? "مندوب نشط" : "active employees"}
+            {employees.length} مندوب نشط
           </span>
         </div>
         <div className="flex gap-2">
           {permissions.can_edit && (
             <Button variant="outline" onClick={markAllPresent} className="gap-2">
               <UserCheck size={16} />
-              {lang === "ar" ? "تسجيل الكل حاضرين" : "Mark All Present"}
+              تسجيل الكل حاضرين
             </Button>
           )}
           {permissions.can_edit && (
             <Button onClick={handleSave} disabled={saving || savedCount === 0} className="gap-2">
               <Save size={16} />
-              {saving
-                ? lang === "ar"
-                  ? "جاري الحفظ..."
-                  : "Saving..."
-                : `${lang === "ar" ? "حفظ الحضور" : "Save"} (${savedCount})`}
+              {saving ? "جاري الحفظ..." : `حفظ الحضور (${savedCount})`}
             </Button>
           )}
         </div>
@@ -288,7 +284,7 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
         )}
         {savedCount === 0 && (
           <span className="text-xs text-muted-foreground">
-            {lang === "ar" ? "لم يُحدَّد أي حضور بعد" : "No attendance recorded yet"}
+            لم يُحدَّد أي حضور بعد
           </span>
         )}
       </div>
@@ -341,12 +337,8 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
                               <p className="text-xs text-muted-foreground">
                                 {emp.job_title ||
                                   (emp.salary_type === "orders"
-                                    ? lang === "ar"
-                                      ? "طلبات"
-                                      : "Orders"
-                                    : lang === "ar"
-                                      ? "دوام"
-                                      : "Shift")}
+                                    ? "طلبات"
+                                    : "دوام")}
                               </p>
                             </div>
                           </div>
@@ -368,11 +360,11 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
                                       setCustomInput("");
                                     }
                                   }}
-                                  placeholder={lang === "ar" ? "اسم الحالة..." : "Status name..."}
+                                  placeholder="اسم الحالة..."
                                   className="h-8 text-xs w-32"
                                 />
                                 <Button size="sm" className="h-8 text-xs px-2" onClick={() => addCustomStatus(emp.id)}>
-                                  {lang === "ar" ? "إضافة" : "Add"}
+                                  إضافة
                                 </Button>
                                 <Button
                                   size="sm"
@@ -405,7 +397,7 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
                                     currentStatus ? selectColor : "text-muted-foreground",
                                   )}
                                 >
-                                  <SelectValue placeholder={lang === "ar" ? "اختر الحالة..." : "Select status..."} />
+                                  <SelectValue placeholder="اختر الحالة..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {allStatuses.map((s) => (
@@ -418,7 +410,7 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
                                     </SelectItem>
                                   ))}
                                   <SelectItem value="__add_custom__" className="text-primary font-medium border-t mt-1">
-                                    + {lang === "ar" ? "إضافة حالة جديدة..." : "Add new status..."}
+                                    + إضافة حالة جديدة...
                                   </SelectItem>
                                 </SelectContent>
                               </Select>
@@ -454,7 +446,7 @@ const DailyAttendance = ({ selectedMonth, selectedYear }: Props) => {
                         <td className="ta-td">
                           <Input
                             disabled={!permissions.can_edit}
-                            placeholder={lang === "ar" ? "ملاحظة اختيارية..." : "Optional note..."}
+                            placeholder="ملاحظة اختيارية..."
                             value={record.note}
                             onChange={(e) => updateRecord(emp.id, "note", e.target.value)}
                             className="text-sm min-w-[160px]"

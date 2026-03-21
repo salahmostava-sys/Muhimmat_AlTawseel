@@ -40,8 +40,8 @@ interface Props {
 }
 
 const MonthlyRecord = ({ selectedMonth, selectedYear }: Props) => {
-  const { lang, isRTL } = useLanguage();
-  const MONTHS = lang === "ar" ? MONTHS_AR : MONTHS_EN;
+  const { isRTL } = useLanguage();
+  const MONTHS = MONTHS_AR;
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [attendanceRows, setAttendanceRows] = useState<AttendanceRow[]>([]);
@@ -97,17 +97,17 @@ const MonthlyRecord = ({ selectedMonth, selectedYear }: Props) => {
   );
 
   const t = {
-    employee: lang === "ar" ? "المندوب" : "Employee",
-    nationalId: lang === "ar" ? "رقم الهوية" : "National ID",
-    present: lang === "ar" ? "حضور" : "Present",
-    absent: lang === "ar" ? "غياب" : "Absent",
-    leave: lang === "ar" ? "إجازة" : "Leave",
-    sick: lang === "ar" ? "مريض" : "Sick",
-    late: lang === "ar" ? "متأخر" : "Late",
-    hours: lang === "ar" ? "ساعات العمل" : "Work Hours",
-    total: lang === "ar" ? "الإجمالي" : "Total",
-    noData: lang === "ar" ? "لا توجد بيانات لهذا الشهر" : "No data for this month",
-    hoursUnit: lang === "ar" ? "س" : "h",
+    employee: "المندوب",
+    nationalId: "رقم الهوية",
+    present: "حضور",
+    absent: "غياب",
+    leave: "إجازة",
+    sick: "مريض",
+    late: "متأخر",
+    hours: "ساعات العمل",
+    total: "الإجمالي",
+    noData: "لا توجد بيانات لهذا الشهر",
+    hoursUnit: "س",
     monthPeriod: `${MONTHS[selectedMonth]} ${selectedYear}`,
   };
 
@@ -143,7 +143,7 @@ const MonthlyRecord = ({ selectedMonth, selectedYear }: Props) => {
                     {t.late}
                   </span>
                 </th>
-                <th className="ta-th-center">{lang === "ar" ? "ساعات العمل" : "Work Hours"}</th>
+                <th className="ta-th-center">ساعات العمل</th>
               </tr>
             </thead>
             <tbody>

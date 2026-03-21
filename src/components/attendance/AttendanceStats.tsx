@@ -45,17 +45,17 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 const AttendanceStats = ({ selectedMonth, selectedYear }: Props) => {
-  const { lang } = useLanguage();
+  const { isRTL } = useLanguage();
   const [data, setData] = useState<DayStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalEmployees, setTotalEmployees] = useState(0);
 
   const labels = {
-    present: lang === 'ar' ? 'حاضر' : 'Present',
-    absent:  lang === 'ar' ? 'غائب' : 'Absent',
-    leave:   lang === 'ar' ? 'إجازة' : 'Leave',
-    sick:    lang === 'ar' ? 'مريض' : 'Sick',
-    late:    lang === 'ar' ? 'متأخر' : 'Late',
+    present: 'حاضر',
+    absent:  'غائب',
+    leave:   'إجازة',
+    sick:    'مريض',
+    late:    'متأخر',
   };
 
   useEffect(() => {
@@ -143,18 +143,18 @@ const AttendanceStats = ({ selectedMonth, selectedYear }: Props) => {
       <div className="bg-card border border-border/50 rounded-xl p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-foreground">
-            {lang === 'ar' ? 'توزيع الحضور يومياً' : 'Daily Attendance Breakdown'}
+            توزيع الحضور يومياً
           </h3>
           {totalEmployees > 0 && (
             <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-              {totalEmployees} {lang === 'ar' ? 'مندوب نشط' : 'active employees'}
+              {totalEmployees} مندوب نشط
             </span>
           )}
         </div>
 
         {data.length === 0 ? (
           <div className="h-64 flex items-center justify-center text-muted-foreground text-sm">
-            {lang === 'ar' ? 'لا توجد بيانات حضور لهذا الشهر' : 'No attendance data for this month'}
+            لا توجد بيانات حضور لهذا الشهر
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={280}>

@@ -1,14 +1,11 @@
-import { useLanguage } from '@/context/LanguageContext';
 import { useSystemSettings } from '@/context/SystemSettingsContext';
 import { Settings2 } from 'lucide-react';
 import ProjectSettings from '@/components/settings/ProjectSettings';
 
 export default function GeneralSettings() {
-  const { lang } = useLanguage();
   const { projectName } = useSystemSettings();
-  const isRTL = lang === 'ar';
 
-  document.title = `${projectName} | ${isRTL ? 'الإعدادات العامة' : 'General Settings'}`;
+  document.title = `${projectName} | الإعدادات العامة`;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -18,10 +15,10 @@ export default function GeneralSettings() {
         </div>
         <div>
           <h1 className="text-xl font-bold text-foreground">
-            {isRTL ? 'الإعدادات العامة' : 'General Settings'}
+            الإعدادات العامة
           </h1>
           <p className="text-sm text-muted-foreground">
-            {isRTL ? 'إدارة اسم المشروع والشعار والمظهر' : 'Manage project name, logo and appearance'}
+            إدارة اسم المشروع والشعار والمظهر
           </p>
         </div>
       </div>

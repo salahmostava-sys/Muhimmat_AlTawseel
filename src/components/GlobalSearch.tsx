@@ -20,8 +20,7 @@ export default function GlobalSearch() {
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { lang } = useLanguage();
-  const isRTL = lang === 'ar';
+  const { isRTL } = useLanguage();
   const navigate = useNavigate();
 
   const search = useCallback(async (q: string) => {
@@ -49,7 +48,7 @@ export default function GlobalSearch() {
     (empRes.data ?? []).forEach(e => {
       out.push({
         id: e.id,
-        label: lang === 'ar' ? e.name : (e.name_en || e.name),
+        label: e.name,
         sub: e.phone || undefined,
         type: 'employee',
         href: '/employees',
@@ -68,7 +67,7 @@ export default function GlobalSearch() {
 
     setResults(out);
     setLoading(false);
-  }, [lang]);
+  }, [isRTL]);
 
   useEffect(() => {
     const timer = setTimeout(() => search(query), 300);

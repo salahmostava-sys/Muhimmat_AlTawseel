@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { Input } from '@/components/ui/input';
 import { Loader2, Eye, EyeOff, Mail, Lock, Sun, Moon } from 'lucide-react';
@@ -17,10 +16,8 @@ interface SystemSettings {
 
 const Login = () => {
   const { signIn } = useAuth();
-  const { lang, toggleLang, isRTL } = useLanguage();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const isAr = lang === 'ar';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,11 +31,11 @@ const Login = () => {
   }, []);
 
   const projectName = settings
-    ? (isAr ? settings.project_name_ar : settings.project_name_en)
-    : (isAr ? 'نظام إدارة التوصيل' : 'Delivery Management');
+    ? settings.project_name_ar
+    : 'نظام إدارة التوصيل';
   const projectSubtitle = settings
-    ? (isAr ? settings.project_subtitle_ar : settings.project_subtitle_en)
-    : (isAr ? 'إدارة المناديب' : 'Rider Management');
+    ? settings.project_subtitle_ar
+    : 'إدارة المناديب';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,9 +47,9 @@ const Login = () => {
     if (error) {
       const deactivatedMsg = 'هذا الحساب معطّل. تواصل مع المسؤول.';
       if (error.message === deactivatedMsg) {
-        setLoginError(isAr ? deactivatedMsg : 'This account is deactivated. Contact your administrator.');
+        setLoginError(deactivatedMsg);
       } else {
-        setLoginError(isAr ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة' : 'Invalid email or password');
+        setLoginError('البريد الإلكتروني أو كلمة المرور غير صحيحة');
       }
     } else {
       navigate('/', { replace: true });
@@ -60,21 +57,15 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4" dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Theme & lang toggles */}
-      <div className={`absolute top-4 ${isRTL ? 'left-4' : 'right-4'} flex items-center gap-2`}>
+    <div className="min-h-screen flex items-center justify-center bg-background px-4" dir="rtl">
+      {/* Theme toggle */}
+      <div className="absolute top-4 left-4 flex items-center gap-2">
         <button
           onClick={toggleTheme}
           className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground border border-border"
           title={isDark ? 'Light mode' : 'Dark mode'}
         >
           {isDark ? <Sun size={15} className="text-yellow-500" /> : <Moon size={15} />}
-        </button>
-        <button
-          onClick={toggleLang}
-          className="h-8 px-3 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground border border-border text-xs font-medium"
-        >
-          {isAr ? 'EN' : 'ع'}
         </button>
       </div>
 
@@ -106,16 +97,16 @@ const Login = () => {
         {/* Card */}
         <div className="bg-card border border-border rounded-2xl p-6 shadow-xl">
           <h2 className="text-base font-bold text-foreground mb-5 text-center">
-            {isAr ? 'تسجيل الدخول' : 'Sign In'}
+            تسجيل الدخول
           </h2>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-sm text-muted-foreground mb-1.5">
-                {isAr ? 'البريد الإلكتروني' : 'Email Address'}
+                البريد الإلكتروني
               </label>
               <div className="relative">
-                <Mail size={15} className={`absolute top-1/2 -translate-y-1/2 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
+                <Mail size={15} className="absolute top-1/2 -translate-y-1/2 text-muted-foreground right-3" />
                 <Input
                   type="email"
                   value={email}
@@ -124,17 +115,17 @@ const Login = () => {
                   required
                   dir="ltr"
                   autoComplete="email"
-                  className={`h-11 ${isRTL ? 'pr-9' : 'pl-9'}`}
+                  className="h-11 pr-9"
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-sm text-muted-foreground mb-1.5">
-                {isAr ? 'كلمة المرور' : 'Password'}
+                كلمة المرور
               </label>
               <div className="relative">
-                <Lock size={15} className={`absolute top-1/2 -translate-y-1/2 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
+                <Lock size={15} className="absolute top-1/2 -translate-y-1/2 text-muted-foreground right-3" />
                 <Input
                   type={showPw ? 'text' : 'password'}
                   value={password}
@@ -142,12 +133,12 @@ const Login = () => {
                   placeholder="••••••••"
                   required
                   autoComplete="current-password"
-                  className={`h-11 ${isRTL ? 'pr-9 pl-10' : 'pl-9 pr-10'}`}
+                  className="h-11 pr-9 pl-10"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPw(v => !v)}
-                  className={`absolute top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors ${isRTL ? 'left-3' : 'right-3'}`}
+                  className="absolute top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors left-3"
                 >
                   {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
@@ -168,15 +159,15 @@ const Login = () => {
               style={{ background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.85))' }}
             >
               {loading
-                ? <><Loader2 size={16} className="animate-spin" /> {isAr ? 'جاري التحقق...' : 'Signing in...'}</>
-                : (isAr ? 'تسجيل الدخول' : 'Sign In')
+                ? <><Loader2 size={16} className="animate-spin" /> جاري التحقق...</>
+                : 'تسجيل الدخول'
               }
             </button>
           </form>
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          {isAr ? `جميع الحقوق محفوظة © ${new Date().getFullYear()}` : `© ${new Date().getFullYear()} All rights reserved`}
+          {`جميع الحقوق محفوظة © ${new Date().getFullYear()}`}
         </p>
       </div>
     </div>
