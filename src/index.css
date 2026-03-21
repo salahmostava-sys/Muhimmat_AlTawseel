@@ -78,6 +78,9 @@
     --ds-secondary:         #3549db;
     --ds-error:             #ba1a1a;
 
+    /* ── Header glass background ─────────────────────────────── */
+    --header-glass-bg: rgba(249, 249, 251, 0.88);
+
     /* ── Spacing ─────────────────────────────────────────────── */
     --space-xs:  0.25rem;
     --space-sm:  0.5rem;
@@ -134,6 +137,19 @@
     --sidebar-border: 222 30% 14%;
     --sidebar-ring: 232 85% 65%;
     --sidebar-muted: 213 14% 42%;
+
+    /* ── MD3 surface tokens — dark overrides ─────────────────── */
+    --ds-surface:            #0f1422;
+    --ds-surface-lowest:     #090d18;
+    --ds-surface-low:        #0c1119;
+    --ds-surface-container:  #18202f;
+    --ds-surface-high:       #1e2840;
+    --ds-on-surface:         #dde3ec;
+    --ds-on-surface-variant: #8b9ab4;
+    --ds-outline-variant:    #2a3850;
+
+    /* ── Header glass background — dark ─────────────────────── */
+    --header-glass-bg: rgba(12, 17, 25, 0.88);
   }
 }
 

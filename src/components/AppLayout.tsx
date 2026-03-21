@@ -117,10 +117,10 @@ const AppLayoutInner = ({ children }: AppLayoutProps) => {
         <header
           className="h-[70px] flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40"
           style={{
-            background: 'rgba(255,255,255,0.85)',
+            background: 'var(--header-glass-bg)',
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
-            borderBottom: '1px solid var(--ds-surface-container)',
+            borderBottom: '1px solid var(--ds-outline-variant)',
           }}
         >
 

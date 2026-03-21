@@ -186,15 +186,15 @@ const AppSidebar = () => {
             to="/"
             title={collapsed ? t('dashboard') : undefined}
             className={cn(
-              'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium w-full transition-all duration-150',
+              'relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium w-full transition-all duration-150 overflow-hidden',
               collapsed && 'justify-center px-0',
             )}
             style={
               isActive('/')
                 ? {
-                    background: 'linear-gradient(135deg, #2642e6, #465fff)',
+                    background: 'linear-gradient(135deg, #2642e6 0%, #465fff 100%)',
                     color: '#ffffff',
-                    boxShadow: '0 4px 12px rgba(38,66,230,0.20)',
+                    boxShadow: '0 4px 14px rgba(38,66,230,0.25)',
                   }
                 : { color: 'var(--ds-on-surface-variant)' }
             }
@@ -211,6 +211,13 @@ const AppSidebar = () => {
               }
             }}
           >
+            {/* Active bar indicator */}
+            {isActive('/') && !collapsed && (
+              <span
+                className="absolute top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-white/60"
+                style={{ [isRTL ? 'right' : 'left']: '-2px' }}
+              />
+            )}
             <LayoutDashboard size={17} className="flex-shrink-0" />
             {!collapsed && <span>{t('dashboard')}</span>}
           </Link>
@@ -252,16 +259,16 @@ const AppSidebar = () => {
                           to={item.path}
                           title={collapsed ? item.label : undefined}
                           className={cn(
-                            'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150',
+                            'relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 overflow-hidden',
                             collapsed && 'justify-center px-0',
                           )}
                           style={
                             active
                               ? {
-                                  background: 'linear-gradient(135deg, #2642e6, #465fff)',
+                                  background: 'linear-gradient(135deg, #2642e6 0%, #465fff 100%)',
                                   color: '#ffffff',
                                   fontWeight: 600,
-                                  boxShadow: '0 4px 12px rgba(38,66,230,0.20)',
+                                  boxShadow: '0 4px 14px rgba(38,66,230,0.25)',
                                 }
                               : { color: 'var(--ds-on-surface-variant)', fontWeight: 400 }
                           }
@@ -279,6 +286,13 @@ const AppSidebar = () => {
                           }}
                           onClick={close}
                         >
+                          {/* Active bar indicator */}
+                          {active && !collapsed && (
+                            <span
+                              className="absolute top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-white/60"
+                              style={{ [isRTL ? 'right' : 'left']: '-2px' }}
+                            />
+                          )}
                           <item.icon size={16} className="flex-shrink-0" />
                           {!collapsed && <span>{item.label}</span>}
                         </Link>
