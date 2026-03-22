@@ -1,0 +1,118 @@
+Using SAFE MODE:
+
+You are working on an EXISTING production system connected via GitHub.
+
+---
+
+## 🚨 CRITICAL CONTEXT
+
+This system is a DRIVER PAYROLL SYSTEM.
+
+* Drivers work on external platforms (Keeta, HungerStation, etc.)
+* Orders are manually entered as daily counts
+* Salary is calculated using tier-based rules (NOT fixed pricing)
+
+---
+
+## ❗ CURRENT PROBLEM
+
+Salary calculation is hardcoded in the code like:
+
+if (orders <= 300) { ... }
+
+This is NOT acceptable.
+
+We need to move ALL payroll logic into the database and services layer.
+
+---
+
+## 🎯 TASK 1 — CREATE DATABASE RULE SYSTEM
+
+Create a new table:
+
+pricing_rules
+
+Columns:
+
+* id
+* platform_id (foreign key)
+* min_orders
+* max_orders (nullable)
+* type ('per_order', 'fixed', 'hybrid')
+* rate_per_order (nullable)
+* fixed_salary (nullable)
+
+---
+
+## 🎯 TASK 2 — DO NOT BREAK EXISTING SYSTEM
+
+* DO NOT delete existing logic
+* DO NOT modify current pages
+* DO NOT change UI
+* Add new system in parallel
+
+---
+
+## 🎯 TASK 3 — CREATE payrollService
+
+Create new file:
+
+services/payrollService.ts
+
+Add method:
+
+calculateSalary(driverId, month)
+
+---
+
+## 🎯 TASK 4 — LOGIC IMPLEMENTATION
+
+* Fetch total orders per driver per platform
+* Fetch pricing_rules for that platform
+* Find matching rule based on total orders
+
+Apply:
+
+if type = 'per_order':
+salary = orders * rate
+
+if type = 'fixed':
+salary = fixed_salary
+
+if type = 'hybrid':
+salary = fixed_salary + (orders * rate)
+
+---
+
+## 🎯 TASK 5 — KEEP SYSTEM SAFE
+
+* Do NOT remove old calculation
+* Add new calculation as alternative
+* Log differences if needed
+
+---
+
+## 🎯 TASK 6 — FUTURE READY
+
+Design system so that:
+
+* Each platform has its own rules
+* Rules can be edited without code changes
+
+---
+
+## 🔒 STRICT RULES
+
+* Do NOT rewrite full files
+* Do NOT touch Dashboard.tsx
+* Do NOT touch Orders.tsx
+* Do NOT break routing
+* Only ADD new logic safely
+
+---
+
+## 🧠 OUTPUT REQUIRED
+
+1. Show SQL for pricing_rules table
+2. Show payrollService code
+3. Explain integration steps BEFORE applying changes
